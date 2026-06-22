@@ -1,0 +1,56 @@
+# ── Python ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+.env
+*.env
+
+# ── Secrets / local config ───────────────────────────────
+.env
+.env.local
+.env.*.local
+exchange.json
+sessions.json
+
+# ── Database ─────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Trade images (user uploads, not source code) ─────────
+legacy/images/
+backend/images/
+
+# ── Node / frontend ──────────────────────────────────────
+node_modules/
+frontend/node_modules/
+mobile/node_modules/
+frontend/dist/
+frontend/.vite/
+mobile/.expo/
+mobile/dist/
+*.tsbuildinfo
+
+# ── OS ───────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ──────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Logs ─────────────────────────────────────────────────
+*.log
+npm-debug.log*
