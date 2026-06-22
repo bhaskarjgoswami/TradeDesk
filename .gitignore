@@ -54,3 +54,10 @@ Thumbs.db
 # ── Logs ─────────────────────────────────────────────────
 *.log
 npm-debug.log*
+
+# ── Root-level legacy launcher (kept local; canonical copy lives in legacy/) ──
+/app.py
+/index.html
+/page.html
+/Start Trade Journal.command
+/.env.example
