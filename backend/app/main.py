@@ -14,6 +14,8 @@ app.add_middleware(
         "capacitor://localhost",   # Capacitor mobile
         "http://localhost",        # Expo mobile
     ],
+    # Allow this project's Vercel domains (stable production alias + per-deploy preview URLs)
+    allow_origin_regex=r"https://trade-desk-dl66[a-z0-9-]*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
