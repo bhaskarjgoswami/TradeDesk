@@ -41,6 +41,7 @@ class ExchangeIn(BaseModel):
     exchange: Optional[str] = "delta"
     key: Optional[str] = ""
     secret: Optional[str] = ""
+    passphrase: Optional[str] = ""
 
 
 class ImageUploadIn(BaseModel):

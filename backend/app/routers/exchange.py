@@ -24,16 +24,34 @@ socket.getaddrinfo = _v4
 
 # ── Exchange key CRUD ────────────────────────────────────
 
+# Exchanges whose credentials we accept (mirrors the frontend selector).
+SUPPORTED_EXCHANGES = {
+    "delta", "binance", "bybit", "okx", "coinbase", "kucoin", "kraken", "bitget", "mexc",
+}
+
+
+def _norm_exchange(name: str) -> str:
+    ex = (name or "delta").strip().lower()
+    if ex not in SUPPORTED_EXCHANGES:
+        raise HTTPException(400, f"Unsupported exchange '{ex}'")
+    return ex
+
+
 @router.get("/exchange")
-def get_exchange(user=Depends(get_current_user)):
+def get_exchange(exchange: str = "delta", user=Depends(get_current_user)):
+    ex = _norm_exchange(exchange)
     uid = user["user_id"]
     with get_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT delta_key, delta_secret FROM user_profiles WHERE id=%s", (uid,))
+            cur.execute("SELECT delta_key, exchange_creds FROM user_profiles WHERE id=%s", (uid,))
             row = cur.fetchone()
-    key = (row["delta_key"] or "") if row else ""
+    creds = (row["exchange_creds"] or {}) if row else {}
+    key = (creds.get(ex) or {}).get("key") or ""
+    # backward-compat: legacy Delta keys may only live in the dedicated column
+    if ex == "delta" and not key and row:
+        key = row["delta_key"] or ""
     return {
-        "exchange": "delta",
+        "exchange": ex,
         "has_creds": bool(key),
         "key_masked": ("••••" + key[-4:]) if len(key) >= 4 else "",
     }
@@ -41,13 +59,27 @@ def get_exchange(user=Depends(get_current_user)):
 
 @router.post("/exchange")
 def save_exchange(body: ExchangeIn, user=Depends(get_current_user)):
+    ex = _norm_exchange(body.exchange)
     uid = user["user_id"]
+    entry = {
+        "key": (body.key or "").strip(),
+        "secret": (body.secret or "").strip(),
+        "passphrase": (body.passphrase or "").strip(),
+    }
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                """UPDATE user_profiles SET delta_key=%s, delta_secret=%s WHERE id=%s""",
-                (body.key.strip(), body.secret.strip(), uid),
+                "UPDATE user_profiles SET exchange_creds = "
+                "jsonb_set(COALESCE(exchange_creds, '{}'::jsonb), %s::text[], %s::jsonb, true) "
+                "WHERE id=%s",
+                ("{" + ex + "}", json.dumps(entry), uid),
             )
+            # keep the legacy Delta columns in sync so the existing fills-sync keeps working
+            if ex == "delta":
+                cur.execute(
+                    "UPDATE user_profiles SET delta_key=%s, delta_secret=%s WHERE id=%s",
+                    (entry["key"], entry["secret"], uid),
+                )
     return {"ok": True}
 
 
