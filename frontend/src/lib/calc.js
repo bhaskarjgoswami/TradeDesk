@@ -38,6 +38,10 @@ function round(n, d = 2) {
 
 export const fmt = {
   money: (n) =>
-    n == null ? "—" : (n < 0 ? "-" : "") + "₹" + Math.abs(n).toLocaleString("en-IN", { maximumFractionDigits: 2 }),
-  num: (n, d = 2) => (n == null ? "—" : Number(n).toFixed(d)),
+    n == null || isNaN(n)
+      ? "—"
+      : (n < 0 ? "-" : "") +
+        "$" +
+        Math.abs(Number(n)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+  num: (n, d = 2) => (n == null || n === "" || isNaN(n) ? "—" : Number(n).toFixed(d)),
 };

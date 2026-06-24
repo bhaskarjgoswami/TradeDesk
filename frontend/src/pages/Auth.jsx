@@ -1,17 +1,24 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 
+const BrandMark = (
+  <span className="mark"><svg viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z" /><path d="M6 3.5v17" /><path d="M9.5 8h6M9.5 12h4" /></svg></span>
+);
+
 export default function Auth() {
   const [mode, setMode] = useState("login"); // login | signup
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function submit(e) {
     e.preventDefault();
-    setErr(""); setMsg(""); setBusy(true);
+    setErr(""); setMsg("");
+    if (!email || !password) { setErr("Enter your email and password."); return; }
+    setBusy(true);
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password });
@@ -21,11 +28,8 @@ export default function Auth() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-    } catch (e2) {
-      setErr(e2.message || "Something went wrong");
-    } finally {
-      setBusy(false);
-    }
+    } catch (e2) { setErr(e2.message || "Something went wrong"); }
+    finally { setBusy(false); }
   }
 
   async function reset() {
@@ -33,35 +37,54 @@ export default function Auth() {
     setErr(""); setMsg(""); setBusy(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email);
     setBusy(false);
-    if (error) setErr(error.message);
-    else setMsg("Password reset link sent to your email.");
+    error ? setErr(error.message) : setMsg("Password reset link sent to your email.");
   }
 
   return (
-    <div className="auth-wrap">
-      <div className="panel auth-card">
-        <h1>Trade<span style={{ color: "var(--accent)" }}>Desk</span></h1>
-        <div className="sub">{mode === "login" ? "Sign in to your journal" : "Create your account"}</div>
-        <form onSubmit={submit}>
-          <label className="field">
-            <span>Email</span>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
-          </label>
-          <label className="field">
-            <span>Password</span>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-          </label>
-          {err && <div className="error">{err}</div>}
-          {msg && <div style={{ color: "var(--green)", fontSize: 13, margin: "8px 0" }}>{msg}</div>}
-          <button className="primary" style={{ width: "100%" }} disabled={busy}>
-            {busy ? "…" : mode === "login" ? "Sign in" : "Sign up"}
-          </button>
-        </form>
-        <div style={{ marginTop: 14, display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-          <a onClick={() => setMode(mode === "login" ? "signup" : "login")} style={{ cursor: "pointer" }}>
-            {mode === "login" ? "Create an account" : "Have an account? Sign in"}
-          </a>
-          {mode === "login" && <a onClick={reset} style={{ cursor: "pointer" }}>Forgot password?</a>}
+    <div className="login">
+      <div className="login-card2">
+        <div className="login-left">
+          <div className="brand2">{BrandMark}<span className="brandtxt">TRADE<br />JOURNAL</span></div>
+          <h1>{mode === "login" ? "Login to your account" : "Create your account"}</h1>
+          <div className="sub">{mode === "login" ? "Enter your password to continue." : "Start your private trading journal."}</div>
+
+          <div className="seg2">
+            <button type="button" className={mode === "login" ? "on" : ""} onClick={() => { setMode("login"); setErr(""); setMsg(""); }}>Sign in</button>
+            <button type="button" className={mode === "signup" ? "on" : ""} onClick={() => { setMode("signup"); setErr(""); setMsg(""); }}>Sign up</button>
+          </div>
+
+          <form onSubmit={submit}>
+            <label>Email Address</label>
+            <div className="ic-field">
+              <svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2" /><path d="m4 7 8 5.5L20 7" /></svg>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoFocus />
+            </div>
+            <label>Password</label>
+            <div className="ic-field">
+              <svg viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2" /><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" /></svg>
+              <input type={show ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" />
+              <button type="button" className="eye" onClick={() => setShow((s) => !s)}>
+                <svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="2.8" /></svg>
+              </button>
+            </div>
+            {mode === "login" && <a className="forgot" onClick={reset}>Forgot password?</a>}
+            {err && <div className="login-err">{err}</div>}
+            {msg && <div className="login-msg">{msg}</div>}
+            <button className="login-btn" type="submit" disabled={busy}>
+              {busy ? "…" : mode === "login" ? "Sign In" : "Create account"}
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </button>
+          </form>
+          <div className="login-foot">Need help? Contact <a>support@tradejournal.app</a></div>
+        </div>
+
+        <div className="login-right">
+          <div className="glowbg" /><div className="sphere" />
+          <div className="right-content">
+            <div className="brand2">{BrandMark}<span className="brandtxt">TRADE<br />JOURNAL</span></div>
+            <h2>Review every trade,<br />sharpen your edge</h2>
+            <p>Log setups, screenshots, and P&amp;L in one private journal built for serious traders.</p>
+          </div>
         </div>
       </div>
     </div>

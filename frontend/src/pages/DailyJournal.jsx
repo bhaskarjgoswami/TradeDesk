@@ -1,50 +1,57 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { fmt } from "../lib/calc";
+import { fmtDate, fmtDateLong, TODAY } from "../lib/ui";
 import { useAuth } from "../lib/AuthContext";
 import TradeModal from "../components/TradeModal";
 
 const SECTIONS = [
-  { key: "market", label: "1 · Pre-Market — Market Context" },
+  { key: "market", label: "Pre-Market — Market Context" },
   { key: "watchlist", label: "Watchlist" },
-  { key: "mistakes", label: "2 · Daily Recap — Mistakes" },
+  { key: "mistakes", label: "Daily Recap — Mistakes" },
   { key: "did_great", label: "What I Did Great" },
   { key: "reinforcement", label: "Reinforcement" },
-  { key: "overall", label: "3 · Overall" },
+  { key: "overall", label: "Overall" },
 ];
+
+function pnlCls(n) {
+  return n > 0 ? "pos" : n < 0 ? "neg" : "muted";
+}
 
 export default function DailyJournal() {
   const { isPro } = useAuth();
   const [days, setDays] = useState([]);
-  const [active, setActive] = useState(null); // date string
+  const [active, setActive] = useState(null);
   const [detail, setDetail] = useState(null);
   const [log, setLog] = useState({});
   const [saveState, setSaveState] = useState("");
+  const [openTrade, setOpenTrade] = useState(null); // accordion expanded trade id
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
   const [pullMsg, setPullMsg] = useState("");
+  const skipSave = useRef(true);
 
-  async function loadDays() {
+  async function loadDays(selectFirst = false) {
     const d = await api.listDaylogs();
     setDays(d);
-    if (!active && d.length) selectDay(d[0].date);
-    else if (!active) {
-      const today = new Date().toISOString().slice(0, 10);
-      selectDay(today);
-    }
+    if (selectFirst && !active) selectDay(d.length ? d[0].date : TODAY());
   }
-  useEffect(() => { loadDays(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => { loadDays(true); /* eslint-disable-next-line */ }, []);
 
   async function selectDay(date) {
     setActive(date);
+    setOpenTrade(null);
     const d = await api.getDaylog(date);
+    skipSave.current = true;
     setDetail(d);
     setLog(d.log || {});
+    setSaveState("");
   }
 
-  // debounced autosave
+  // debounced autosave of the day-log note sections
   useEffect(() => {
     if (!active) return;
+    if (skipSave.current) { skipSave.current = false; return; }
     setSaveState("saving");
     const id = setTimeout(async () => {
       try {
@@ -62,110 +69,154 @@ export default function DailyJournal() {
     try {
       const { trades } = await api.deltaToday();
       let n = 0;
-      for (const t of trades.filter((x) => !x.open)) {
-        await api.createTrade(t);
-        n++;
-      }
+      for (const t of (trades || []).filter((x) => !x.open)) { await api.createTrade(t); n++; }
       setPullMsg(`Imported ${n} round-trip trade(s).`);
-      selectDay(active);
-      loadDays();
-    } catch (e) {
-      setPullMsg(e.message);
-    }
+      selectDay(active); loadDays();
+    } catch (e) { setPullMsg(e.message); }
   }
 
+  async function afterTrade() {
+    setAdding(false); setEditing(null);
+    await selectDay(active); loadDays();
+  }
+  async function delTrade(id) {
+    if (!confirm("Delete this trade permanently?")) return;
+    await api.deleteTrade(id);
+    afterTrade();
+  }
+
+  const s = detail?.stats || {};
+  const pf = s.profit_factor === 999 ? "∞" : s.profit_factor;
+
   return (
-    <div style={{ display: "flex", gap: 18, height: "100%" }}>
-      {/* days list */}
-      <div style={{ width: 240, flexShrink: 0, overflowY: "auto" }}>
-        <div className="header-row"><h2 style={{ fontSize: 18 }}>Days</h2></div>
-        {days.map((d) => (
-          <div key={d.date} className="panel" style={{ padding: 12, marginBottom: 8, cursor: "pointer",
-                 borderColor: d.date === active ? "var(--accent)" : "var(--border)" }}
-               onClick={() => selectDay(d.date)}>
-            <div style={{ fontWeight: 600 }}>{d.date}</div>
-            <div className={d.net_pnl >= 0 ? "pos" : "neg"}>{fmt.money(d.net_pnl)}</div>
-            <div className="muted" style={{ fontSize: 12 }}>
-              {d.total_trades} trade(s){!d.has_log && " · no log"}
+    <>
+      {/* MIDDLE — day list */}
+      <section className="middle">
+        <div className="midhead"><h2>Days Logged ({days.length})</h2></div>
+        <button className="logday" onClick={() => selectDay(TODAY())}>+ Log Day</button>
+        <div className="daycards">
+          {days.length === 0 && <div className="emptyday">No days yet. Hit <b>+ Log Day</b>.</div>}
+          {days.map((d) => (
+            <div key={d.date} className={"daycard" + (d.date === active ? " sel" : "") + (!d.has_log && d.total_trades === 0 ? " missing" : "")}
+                 onClick={() => selectDay(d.date)}>
+              <div className="dc-date">{fmtDate(d.date)}</div>
+              {d.has_log || d.total_trades > 0 ? (
+                <div className={"dc-pnl " + pnlCls(d.net_pnl)}>Net P&L {d.net_pnl > 0 ? "+" : ""}{fmt.money(d.net_pnl)}</div>
+              ) : (
+                <div className="dc-missing">Day log is missing.<span>Fill the log →</span></div>
+              )}
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* MAIN — day view */}
+      <main className="main">
+        <div className="dv-top">
+          <div className="dv-title">{active ? fmtDateLong(active) : "Select a day"}</div>
+          <div className="dv-actions">
+            <span className="save-state">
+              {saveState === "saving" ? "saving…" : saveState === "saved" ? "✓ saved" : saveState === "error" ? "save failed" : ""}
+            </span>
+            <button className="btn ghost" onClick={pullDelta} disabled={!isPro} title={isPro ? "" : "Pro feature"}>
+              ↧ {isPro ? "Pull from Delta" : "Pull (Pro)"}
+            </button>
+            <button className="btn" onClick={() => setAdding(true)} disabled={!active}>+ Add trade</button>
           </div>
-        ))}
-      </div>
+        </div>
+        <hr className="div" />
 
-      {/* day detail */}
-      <div style={{ flex: 1, overflowY: "auto" }}>
-        {!detail ? <div>Loading…</div> : (
-          <>
-            <div className="header-row">
-              <h2 style={{ margin: 0 }}>{active}
-                <span className="muted" style={{ fontSize: 13, marginLeft: 10 }}>
-                  {saveState === "saving" ? "saving…" : saveState === "saved" ? "✓ saved" : saveState === "error" ? "save failed" : ""}
-                </span>
-              </h2>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button className="primary" onClick={() => setAdding(true)}>+ Add trade</button>
-                <button onClick={pullDelta} disabled={!isPro} title={isPro ? "" : "Pro feature"}>
-                  {isPro ? "⬇ Pull from Delta" : "🔒 Pull from Delta"}
-                </button>
-              </div>
-            </div>
-            {pullMsg && <div className="muted" style={{ marginBottom: 10 }}>{pullMsg}</div>}
+        {!detail ? (
+          <div className="dv-grid"><div className="muted">Loading…</div></div>
+        ) : (
+          <div className="dv-grid">
+            <div className="dv-main">
+              {pullMsg && <div className="muted" style={{ marginBottom: 12 }}>{pullMsg}</div>}
 
-            {/* day stats */}
-            <div className="grid stat-grid" style={{ marginBottom: 16 }}>
-              <Stat label="Net P&L" value={fmt.money(detail.stats.net_pnl)} cls={detail.stats.net_pnl >= 0 ? "pos" : "neg"} />
-              <Stat label="Gross" value={fmt.money(detail.stats.gross_pnl)} />
-              <Stat label="Fees" value={fmt.money(detail.stats.platform_fee)} />
-              <Stat label="PF" value={detail.stats.profit_factor} />
-              <Stat label="Win Rate" value={detail.stats.winrate + "%"} />
-              <Stat label="W / L" value={`${detail.stats.winners} / ${detail.stats.losers}`} />
-            </div>
+              {/* trades */}
+              {detail.trades.length === 0 ? (
+                <div className="empty-state">
+                  <svg width="140" height="104" viewBox="0 0 140 104" fill="none">
+                    <line x1="12" y1="90" x2="128" y2="90" stroke="currentColor" strokeWidth="1.5" opacity=".25" />
+                    <rect x="24" y="44" width="12" height="24" rx="2.5" fill="var(--red)" opacity=".55" />
+                    <rect x="50" y="32" width="12" height="22" rx="2.5" fill="var(--grn)" opacity=".55" />
+                    <rect x="76" y="52" width="12" height="20" rx="2.5" fill="var(--red)" opacity=".55" />
+                    <rect x="102" y="28" width="12" height="24" rx="2.5" fill="var(--grn)" opacity=".55" />
+                    <circle cx="120" cy="22" r="14" fill="var(--accent)" />
+                    <path d="M120 15.5v13M113.5 22h13" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
+                  </svg>
+                  <h3>No trades logged yet</h3>
+                  <p>Record your first trade of the day — add it manually, or pull your fills from Delta.</p>
+                  <button className="btn" onClick={() => setAdding(true)}>+ Add trade</button>
+                </div>
+              ) : (
+                detail.trades.map((t) => {
+                  const open = openTrade === t.id;
+                  return (
+                    <div className={"acc" + (open ? " open" : "")} key={t.id}>
+                      <div className="acc-head" onClick={() => setOpenTrade(open ? null : t.id)}>
+                        <span className="t-sym">{t.symbol || "—"}</span>
+                        <span className="t-tags">
+                          {t.direction && <span className={"pill " + t.direction.toLowerCase()}>{t.direction}</span>}
+                          {t.setup && <span className="pill setup">{t.setup}</span>}
+                        </span>
+                        <span className="t-note">{t.logic || t.notes || ""}</span>
+                        <span className={"t-r " + pnlCls(t.r_multiple)}>{t.r_multiple == null || t.r_multiple === "" ? "" : fmt.num(t.r_multiple, 2) + "R"}</span>
+                        <span className={"t-pnl " + pnlCls(t.pnl)}>{fmt.money(t.pnl)}</span>
+                        <span className="t-out">{t.outcome && <span className={"pill " + t.outcome.toLowerCase()}>{t.outcome}</span>}</span>
+                        <span className="acc-caret">{open ? "▾" : "▸"}</span>
+                      </div>
+                      {open && (
+                        <div className="acc-body">
+                          <div className="acc-actions">
+                            <button className="btn ghost" onClick={() => setEditing(t)}>Edit trade</button>
+                            <button className="btn danger" onClick={() => delTrade(t.id)}>Delete</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
 
-            {/* trades */}
-            <div className="panel" style={{ padding: 0, marginBottom: 16, overflowX: "auto" }}>
-              <table>
-                <thead><tr><th>Symbol</th><th>Dir</th><th>Entry</th><th>Exit</th><th>P&L</th><th>R</th><th></th></tr></thead>
-                <tbody>
-                  {detail.trades.length === 0 ? <tr><td colSpan={7} className="muted">No trades this day.</td></tr>
-                    : detail.trades.map((t) => (
-                      <tr key={t.id}>
-                        <td>{t.symbol}</td><td>{t.direction}</td>
-                        <td>{fmt.num(t.entry)}</td><td>{fmt.num(t.exit)}</td>
-                        <td className={t.pnl > 0 ? "pos" : t.pnl < 0 ? "neg" : ""}>{fmt.money(t.pnl)}</td>
-                        <td>{fmt.num(t.r_multiple, 2)}</td>
-                        <td><button onClick={() => setEditing(t)} style={{ padding: "4px 8px" }}>Edit</button></td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* journal sections */}
-            <div className="panel">
+              {/* journal note sections */}
+              <div className="sec-h">Journal</div>
               {SECTIONS.map((sec) => (
-                <label className="field" key={sec.key}>
-                  <span>{sec.label}</span>
-                  <textarea value={log[sec.key] || ""} onChange={(e) => setLog({ ...log, [sec.key]: e.target.value })} />
-                </label>
+                <div key={sec.key}>
+                  <div className="field-h">{sec.label}</div>
+                  <div className="note-wrap">
+                    <textarea className="note" rows={2} placeholder="…"
+                              value={log[sec.key] || ""}
+                              onChange={(e) => setLog({ ...log, [sec.key]: e.target.value })} />
+                  </div>
+                </div>
               ))}
             </div>
-          </>
+
+            {/* RAIL — stats */}
+            <div className="rail">
+              <div className="rail-group">
+                <div className="rail-row"><span className="k">Gross P&L</span><span className={"v " + pnlCls(s.gross_pnl)}>{fmt.money(s.gross_pnl)}</span></div>
+                <div className="rail-row"><span className="k">Platform fee</span><span className="v muted">{fmt.money(s.platform_fee)}</span></div>
+                <div className="rail-row"><span className="k">Net P&L</span><span className={"v " + pnlCls(s.net_pnl)}>{fmt.money(s.net_pnl)}</span></div>
+              </div>
+              <div className="rail-group">
+                {s.volume != null && <div className="rail-row"><span className="k">Volume</span><span className="v">{fmt.num(s.volume, 0)}</span></div>}
+                <div className="rail-row"><span className="k">Profit Factor</span><span className="v">{pf ?? "—"}</span></div>
+              </div>
+              <div className="rail-group">
+                <div className="rail-row"><span className="k">Total Trades</span><span className="v">{s.total_trades ?? 0}</span></div>
+                <div className="rail-row"><span className="k">Winners</span><span className="v pos">{s.winners ?? 0}</span></div>
+                <div className="rail-row"><span className="k">Losers</span><span className="v neg">{s.losers ?? 0}</span></div>
+                <div className="rail-row"><span className="k">Winrate</span><span className="v">{s.winrate ?? 0}%</span></div>
+              </div>
+            </div>
+          </div>
         )}
-      </div>
+      </main>
 
-      {adding && <TradeModal initial={{ date: active, direction: "Long" }} onClose={() => setAdding(false)}
-                             onSaved={() => { setAdding(false); selectDay(active); loadDays(); }} />}
-      {editing && <TradeModal initial={editing} onClose={() => setEditing(null)}
-                              onSaved={() => { setEditing(null); selectDay(active); loadDays(); }} />}
-    </div>
-  );
-}
-
-function Stat({ label, value, cls }) {
-  return (
-    <div className="panel stat">
-      <div className="label">{label}</div>
-      <div className={"value " + (cls || "")} style={{ fontSize: 18 }}>{value}</div>
-    </div>
+      {adding && <TradeModal initial={{ date: active, direction: "Long" }} onClose={() => setAdding(false)} onSaved={afterTrade} />}
+      {editing && <TradeModal initial={editing} onClose={() => setEditing(null)} onSaved={afterTrade} />}
+    </>
   );
 }
