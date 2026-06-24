@@ -1,0 +1,7 @@
+backend
+qml_scanner
+**/node_modules
+**/.venv
+**/__pycache__
+**/*.pyc
+**/dist

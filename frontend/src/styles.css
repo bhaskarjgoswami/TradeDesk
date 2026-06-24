@@ -1,10 +1,10 @@
 :root{
-  --bg:#ffffff; --sidebar:#fafafb; --panel:#ffffff; --panel2:#f4f5f7; --line:#ececef;
-  --txt:#1b1c20; --mut:#8a8f98; --dim:#aeb4bd;
-  --accent:#6c5ce7; --accent-weak:#efedfd;
+  --bg:#f6f7f9; --sidebar:#fafafb; --panel:#ffffff; --panel2:#eef0f4; --line:#dcdfe6;
+  --txt:#13151a; --mut:#5f6670; --dim:#969ba6;
+  --accent:#6c5ce7; --accent-weak:#ece9fd;
   --grn:#16a34a; --red:#e0414a; --amb:#d97706;
   --missing-bg:#fdfaf2; --missing-line:#f0e3c6; --missing-txt:#c08a1c;
-  --page:#f3f1fc;
+  --page:#edebf7;
 }
 [data-theme="dark"]{
   --bg:#0b0e14; --sidebar:#0e131c; --panel:#131822; --panel2:#1a2130; --line:#232c3d;
@@ -14,6 +14,10 @@
   --missing-bg:#1d1a10; --missing-line:#3d3415; --missing-txt:#e0b53e;
   --page:#05080c;
 }
+/* light theme: lift white cards off the soft canvas for depth (0-specificity, won't override existing shadows) */
+:where(html:not([data-theme="dark"])) .daycard,
+:where(html:not([data-theme="dark"])) .plan-card,
+:where(html:not([data-theme="dark"])) .settings-card{box-shadow:0 1px 2px rgba(16,24,40,.05),0 2px 6px rgba(16,24,40,.05)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body,#root{height:100%}
 body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
@@ -130,6 +134,7 @@ svg.hi{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;strok
   .app.collapsed .navitem{gap:0;padding:9px;position:relative}
   .app.collapsed .nav-lbl,.app.collapsed .tgl-lbl{max-width:0;opacity:0}
   .app.collapsed .navitem.on{background:var(--accent-weak)}
+  .app.collapsed .navitem.on .ic{background:transparent !important;border:none}
   .app.collapsed .navitem.on::before{content:"";position:absolute;left:-11px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
   .app.collapsed .themebtn,.app.collapsed .tb-toggle{padding:9px;gap:0;width:40px;margin-left:auto;margin-right:auto}
   .app.collapsed .sidefoot{border-top:none}
@@ -284,8 +289,9 @@ tbody tr:hover td{background:var(--panel2)}
 .seg button.on[data-v=Short],.seg button.on[data-v=Loss]{background:rgba(224,65,74,.2);color:var(--red)}
 .seg button.on[data-v=BE]{background:rgba(217,119,6,.2);color:var(--amb)}
 .ex-creds label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);font-weight:600;margin:13px 0 6px}
-.ex-creds input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--txt);outline:none;font-size:13.5px}
-.ex-creds input:focus{border-color:var(--accent)}
+.ex-creds input,.ex-creds select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--txt);outline:none;font-size:13.5px}
+.ex-creds input:focus,.ex-creds select:focus{border-color:var(--accent)}
+.ex-creds select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
 .ex-note{font-size:12px;color:var(--dim);margin-top:12px;line-height:1.55}
 
 /* ---------- inline trade form (relocated into the day view) ---------- */
@@ -330,3 +336,42 @@ tbody tr:hover td{background:var(--panel2)}
 *::-webkit-scrollbar-thumb:hover{background:var(--dim)}
 *::-webkit-scrollbar-track{background:transparent}
 .badge-pro{background:linear-gradient(90deg,#f59e0b,#d97706);color:#fff;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+
+/* ---------- subscription page ---------- */
+.btn svg{width:15px;height:15px;vertical-align:-2px;margin-right:4px}
+/* ---- subscription / pricing (reference-style cards) ---- */
+.sub-pad{max-width:1040px}
+.sub-hero{text-align:center;margin:6px 0 34px}
+.sub-title{font-family:Georgia,"Times New Roman",ui-serif,serif;font-weight:500;font-size:34px;line-height:1.12;letter-spacing:-.5px;margin:0 0 12px}
+.sub-sub{font-size:13.5px;color:var(--mut);margin:0}
+.sub-sub b{color:var(--txt);font-weight:650}
+
+.plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:0 auto 24px;max-width:760px}
+@media(max-width:720px){.plan-grid{grid-template-columns:1fr;max-width:420px}}
+.plan-card{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:18px;background:var(--panel);overflow:hidden;position:relative}
+.plan-card.featured{border-color:rgba(108,92,231,.42)}
+.plan-card.current{outline:1.5px solid var(--accent);outline-offset:-1px}
+.pc-top{padding:24px 24px 22px;display:flex;flex-direction:column}
+.pc-pop{position:absolute;top:18px;right:18px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);background:var(--accent-weak);padding:4px 10px;border-radius:999px}
+.pc-ic{color:var(--txt);margin-bottom:18px;display:flex}
+.pc-ic svg{width:32px;height:32px;stroke-width:1.4;fill:none}
+.pc-name{font-size:22px;font-weight:700;letter-spacing:-.3px}
+.pc-tag{font-size:13px;color:var(--mut);margin-top:4px}
+.pc-price{display:flex;align-items:baseline;gap:10px;margin:20px 0}
+.pc-amt{font-size:34px;font-weight:750;letter-spacing:-.8px;font-variant-numeric:tabular-nums;line-height:1}
+.pc-unit{font-size:11.5px;color:var(--mut);line-height:1.4}
+.pc-btn{width:100%;height:46px;border-radius:12px;font-weight:650;font-size:14px;cursor:pointer;border:1px solid transparent;transition:filter .15s ease,background .15s ease}
+.pc-btn.primary{background:var(--accent);color:#fff}
+.pc-btn.primary:hover:not(:disabled){filter:brightness(1.08)}
+.pc-btn.ghost{background:transparent;color:var(--txt);border-color:var(--line)}
+.pc-btn.ghost:hover:not(:disabled){background:var(--panel2)}
+.pc-btn:disabled{cursor:default;color:var(--mut);border-color:var(--line);background:transparent}
+.pc-note{text-align:center;font-size:11.5px;color:var(--mut);margin-top:11px}
+.pc-divider{height:1px;background:var(--line)}
+.pc-body{padding:22px 24px 26px}
+.pc-feathead{font-size:13px;font-weight:650;color:var(--txt);margin-bottom:15px}
+.pc-feats{list-style:none;display:flex;flex-direction:column;gap:13px}
+.pc-feats li{display:flex;align-items:flex-start;gap:11px;font-size:13.5px;color:var(--mut);line-height:1.4}
+.pc-check{flex-shrink:0;color:var(--mut);display:flex;margin-top:1px}
+.pc-check svg{width:16px;height:16px;stroke-width:1.7;fill:none}
+.sub-foot{text-align:center;font-size:12.5px;color:var(--mut);margin-top:8px}

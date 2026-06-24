@@ -31,6 +31,18 @@ export const Icon = {
   menu: (
     <svg className="hi" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
   ),
+  card: (
+    <svg className="hi" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5" /><path d="M3 9.5h18M7 14.5h4" /></svg>
+  ),
+  bolt: (
+    <svg className="hi" viewBox="0 0 24 24"><path d="M13 3 5 13h6l-1 8 8-10h-6z" /></svg>
+  ),
+  check: (
+    <svg className="hi" viewBox="0 0 24 24"><path d="M4 12.5l5 5 11-11" /></svg>
+  ),
+  info: (
+    <svg className="hi" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 7.5v.5" /></svg>
+  ),
 };
 
 // ---- pre-trade checklist template (persisted in localStorage, like the original) ----

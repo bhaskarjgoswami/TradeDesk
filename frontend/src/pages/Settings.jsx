@@ -1,47 +1,60 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/AuthContext";
+import PlanCards from "../lib/PlanCards";
 
 function isDark() { return document.documentElement.getAttribute("data-theme") === "dark"; }
 
+// Supported exchanges. `pass` = exchange also requires an API passphrase.
+// Auto-sync of fills is live for Delta today; other exchanges securely store keys.
+const EXCHANGES = [
+  { id: "delta", name: "Delta Exchange (India)", pass: false, note: "Delta whitelists API keys by IP — whitelist the server's IP on your key for sync to work." },
+  { id: "binance", name: "Binance", pass: false },
+  { id: "bybit", name: "Bybit", pass: false },
+  { id: "okx", name: "OKX", pass: true, note: "OKX requires the API passphrase you set when creating the key." },
+  { id: "coinbase", name: "Coinbase Advanced", pass: true, note: "Use an Advanced Trade API key (key, secret & passphrase)." },
+  { id: "kucoin", name: "KuCoin", pass: true, note: "KuCoin requires the API passphrase you set when creating the key." },
+  { id: "kraken", name: "Kraken", pass: false },
+  { id: "bitget", name: "Bitget", pass: true, note: "Bitget requires the API passphrase you set when creating the key." },
+  { id: "mexc", name: "MEXC", pass: false },
+];
+
 export default function Settings() {
-  const { user, isPro, refreshTier, signOut } = useAuth();
+  const { user, isPro, signOut } = useAuth();
   const [ex, setEx] = useState({ has_creds: false, key_masked: "" });
+  const [exId, setExId] = useState("delta");
   const [key, setKey] = useState("");
   const [secret, setSecret] = useState("");
+  const [pass, setPass] = useState("");
   const [exMsg, setExMsg] = useState("");
-  const [billMsg, setBillMsg] = useState("");
   const [dark, setDark] = useState(isDark());
+  const exDef = EXCHANGES.find((e) => e.id === exId) || EXCHANGES[0];
 
   useEffect(() => {
-    api.getExchange().then(setEx).catch(() => {});
-    if (new URLSearchParams(location.search).get("upgraded")) { setBillMsg("🎉 Welcome to Pro!"); refreshTier(); }
-    /* eslint-disable-next-line */
-  }, []);
+    api.getExchange(exId).then(setEx).catch(() => setEx({ has_creds: false, key_masked: "" }));
+  }, [exId]);
 
   function setTheme(d) {
     document.documentElement.setAttribute("data-theme", d ? "dark" : "");
     localStorage.setItem("td_theme", d ? "dark" : "");
     setDark(d);
   }
+  function pickExchange(id) {
+    setExId(id); setExMsg(""); setKey(""); setSecret(""); setPass("");
+  }
   async function saveKeys() {
     setExMsg("Saving…");
-    try { await api.saveExchange({ exchange: "delta", key, secret }); setExMsg("✓ Saved."); setKey(""); setSecret(""); setEx(await api.getExchange()); }
-    catch (e) { setExMsg(e.message); }
-  }
-  async function upgrade() {
-    setBillMsg("Redirecting to checkout…");
-    try { const { url } = await api.checkout(); location.href = url; } catch (e) { setBillMsg(e.message); }
-  }
-  async function manage() {
-    try { const { url } = await api.portal(); location.href = url; } catch (e) { setBillMsg(e.message); }
+    try {
+      await api.saveExchange({ exchange: exId, key, secret, passphrase: pass });
+      setExMsg("✓ Saved."); setKey(""); setSecret(""); setPass(""); setEx(await api.getExchange(exId));
+    } catch (e) { setExMsg(e.message); }
   }
 
   return (
     <main className="main">
-      <div className="pane-pad" style={{ maxWidth: 600 }}>
+      <div className="pane-pad" style={{ maxWidth: 760 }}>
         <h1>Settings</h1>
-        <div className="settings-card">
+        <div className="settings-card" style={{ maxWidth: "none" }}>
           <div className="set-sec">
             <div className="set-label">Appearance</div>
             <div className="set-row"><span>Theme</span>
@@ -53,34 +66,38 @@ export default function Settings() {
           </div>
 
           <div className="set-sec">
-            <div className="set-label">Subscription</div>
-            <div className="set-row"><span>Current plan: <strong>{isPro ? "Pro" : "Free"}</strong></span>
-              {isPro ? <button className="btn ghost" onClick={manage}>Manage billing</button>
-                     : <button className="btn" onClick={upgrade}>Upgrade to Pro</button>}
-            </div>
-            {!isPro && (
-              <ul className="set-list" style={{ marginTop: 10 }}>
-                <li>Free — 50 trades / month, manual entry only</li>
-                <li><strong>Pro ($9/mo)</strong> — unlimited trades, Delta auto-sync, screenshots, mobile</li>
-              </ul>
-            )}
-            {billMsg && <div className="ex-note">{billMsg}</div>}
-          </div>
-
-          <div className="set-sec">
-            <div className="set-label">Exchange — Delta {!isPro && <span className="pill setup">Pro to sync</span>}</div>
+            <div className="set-label">Exchange {!isPro && <span className="pill setup">Pro to sync</span>}</div>
             <div className="ex-creds">
-              <div className="muted" style={{ fontSize: 12.5 }}>
-                {ex.has_creds ? `Connected · key ${ex.key_masked}` : "No keys saved. Add your Delta India API key to auto-pull fills."}
+              <label>Exchange</label>
+              <select value={exId} onChange={(e) => pickExchange(e.target.value)}>
+                {EXCHANGES.map((x) => (
+                  <option key={x.id} value={x.id}>{x.name}</option>
+                ))}
+              </select>
+              <div className="muted" style={{ fontSize: 12.5, marginTop: 10 }}>
+                {ex.has_creds
+                  ? `Connected · key ${ex.key_masked}`
+                  : `No keys saved. Add your ${exDef.name} API key to auto-pull fills.`}
               </div>
               <label>API Key</label><input value={key} onChange={(e) => setKey(e.target.value)} placeholder="Enter API key" />
               <label>API Secret</label><input type="password" value={secret} onChange={(e) => setSecret(e.target.value)} placeholder="Enter API secret" />
+              {exDef.pass && (<>
+                <label>API Passphrase</label><input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Enter API passphrase" />
+              </>)}
               <div className="set-row" style={{ marginTop: 14 }}>
                 <span className="muted" style={{ fontSize: 12.5 }}>{exMsg}</span>
                 <button className="btn" onClick={saveKeys}>Save</button>
               </div>
-              <div className="ex-note">Delta whitelists API keys by IP — whitelist the server's IP on your key for sync to work.</div>
+              {exDef.note && <div className="ex-note">{exDef.note}</div>}
             </div>
+          </div>
+
+          <div className="set-sec">
+            <div className="set-label">Subscription {isPro ? <span className="pill">Pro</span> : <span className="pill setup">Free</span>}</div>
+            <div className="muted" style={{ fontSize: 12.5, marginBottom: 16 }}>
+              {isPro ? "You're on Pro — renews monthly, billed securely via Stripe." : "You're on the Free plan. Upgrade anytime to unlock everything."}
+            </div>
+            <PlanCards />
           </div>
 
           <div className="set-sec">

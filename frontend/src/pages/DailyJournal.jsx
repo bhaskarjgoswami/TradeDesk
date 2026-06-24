@@ -114,7 +114,7 @@ export default function DailyJournal() {
         {!detail ? (
           <div className="dv-grid"><div className="muted">Loading…</div></div>
         ) : (
-          <div className="dv-grid">
+          <div className="dv-grid" style={detail.trades.length === 0 ? { gridTemplateColumns: "1fr" } : undefined}>
             <div className="dv-main">
               {pullMsg && <div className="muted" style={{ marginBottom: 12 }}>{pullMsg}</div>}
 
@@ -172,7 +172,8 @@ export default function DailyJournal() {
               )}
             </div>
 
-            {/* RAIL — stats */}
+            {/* RAIL — stats (hidden until the day has trades) */}
+            {detail.trades.length > 0 && (
             <div className="rail">
               <div className="rail-group">
                 <div className="rail-row"><span className="k">Gross P&L</span><span className={"v " + pnlCls(s.gross_pnl)}>{fmt.money(s.gross_pnl)}</span></div>
@@ -190,6 +191,7 @@ export default function DailyJournal() {
                 <div className="rail-row"><span className="k">Winrate</span><span className="v">{s.winrate ?? 0}%</span></div>
               </div>
             </div>
+            )}
           </div>
         )}
       </main>

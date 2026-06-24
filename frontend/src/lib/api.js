@@ -49,7 +49,7 @@ export const api = {
   saveDaylog: (log) => request("PUT", "/api/daylog", log),
 
   // exchange
-  getExchange: () => request("GET", "/api/exchange"),
+  getExchange: (exchange = "delta") => request("GET", "/api/exchange?exchange=" + encodeURIComponent(exchange)),
   saveExchange: (e) => request("POST", "/api/exchange", e),
   price: (symbol) => request("GET", `/api/price?symbol=${encodeURIComponent(symbol)}`),
   deltaToday: () => request("GET", "/api/delta/today"),

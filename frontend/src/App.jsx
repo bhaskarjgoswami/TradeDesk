@@ -102,7 +102,7 @@ function Shell() {
   return (
     <div className={"app" + (collapsed ? " collapsed" : "")}>
       <div className="topbar">
-        <div className="tb-brand"><div className="logo">{Icon.book}</div> Trade Journal</div>
+        <div className="tb-brand">TradeDesk</div>
         <div className="tb-search">{Icon.search}
           <input value={search} onChange={(e) => onSearch(e.target.value)} placeholder="Search trades, setups, notes…" />
         </div>
@@ -144,6 +144,7 @@ function Shell() {
             <Route path="/journal" element={<DailyJournal />} />
             <Route path="/trades" element={<AllTrades />} />
             <Route path="/performance" element={<Performance />} />
+            <Route path="/subscription" element={<Navigate to="/settings" replace />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/journal" replace />} />
           </Routes>
