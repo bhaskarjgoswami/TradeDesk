@@ -1,10 +1,10 @@
 :root{
-  --bg:#f6f7f9; --sidebar:#fafafb; --panel:#ffffff; --panel2:#eef0f4; --line:#dcdfe6;
-  --txt:#13151a; --mut:#5f6670; --dim:#969ba6;
-  --accent:#6c5ce7; --accent-weak:#ece9fd;
+  --bg:#ffffff; --sidebar:#fafafb; --panel:#ffffff; --panel2:#f4f5f7; --line:#ececef;
+  --txt:#1b1c20; --mut:#8a8f98; --dim:#aeb4bd;
+  --accent:#6c5ce7; --accent-weak:#efedfd;
   --grn:#16a34a; --red:#e0414a; --amb:#d97706;
   --missing-bg:#fdfaf2; --missing-line:#f0e3c6; --missing-txt:#c08a1c;
-  --page:#edebf7;
+  --page:#f3f1fc;
 }
 [data-theme="dark"]{
   --bg:#0b0e14; --sidebar:#0e131c; --panel:#131822; --panel2:#1a2130; --line:#232c3d;
@@ -14,10 +14,6 @@
   --missing-bg:#1d1a10; --missing-line:#3d3415; --missing-txt:#e0b53e;
   --page:#05080c;
 }
-/* light theme: lift white cards off the soft canvas for depth (0-specificity, won't override existing shadows) */
-:where(html:not([data-theme="dark"])) .daycard,
-:where(html:not([data-theme="dark"])) .plan-card,
-:where(html:not([data-theme="dark"])) .settings-card{box-shadow:0 1px 2px rgba(16,24,40,.05),0 2px 6px rgba(16,24,40,.05)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body,#root{height:100%}
 body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
