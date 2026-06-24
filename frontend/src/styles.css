@@ -154,7 +154,7 @@ svg.hi{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;strok
 .logday:active{transform:translateY(1px)}
 .daycards{overflow:auto;padding:0 16px 24px;display:flex;flex-direction:column;gap:12px}
 .daycard{border:1px solid var(--line);border-radius:13px;padding:14px 16px;cursor:pointer;background:var(--panel);position:relative;transition:border-color .14s,transform .12s}
-.daycard:hover{border-color:var(--dim);transform:translateY(-1px)}
+.daycard:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(16,24,40,.10)}
 .daycard.sel{border-color:var(--accent)}
 .daycard.sel::after{content:"";position:absolute;top:0;right:0;border-width:0 26px 26px 0;border-style:solid;border-color:transparent var(--accent) transparent transparent;border-top-right-radius:13px}
 .dc-date{font-weight:600;font-size:13.5px}
