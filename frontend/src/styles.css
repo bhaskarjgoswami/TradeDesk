@@ -293,8 +293,7 @@ tbody tr:hover td{background:var(--panel2)}
 /* ---------- inline trade form (relocated into the day view) ---------- */
 .tradeform{background:transparent;border:none;padding:6px 2px;margin-top:10px}
 .newtrade-slot{margin-top:16px}
-.newtrade-slot .tradeform{border:1px solid var(--line);border-radius:16px;padding:0 22px 22px;margin-top:0;background:var(--panel);box-shadow:0 10px 30px rgba(16,24,40,.07),0 1px 3px rgba(16,24,40,.05)}
-[data-theme="dark"] .newtrade-slot .tradeform{box-shadow:0 14px 34px rgba(0,0,0,.45)}
+.newtrade-slot .tradeform{border:1px solid var(--line);border-radius:16px;padding:0 22px 22px;margin-top:0;background:var(--panel)}
 .acc-body .tradeform{padding:4px 18px 18px}
 .tradeform h2{font-size:18px;letter-spacing:-.3px}
 .tf-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 0 16px;margin-bottom:16px;border-bottom:1px solid var(--line)}
