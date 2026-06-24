@@ -1,18 +1,16 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { fmt } from "../lib/calc";
-import { Icon } from "../lib/ui";
-import TradeModal from "../components/TradeModal";
+import { Icon, TODAY } from "../lib/ui";
 
 function pnlCls(n) { return n > 0 ? "pos" : n < 0 ? "neg" : ""; }
 
 export default function AllTrades() {
   const [params, setParams] = useSearchParams();
+  const nav = useNavigate();
   const q = params.get("q") || "";
   const [trades, setTrades] = useState([]);
-  const [editing, setEditing] = useState(null);
-  const [adding, setAdding] = useState(false);
   const [loading, setLoading] = useState(true);
 
   async function load() {
@@ -21,6 +19,10 @@ export default function AllTrades() {
     finally { setLoading(false); }
   }
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [q]);
+
+  // editing/adding happens inline in the Daily Journal, mirroring the original app
+  const editInJournal = (t) => nav(`/journal?date=${encodeURIComponent(t.date || TODAY())}&edit=${t.id}`);
+  const addInJournal = () => nav(`/journal?date=${encodeURIComponent(TODAY())}&edit=new`);
 
   function exportCsv() {
     const cols = ["date", "symbol", "direction", "setup", "entry", "stop", "exit", "qty", "risk", "pnl", "r_multiple", "outcome", "rating", "tags"];
@@ -42,7 +44,7 @@ export default function AllTrades() {
               <input placeholder="Search…" value={q} onChange={(e) => setParams(e.target.value ? { q: e.target.value } : {})} />
             </div>
             <button className="btn ghost" onClick={exportCsv}>Export CSV</button>
-            <button className="btn" onClick={() => setAdding(true)}>+ Add trade</button>
+            <button className="btn" onClick={addInJournal}>+ Add trade</button>
           </div>
         </div>
 
@@ -59,7 +61,7 @@ export default function AllTrades() {
               ) : trades.length === 0 ? (
                 <tr><td colSpan={10} className="muted" style={{ padding: 28, textAlign: "center" }}>No trades yet.</td></tr>
               ) : trades.map((t) => (
-                <tr key={t.id} style={{ cursor: "pointer" }} onClick={() => setEditing(t)}>
+                <tr key={t.id} style={{ cursor: "pointer" }} onClick={() => editInJournal(t)}>
                   <td className="num muted">{t.date || "—"}</td>
                   <td><b>{t.symbol || "—"}</b></td>
                   <td>{t.direction ? <span className={"pill " + t.direction.toLowerCase()}>{t.direction}</span> : "—"}</td>
@@ -79,9 +81,6 @@ export default function AllTrades() {
           </table>
         </div>
       </div>
-
-      {adding && <TradeModal onClose={() => setAdding(false)} onSaved={() => { setAdding(false); load(); }} />}
-      {editing && <TradeModal initial={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
     </main>
   );
 }

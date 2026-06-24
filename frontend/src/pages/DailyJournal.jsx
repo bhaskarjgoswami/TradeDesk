@@ -1,68 +1,56 @@
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { fmt } from "../lib/calc";
 import { fmtDate, fmtDateLong, TODAY } from "../lib/ui";
 import { useAuth } from "../lib/AuthContext";
-import TradeModal from "../components/TradeModal";
+import TradeForm from "../components/TradeForm";
 
-const SECTIONS = [
-  { key: "market", label: "Pre-Market — Market Context" },
-  { key: "watchlist", label: "Watchlist" },
-  { key: "mistakes", label: "Daily Recap — Mistakes" },
-  { key: "did_great", label: "What I Did Great" },
-  { key: "reinforcement", label: "Reinforcement" },
-  { key: "overall", label: "Overall" },
-];
-
-function pnlCls(n) {
-  return n > 0 ? "pos" : n < 0 ? "neg" : "muted";
-}
+function pnlCls(n) { return n > 0 ? "pos" : n < 0 ? "neg" : "muted"; }
 
 export default function DailyJournal() {
   const { isPro } = useAuth();
+  const [params, setParams] = useSearchParams();
   const [days, setDays] = useState([]);
   const [active, setActive] = useState(null);
   const [detail, setDetail] = useState(null);
-  const [log, setLog] = useState({});
-  const [saveState, setSaveState] = useState("");
-  const [openTrade, setOpenTrade] = useState(null); // accordion expanded trade id
-  const [adding, setAdding] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const [formMode, setFormMode] = useState(null); // null | "new" | <tradeId>
   const [pullMsg, setPullMsg] = useState("");
-  const skipSave = useRef(true);
+  const newSlotRef = useRef(null);
 
-  async function loadDays(selectFirst = false) {
+  async function loadDays() {
     const d = await api.listDaylogs();
     setDays(d);
-    if (selectFirst && !active) selectDay(d.length ? d[0].date : TODAY());
+    return d;
   }
-  useEffect(() => { loadDays(true); /* eslint-disable-next-line */ }, []);
 
   async function selectDay(date) {
     setActive(date);
-    setOpenTrade(null);
     const d = await api.getDaylog(date);
-    skipSave.current = true;
     setDetail(d);
-    setLog(d.log || {});
-    setSaveState("");
+    return d;
   }
 
-  // debounced autosave of the day-log note sections
+  // initial load — honor ?date=&edit= coming from the All Trades page
   useEffect(() => {
-    if (!active) return;
-    if (skipSave.current) { skipSave.current = false; return; }
-    setSaveState("saving");
-    const id = setTimeout(async () => {
-      try {
-        await api.saveDaylog({ date: active, ...log });
-        setSaveState("saved");
-        loadDays();
-      } catch { setSaveState("error"); }
-    }, 800);
-    return () => clearTimeout(id);
+    (async () => {
+      const list = await loadDays();
+      const d = params.get("date");
+      const e = params.get("edit");
+      const target = d || (list.length ? list[0].date : TODAY());
+      await selectDay(target);
+      if (e) setFormMode(e === "new" ? "new" : Number(e));
+      if (d || e) setParams({}, { replace: true });
+    })();
     /* eslint-disable-next-line */
-  }, [log]);
+  }, []);
+
+  function pickDay(date) { setFormMode(null); selectDay(date); }
+
+  function addTrade() {
+    setFormMode("new");
+    setTimeout(() => newSlotRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+  }
 
   async function pullDelta() {
     setPullMsg("Pulling…");
@@ -71,18 +59,19 @@ export default function DailyJournal() {
       let n = 0;
       for (const t of (trades || []).filter((x) => !x.open)) { await api.createTrade(t); n++; }
       setPullMsg(`Imported ${n} round-trip trade(s).`);
-      selectDay(active); loadDays();
+      await selectDay(active); loadDays();
     } catch (e) { setPullMsg(e.message); }
   }
 
-  async function afterTrade() {
-    setAdding(false); setEditing(null);
+  async function afterSave() {
+    setFormMode(null);
     await selectDay(active); loadDays();
   }
   async function delTrade(id) {
     if (!confirm("Delete this trade permanently?")) return;
     await api.deleteTrade(id);
-    afterTrade();
+    setFormMode(null);
+    await selectDay(active); loadDays();
   }
 
   const s = detail?.stats || {};
@@ -93,12 +82,11 @@ export default function DailyJournal() {
       {/* MIDDLE — day list */}
       <section className="middle">
         <div className="midhead"><h2>Days Logged ({days.length})</h2></div>
-        <button className="logday" onClick={() => selectDay(TODAY())}>+ Log Day</button>
         <div className="daycards">
-          {days.length === 0 && <div className="emptyday">No days yet. Hit <b>+ Log Day</b>.</div>}
+          {days.length === 0 && <div className="emptyday">No days yet. Hit <b>+ Add trade</b> to start.</div>}
           {days.map((d) => (
             <div key={d.date} className={"daycard" + (d.date === active ? " sel" : "") + (!d.has_log && d.total_trades === 0 ? " missing" : "")}
-                 onClick={() => selectDay(d.date)}>
+                 onClick={() => pickDay(d.date)}>
               <div className="dc-date">{fmtDate(d.date)}</div>
               {d.has_log || d.total_trades > 0 ? (
                 <div className={"dc-pnl " + pnlCls(d.net_pnl)}>Net P&L {d.net_pnl > 0 ? "+" : ""}{fmt.money(d.net_pnl)}</div>
@@ -115,13 +103,10 @@ export default function DailyJournal() {
         <div className="dv-top">
           <div className="dv-title">{active ? fmtDateLong(active) : "Select a day"}</div>
           <div className="dv-actions">
-            <span className="save-state">
-              {saveState === "saving" ? "saving…" : saveState === "saved" ? "✓ saved" : saveState === "error" ? "save failed" : ""}
-            </span>
             <button className="btn ghost" onClick={pullDelta} disabled={!isPro} title={isPro ? "" : "Pro feature"}>
               ↧ {isPro ? "Pull from Delta" : "Pull (Pro)"}
             </button>
-            <button className="btn" onClick={() => setAdding(true)} disabled={!active}>+ Add trade</button>
+            <button className="btn" onClick={addTrade} disabled={!active}>+ Add trade</button>
           </div>
         </div>
         <hr className="div" />
@@ -134,7 +119,7 @@ export default function DailyJournal() {
               {pullMsg && <div className="muted" style={{ marginBottom: 12 }}>{pullMsg}</div>}
 
               {/* trades */}
-              {detail.trades.length === 0 ? (
+              {detail.trades.length === 0 && formMode !== "new" ? (
                 <div className="empty-state">
                   <svg width="140" height="104" viewBox="0 0 140 104" fill="none">
                     <line x1="12" y1="90" x2="128" y2="90" stroke="currentColor" strokeWidth="1.5" opacity=".25" />
@@ -147,14 +132,14 @@ export default function DailyJournal() {
                   </svg>
                   <h3>No trades logged yet</h3>
                   <p>Record your first trade of the day — add it manually, or pull your fills from Delta.</p>
-                  <button className="btn" onClick={() => setAdding(true)}>+ Add trade</button>
+                  <button className="btn" onClick={addTrade}>+ Add trade</button>
                 </div>
               ) : (
                 detail.trades.map((t) => {
-                  const open = openTrade === t.id;
+                  const open = formMode === t.id;
                   return (
                     <div className={"acc" + (open ? " open" : "")} key={t.id}>
-                      <div className="acc-head" onClick={() => setOpenTrade(open ? null : t.id)}>
+                      <div className="acc-head" onClick={() => setFormMode(open ? null : t.id)}>
                         <span className="t-sym">{t.symbol || "—"}</span>
                         <span className="t-tags">
                           {t.direction && <span className={"pill " + t.direction.toLowerCase()}>{t.direction}</span>}
@@ -168,9 +153,9 @@ export default function DailyJournal() {
                       </div>
                       {open && (
                         <div className="acc-body">
+                          <TradeForm initial={t} onClose={() => setFormMode(null)} onSaved={afterSave} />
                           <div className="acc-actions">
-                            <button className="btn ghost" onClick={() => setEditing(t)}>Edit trade</button>
-                            <button className="btn danger" onClick={() => delTrade(t.id)}>Delete</button>
+                            <button className="btn danger" onClick={() => delTrade(t.id)}>Delete trade</button>
                           </div>
                         </div>
                       )}
@@ -179,18 +164,12 @@ export default function DailyJournal() {
                 })
               )}
 
-              {/* journal note sections */}
-              <div className="sec-h">Journal</div>
-              {SECTIONS.map((sec) => (
-                <div key={sec.key}>
-                  <div className="field-h">{sec.label}</div>
-                  <div className="note-wrap">
-                    <textarea className="note" rows={2} placeholder="…"
-                              value={log[sec.key] || ""}
-                              onChange={(e) => setLog({ ...log, [sec.key]: e.target.value })} />
-                  </div>
+              {/* inline new-trade form */}
+              {formMode === "new" && (
+                <div className="newtrade-slot" ref={newSlotRef}>
+                  <TradeForm initial={{ date: active, direction: "Long" }} onClose={() => setFormMode(null)} onSaved={afterSave} />
                 </div>
-              ))}
+              )}
             </div>
 
             {/* RAIL — stats */}
@@ -214,9 +193,6 @@ export default function DailyJournal() {
           </div>
         )}
       </main>
-
-      {adding && <TradeModal initial={{ date: active, direction: "Long" }} onClose={() => setAdding(false)} onSaved={afterTrade} />}
-      {editing && <TradeModal initial={editing} onClose={() => setEditing(null)} onSaved={afterTrade} />}
     </>
   );
 }
