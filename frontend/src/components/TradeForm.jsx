@@ -2,12 +2,33 @@ import { useEffect, useState } from "react";
 import { computeTrade, fmt } from "../lib/calc";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/AuthContext";
+import { loadChecklist, saveChecklist } from "../lib/ui";
 
 export default function TradeForm({ initial, onClose, onSaved }) {
   const { isPro } = useAuth();
   const [t, setT] = useState(initial || { date: new Date().toLocaleDateString("en-CA"), direction: "Long" });
+  const [template, setTemplate] = useState(loadChecklist());
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+
+  const checked = new Set((() => { try { return JSON.parse(t.checklist || "[]"); } catch { return []; } })());
+  function toggleChk(item) {
+    const next = new Set(checked);
+    next.has(item) ? next.delete(item) : next.add(item);
+    setT({ ...t, checklist: next.size ? JSON.stringify([...next]) : null });
+  }
+  function addChkItem() {
+    const v = prompt("New checklist item:");
+    if (v && v.trim() && !template.includes(v.trim())) {
+      const nt = [...template, v.trim()];
+      setTemplate(nt); saveChecklist(nt);
+    }
+  }
+  function removeChkItem(item) {
+    if (!confirm(`Remove "${item}" from the checklist?`)) return;
+    const nt = template.filter((x) => x !== item);
+    setTemplate(nt); saveChecklist(nt);
+  }
 
   const set = (k) => (e) => setT({ ...t, [k]: e.target.value });
   const preview = computeTrade(t);
@@ -55,65 +76,82 @@ export default function TradeForm({ initial, onClose, onSaved }) {
 
   return (
     <div className="tradeform" onPaste={paste}>
-      <div style={{ marginBottom: 6 }}>
-        <h2>{initial?.id ? "Edit trade" : "Add trade"}</h2>
-        <div className="hint">Log the trade with full context — your future self reviews this.</div>
+      <div className="tf-head">
+        <div>
+          <h2>{initial?.id ? "Edit trade" : "Add trade"}</h2>
+          <div className="hint">Log the trade with full context — your future self reviews this.</div>
+        </div>
+        <button className="tf-x" type="button" onClick={onClose} title="Close">✕</button>
       </div>
 
-      <div className="cols">
-        <div className="grid">
-          <div className="fld"><label>Date</label><input type="date" value={t.date || ""} onChange={set("date")} /></div>
-          <div className="fld"><label>Symbol</label><input value={t.symbol || ""} onChange={set("symbol")} placeholder="BTCUSD" /></div>
-          <div className="fld"><label>Direction</label>
-            <div className="seg">
-              <button type="button" data-v="Long" className={dir === "Long" ? "on" : ""} onClick={() => setT({ ...t, direction: "Long" })}>Long</button>
-              <button type="button" data-v="Short" className={dir === "Short" ? "on" : ""} onClick={() => setT({ ...t, direction: "Short" })}>Short</button>
-            </div>
-          </div>
-          <div className="fld"><label>Result</label>
-            <div className="seg">
-              {["Win", "Loss", "BE"].map((o) => (
-                <button key={o} type="button" data-v={o} className={out === o ? "on" : ""} onClick={() => setT({ ...t, outcome: out === o ? "" : o })}>{o}</button>
-              ))}
-            </div>
-          </div>
-          <div className="fld"><label>Setup</label><input value={t.setup || ""} onChange={set("setup")} placeholder="QML / Rejection / EMF…" /></div>
-          <div className="fld"><label>TF bias</label><input value={t.tf_bias || ""} onChange={set("tf_bias")} placeholder="1h up · 5m pullback" /></div>
-          <div className="fld"><label>Entry</label><input type="number" step="any" value={t.entry ?? ""} onChange={set("entry")} /></div>
-          <div className="fld"><label>Stop</label><input type="number" step="any" value={t.stop ?? ""} onChange={set("stop")} /></div>
-          <div className="fld"><label>Exit</label><input type="number" step="any" value={t.exit ?? ""} onChange={set("exit")} /></div>
-          <div className="fld"><label>Qty / size</label><input type="number" step="any" value={t.qty ?? ""} onChange={set("qty")} /></div>
-          <div className="fld"><label>Risk ($ at stop)</label><input type="number" step="any" value={t.risk ?? preview.risk ?? ""} onChange={set("risk")} /></div>
-          <div className="fld"><label>P&L (realized)</label><input type="number" step="any" value={t.pnl ?? preview.pnl ?? ""} onChange={set("pnl")} /></div>
-        </div>
-
-        <div className="grid">
-          <div className="fld full"><label>Logic / why I took it</label><textarea style={{ minHeight: 120 }} value={t.logic || ""} onChange={set("logic")} placeholder="What was the thesis? What confirmed it?" /></div>
-          <div className="fld full"><label>Notes / lessons</label><textarea style={{ minHeight: 120 }} value={t.notes || ""} onChange={set("notes")} placeholder="What went right/wrong, emotions, what to repeat or avoid…" /></div>
-          <div className="fld"><label>Platform fee</label><input type="number" step="any" value={t.fee ?? ""} onChange={set("fee")} /></div>
-          <div className="fld"><label>Tags</label><input value={t.tags || ""} onChange={set("tags")} placeholder="comma,separated" /></div>
-          <div className="fld full"><label>Discipline rating</label>
-            <div className="ratepick">
-              {[1, 2, 3, 4, 5].map((v) => (
-                <span key={v} className={v <= rating ? "on" : ""} onClick={() => setT({ ...t, rating: rating === v ? "" : v })}>★</span>
-              ))}
-            </div>
-          </div>
-          <div className="fld full"><label>Screenshots</label>
-            {isPro
-              ? <div className="dropzone">📎 Paste a screenshot (⌘V) to attach</div>
-              : <div className="dropzone">🔒 Screenshot attachments are a Pro feature</div>}
-            {images.length > 0 && (
-              <div className="shots">
-                {images.map((p, i) => (
-                  <div className="shot" key={i}>
-                    <img src={p.startsWith("http") ? p : "/" + p} alt="" />
-                    <button type="button" onClick={() => rmShot(i)}>×</button>
-                  </div>
-                ))}
+      <div className="fld full" style={{ marginBottom: 18 }}>
+        <label>Pre-trade checklist</label>
+        <div className="checklist">
+          {template.map((item) => {
+            const on = checked.has(item);
+            return (
+              <div className={"chk" + (on ? " on" : "")} key={item}>
+                <span className="box" onClick={() => toggleChk(item)}>{on ? "✓" : ""}</span>
+                <span className="lbl" onClick={() => toggleChk(item)}>{item}</span>
+                <button type="button" className="chk-del" onClick={() => removeChkItem(item)} title="Remove">×</button>
               </div>
-            )}
+            );
+          })}
+          <div className="chk-add" onClick={addChkItem}>+ Add item</div>
+        </div>
+      </div>
+
+      <div className="grid">
+        <div className="fld"><label>Date</label><input type="date" value={t.date || ""} onChange={set("date")} /></div>
+        <div className="fld"><label>Symbol</label><input value={t.symbol || ""} onChange={set("symbol")} placeholder="BTCUSD" /></div>
+        <div className="fld"><label>Direction</label>
+          <div className="seg">
+            <button type="button" data-v="Long" className={dir === "Long" ? "on" : ""} onClick={() => setT({ ...t, direction: "Long" })}>Long</button>
+            <button type="button" data-v="Short" className={dir === "Short" ? "on" : ""} onClick={() => setT({ ...t, direction: "Short" })}>Short</button>
           </div>
+        </div>
+        <div className="fld"><label>Result</label>
+          <div className="seg">
+            {["Win", "Loss", "BE"].map((o) => (
+              <button key={o} type="button" data-v={o} className={out === o ? "on" : ""} onClick={() => setT({ ...t, outcome: out === o ? "" : o })}>{o}</button>
+            ))}
+          </div>
+        </div>
+        <div className="fld"><label>Setup</label><input value={t.setup || ""} onChange={set("setup")} placeholder="QML / Rejection / EMF…" /></div>
+        <div className="fld"><label>TF bias</label><input value={t.tf_bias || ""} onChange={set("tf_bias")} placeholder="1h up · 5m pullback" /></div>
+        <div className="fld"><label>Entry</label><input type="number" step="any" value={t.entry ?? ""} onChange={set("entry")} /></div>
+        <div className="fld"><label>Stop</label><input type="number" step="any" value={t.stop ?? ""} onChange={set("stop")} /></div>
+        <div className="fld"><label>Exit</label><input type="number" step="any" value={t.exit ?? ""} onChange={set("exit")} /></div>
+        <div className="fld"><label>Qty / size</label><input type="number" step="any" value={t.qty ?? ""} onChange={set("qty")} /></div>
+        <div className="fld"><label>Risk ($ at stop)</label><input type="number" step="any" value={t.risk ?? preview.risk ?? ""} onChange={set("risk")} /></div>
+        <div className="fld"><label>P&L (realized)</label><input type="number" step="any" value={t.pnl ?? preview.pnl ?? ""} onChange={set("pnl")} /></div>
+        <div className="fld"><label>Platform fee</label><input type="number" step="any" value={t.fee ?? ""} onChange={set("fee")} /></div>
+        <div className="fld"><label>Tags</label><input value={t.tags || ""} onChange={set("tags")} placeholder="comma,separated" /></div>
+
+        <div className="fld full"><label>Logic / why I took it</label><textarea style={{ minHeight: 96 }} value={t.logic || ""} onChange={set("logic")} placeholder="What was the thesis? What confirmed it?" /></div>
+        <div className="fld full"><label>Notes / lessons</label><textarea style={{ minHeight: 96 }} value={t.notes || ""} onChange={set("notes")} placeholder="What went right/wrong, emotions, what to repeat or avoid…" /></div>
+
+        <div className="fld"><label>Discipline rating</label>
+          <div className="ratepick">
+            {[1, 2, 3, 4, 5].map((v) => (
+              <span key={v} className={v <= rating ? "on" : ""} onClick={() => setT({ ...t, rating: rating === v ? "" : v })}>★</span>
+            ))}
+          </div>
+        </div>
+        <div className="fld"><label>Screenshots</label>
+          {isPro
+            ? <div className="dropzone">📎 Paste a screenshot (⌘V)</div>
+            : <div className="dropzone">🔒 Pro feature</div>}
+          {images.length > 0 && (
+            <div className="shots">
+              {images.map((p, i) => (
+                <div className="shot" key={i}>
+                  <img src={p.startsWith("http") ? p : "/" + p} alt="" />
+                  <button type="button" onClick={() => rmShot(i)}>×</button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

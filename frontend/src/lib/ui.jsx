@@ -28,7 +28,28 @@ export const Icon = {
   sun: (
     <svg className="hi" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2" /><path d="M12 3v2M12 19v2M5 12H3M21 12h-2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M18.5 5.5l-1.4 1.4M6.9 17.1l-1.4 1.4" /></svg>
   ),
+  menu: (
+    <svg className="hi" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+  ),
 };
+
+// ---- pre-trade checklist template (persisted in localStorage, like the original) ----
+const CHECKLIST_DEFAULT = [
+  "High time frame bias",
+  "Liquidity take",
+  "Low Time frame bias sync with HTF",
+  "LTF CHoCH",
+  "Candle high/low cross confirmation",
+];
+export function loadChecklist() {
+  try {
+    const s = JSON.parse(localStorage.getItem("tj_checklist"));
+    return Array.isArray(s) && s.length ? s : CHECKLIST_DEFAULT.slice();
+  } catch { return CHECKLIST_DEFAULT.slice(); }
+}
+export function saveChecklist(list) {
+  localStorage.setItem("tj_checklist", JSON.stringify(list));
+}
 
 export const TODAY = () => new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD local
 

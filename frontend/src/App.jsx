@@ -64,8 +64,17 @@ function Shell() {
   const loc = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dark, setDark] = useState(isDark());
+  const [collapsed, setCollapsed] = useState(localStorage.getItem("td_sidebar") === "collapsed");
   const [search, setSearch] = useState(new URLSearchParams(loc.search).get("q") || "");
   const acctRef = useRef(null);
+
+  function toggleCollapse() {
+    setCollapsed((c) => {
+      const next = !c;
+      localStorage.setItem("td_sidebar", next ? "collapsed" : "open");
+      return next;
+    });
+  }
 
   useEffect(() => {
     const onDoc = (e) => { if (acctRef.current && !acctRef.current.contains(e.target)) setMenuOpen(false); };
@@ -91,7 +100,7 @@ function Shell() {
   const initial = (user?.email || "T").trim()[0].toUpperCase();
 
   return (
-    <div className="app">
+    <div className={"app" + (collapsed ? " collapsed" : "")}>
       <div className="topbar">
         <div className="tb-brand"><div className="logo">{Icon.book}</div> Trade Journal</div>
         <div className="tb-search">{Icon.search}
@@ -113,14 +122,18 @@ function Shell() {
         <aside className="sidebar">
           <div className="side-h">Folders</div>
           {NAV.map((n) => (
-            <NavLink key={n.to} to={n.to} className={({ isActive }) => "navitem" + (isActive ? " on" : "")} title={n.label}>
-              <span className="ic" style={{ background: n.bg, color: n.fg }}>{n.icon}</span> {n.label}
+            <NavLink key={n.to} to={n.to} data-label={n.label} className={({ isActive }) => "navitem" + (isActive ? " on" : "")}>
+              <span className="ic" style={{ background: n.bg, color: n.fg }}>{n.icon}</span>
+              <span className="nav-lbl">{n.label}</span>
             </NavLink>
           ))}
           <div className="sidefoot">
             <Ticker />
-            <button className="themebtn" onClick={toggleTheme}>
-              {dark ? Icon.sun : Icon.moon}<span>{dark ? "Light mode" : "Dark mode"}</span>
+            <button className="themebtn" onClick={toggleTheme} title={dark ? "Light mode" : "Dark mode"}>
+              {dark ? Icon.sun : Icon.moon}<span className="tgl-lbl">{dark ? "Light mode" : "Dark mode"}</span>
+            </button>
+            <button className="tb-toggle" onClick={toggleCollapse} title="Collapse / expand">
+              {Icon.menu}<span className="tgl-lbl">{collapsed ? "Expand" : "Collapse"}</span>
             </button>
           </div>
         </aside>

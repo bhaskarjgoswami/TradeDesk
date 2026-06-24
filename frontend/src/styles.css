@@ -99,6 +99,7 @@ a{color:var(--accent);text-decoration:none}
 .navitem.on{background:var(--accent-weak);color:var(--accent);font-weight:600;box-shadow:inset 0 0 0 1px rgba(108,92,231,.16)}
 .navitem .ic{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .navitem .ic svg{width:17px;height:17px}
+.nav-lbl,.tgl-lbl{display:inline-block;white-space:nowrap;overflow:hidden;max-width:160px;opacity:1;transition:max-width .22s ease,opacity .18s ease}
 svg.hi{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;display:block}
 .tb-brand .logo svg{width:18px;height:18px}
 .tagrow{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;cursor:pointer;color:var(--txt);transition:background .12s}
@@ -112,7 +113,32 @@ svg.hi{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;strok
 .tk .c{font-size:10px}
 .themebtn{display:flex;align-items:center;gap:8px;width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:8px 10px;cursor:pointer;font-weight:500;margin-top:10px}
 .themebtn:hover{border-color:var(--accent)}
-.themebtn svg{width:16px;height:16px}
+.themebtn svg{width:16px;height:16px;flex-shrink:0}
+.tb-toggle{display:flex;align-items:center;gap:11px;width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--mut);border-radius:10px;padding:8px 10px;cursor:pointer;font-weight:500;font-size:13.5px;margin-top:8px}
+.tb-toggle:hover{color:var(--accent);border-color:var(--accent)}
+.tb-toggle svg{width:18px;height:18px;flex-shrink:0}
+
+/* collapsed icon-rail sidebar (desktop) */
+@media(min-width:981px){
+  .sidebar{transition:width .22s ease,padding .22s ease}
+  .navitem{transition:background .14s,color .14s,gap .22s ease,padding .22s ease}
+  .themebtn,.tb-toggle{transition:width .22s ease,padding .22s ease,border-color .14s,color .14s}
+  .tk-row{transition:opacity .15s ease}
+  .app.collapsed .sidebar{width:66px;padding:6px 11px;overflow:visible}
+  .app.collapsed .side-h{display:none}
+  .app.collapsed .tk-row{display:none}
+  .app.collapsed .navitem{gap:0;padding:9px;position:relative}
+  .app.collapsed .nav-lbl,.app.collapsed .tgl-lbl{max-width:0;opacity:0}
+  .app.collapsed .navitem.on{background:var(--accent-weak)}
+  .app.collapsed .navitem.on::before{content:"";position:absolute;left:-11px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+  .app.collapsed .themebtn,.app.collapsed .tb-toggle{padding:9px;gap:0;width:40px;margin-left:auto;margin-right:auto}
+  .app.collapsed .sidefoot{border-top:none}
+  /* tooltip/popover on hover when collapsed */
+  .app.collapsed .navitem:hover::after{
+    content:attr(data-label);position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);
+    background:var(--txt);color:var(--bg);padding:6px 10px;border-radius:8px;font-size:12px;font-weight:600;
+    letter-spacing:0;white-space:nowrap;z-index:120;box-shadow:0 8px 22px rgba(16,24,40,.22);pointer-events:none}
+}
 
 /* ---------- middle (day list) ---------- */
 .middle{width:312px;flex-shrink:0;border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
@@ -158,6 +184,11 @@ hr.div{border:none;border-top:1px solid var(--line);margin:18px 0 0}
 .chk.on .box{background:var(--accent);border-color:var(--accent)}
 .chk.on .lbl{color:var(--mut);text-decoration:line-through}
 .chk .lbl{font-size:14px;flex:1}
+.chk-del{margin-left:auto;background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;line-height:1;opacity:0;padding:0 4px}
+.chk:hover .chk-del{opacity:1}
+.chk-del:hover{color:var(--red)}
+.chk-add{padding:7px 10px;color:var(--accent);font-weight:600;font-size:13px;cursor:pointer;border-radius:9px;width:fit-content}
+.chk-add:hover{background:var(--panel2)}
 
 .rail{font-size:13.5px}
 .rail-group{display:flex;flex-direction:column;gap:5px;margin-bottom:20px}
@@ -218,6 +249,25 @@ tbody tr:hover td{background:var(--panel2)}
 .panel h3{font-size:13px;font-weight:600;color:var(--mut);letter-spacing:.3px;margin-bottom:12px;text-transform:uppercase}
 .searchbox{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 11px}
 .searchbox input{background:none;border:none;outline:none;font-size:13.5px;width:170px}
+.viewseg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.viewseg button{background:var(--panel2);border:none;color:var(--mut);padding:8px 14px;cursor:pointer;font:inherit;font-weight:600;font-size:13px}
+.viewseg button.on{background:var(--accent);color:#fff}
+.icobtn{background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:14px}
+.icobtn:hover{color:var(--accent);border-color:var(--accent)}
+
+/* calendar */
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+.cal-head div{font-size:11px;color:var(--mut);font-weight:600;text-align:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cell{aspect-ratio:1.35/1;border:1px solid var(--line);border-radius:9px;padding:6px 7px;display:flex;flex-direction:column;justify-content:space-between;min-height:54px}
+.cell.blank{border:none}
+.cell .d{font-size:11px;color:var(--dim);font-weight:600}
+.cell.today .d{color:var(--accent)}
+.cell .cpnl{font-size:12px;font-weight:680}
+.cell .ct{font-size:10px;color:var(--mut)}
+.cell.has{cursor:pointer}.cell.has:hover{border-color:var(--accent)}
+.cell.win{background:rgba(34,197,94,var(--i,.15))}.cell.loss{background:rgba(224,65,74,var(--i,.15))}
+.cell.win .cpnl{color:var(--grn)}.cell.loss .cpnl{color:var(--red)}
 
 /* settings */
 .settings-card{max-width:600px}
@@ -240,17 +290,23 @@ tbody tr:hover td{background:var(--panel2)}
 
 /* ---------- inline trade form (relocated into the day view) ---------- */
 .tradeform{background:transparent;border:none;padding:6px 2px;margin-top:10px}
-.newtrade-slot .tradeform{border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:14px;background:var(--panel)}
-.acc-body .tradeform{padding:18px}
-.tradeform h2{font-size:17px}
+.newtrade-slot{margin-top:16px}
+.newtrade-slot .tradeform{border:1px solid var(--line);border-radius:16px;padding:0 22px 22px;margin-top:0;background:var(--panel);box-shadow:0 10px 30px rgba(16,24,40,.07),0 1px 3px rgba(16,24,40,.05)}
+[data-theme="dark"] .newtrade-slot .tradeform{box-shadow:0 14px 34px rgba(0,0,0,.45)}
+.acc-body .tradeform{padding:4px 18px 18px}
+.tradeform h2{font-size:18px;letter-spacing:-.3px}
+.tf-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 0 16px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.acc-body .tradeform .tf-head,.tradeform .tf-head{padding-top:18px}
+.tf-x{background:var(--panel2);border:1px solid var(--line);border-radius:9px;width:32px;height:32px;cursor:pointer;color:var(--mut);font-size:13px;flex-shrink:0}
+.tf-x:hover{color:var(--txt);border-color:var(--dim)}
 .tradeform .hint{color:var(--dim);font-size:12px;margin-bottom:8px}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:start}
 @media(max-width:800px){.cols{grid-template-columns:1fr;gap:20px}}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:13px 16px;align-content:start}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px;align-content:start}
 .grid .full{grid-column:1/-1}
-.fld{display:flex;flex-direction:column;gap:6px}
+.fld{display:flex;flex-direction:column;gap:7px}
 .fld label{font-size:10.5px;color:var(--mut);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
-.tradeform input,.tradeform select,.tradeform textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none;font-size:13.5px;transition:border-color .12s,box-shadow .12s}
+.tradeform input,.tradeform select,.tradeform textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none;font-size:13.5px;transition:border-color .12s,box-shadow .12s}
 .tradeform input:hover,.tradeform textarea:hover,.tradeform select:hover{border-color:var(--dim)}
 .tradeform input:focus,.tradeform textarea:focus,.tradeform select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,92,231,.16)}
 .tradeform textarea{resize:vertical;min-height:64px;line-height:1.5}
