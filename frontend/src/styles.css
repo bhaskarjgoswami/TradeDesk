@@ -284,6 +284,15 @@ tbody tr:hover td{background:var(--panel2)}
 .seg button.on[data-v=Long],.seg button.on[data-v=Win]{background:rgba(34,197,94,.2);color:var(--grn)}
 .seg button.on[data-v=Short],.seg button.on[data-v=Loss]{background:rgba(224,65,74,.2);color:var(--red)}
 .seg button.on[data-v=BE]{background:rgba(217,119,6,.2);color:var(--amb)}
+
+/* billing cycle toggle on the pricing page */
+.bill-bar{display:flex;justify-content:center;margin:0 0 22px}
+.bill-seg{display:inline-flex;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:4px}
+.bill-seg button{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border:none;border-radius:9px;background:transparent;color:var(--mut);font:inherit;font-weight:600;font-size:13px;line-height:1;cursor:pointer;white-space:nowrap;transition:background .15s ease,color .15s ease}
+.bill-seg button:hover:not(.on){color:var(--txt)}
+.bill-seg button.on{background:var(--accent);color:#fff}
+.bill-save{font-size:10px;font-weight:700;letter-spacing:.3px;padding:2px 7px;border-radius:999px;background:var(--accent-weak);color:var(--accent)}
+.bill-seg button.on .bill-save{background:rgba(255,255,255,.22);color:#fff}
 .ex-creds label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);font-weight:600;margin:13px 0 6px}
 .ex-creds input,.ex-creds select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--txt);outline:none;font-size:13.5px}
 .ex-creds input:focus,.ex-creds select:focus{border-color:var(--accent)}
@@ -298,6 +307,7 @@ tbody tr:hover td{background:var(--panel2)}
 .tradeform h2{font-size:18px;letter-spacing:-.3px}
 .tf-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 0 16px;margin-bottom:16px;border-bottom:1px solid var(--line)}
 .acc-body .tradeform .tf-head,.tradeform .tf-head{padding-top:18px}
+.tf-head-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .tf-x{background:var(--panel2);border:1px solid var(--line);border-radius:9px;width:32px;height:32px;cursor:pointer;color:var(--mut);font-size:13px;flex-shrink:0}
 .tf-x:hover{color:var(--txt);border-color:var(--dim)}
 .tradeform .hint{color:var(--dim);font-size:12px;margin-bottom:8px}
@@ -324,6 +334,18 @@ tbody tr:hover td{background:var(--panel2)}
 .ratepick{display:flex;gap:6px}.ratepick span{cursor:pointer;font-size:20px;color:var(--line)}.ratepick span.on{color:var(--amb)}
 .modal-actions{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
 .error{color:var(--red);font-size:13px;margin:8px 0}
+
+/* upgrade modal */
+.um-overlay{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(7,7,8,.55);backdrop-filter:blur(3px)}
+.um-card{position:relative;width:100%;max-width:440px;background:var(--bg);border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 60px rgba(16,24,40,.28);padding:30px 30px 24px}
+.um-x{position:absolute;top:16px;right:16px;border:none;background:transparent;color:var(--mut);font-size:15px;cursor:pointer;line-height:1}
+.um-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.6px;color:var(--accent);background:var(--accent-weak);padding:4px 10px;border-radius:999px;margin-bottom:14px}
+.um-title{font-size:21px;font-weight:700;letter-spacing:-.3px;margin:0 0 8px}
+.um-sub{font-size:13.5px;color:var(--mut);line-height:1.5;margin:0 0 18px}
+.um-feats{list-style:none;display:flex;flex-direction:column;gap:11px;margin:0 0 24px;padding:0}
+.um-feats li{position:relative;padding-left:24px;font-size:13.5px;color:var(--txt);line-height:1.4}
+.um-feats li:before{content:"✓";position:absolute;left:0;top:0;color:var(--accent);font-weight:700}
+.um-actions{display:flex;justify-content:flex-end;gap:10px}
 
 /* scrollbars */
 *::-webkit-scrollbar{width:10px;height:10px}

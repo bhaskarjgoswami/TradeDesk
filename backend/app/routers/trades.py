@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
-from ..auth import get_current_user, get_pro_user
+from ..auth import get_current_user
 from ..database import get_conn
+from ..billing import active_tier
 from ..models import TradeIn, ImageUploadIn
 import time, base64, secrets, os
 
@@ -13,15 +14,15 @@ TRADE_FIELDS = [
     "outcome", "rating", "tags", "notes", "images", "checklist", "fee",
 ]
 
-FREE_TRADE_LIMIT = 50
+# Free tier: max 2 trades per day. Everything else is unlocked.
+FREE_DAILY_LIMIT = 2
 
 
-def _month_trade_count(conn, user_id: str) -> int:
-    month = time.strftime("%Y-%m")
+def _day_trade_count(conn, user_id: str, date: str) -> int:
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT COUNT(*) as n FROM trades WHERE user_id=%s AND date LIKE %s",
-            (user_id, month + "%"),
+            "SELECT COUNT(*) as n FROM trades WHERE user_id=%s AND date=%s",
+            (user_id, date),
         )
         return cur.fetchone()["n"]
 
@@ -62,13 +63,11 @@ def list_trades(
 @router.post("", status_code=201)
 def create_trade(body: TradeIn, user=Depends(get_current_user)):
     with get_conn() as conn:
-        # free tier gate
-        with conn.cursor() as cur:
-            cur.execute("SELECT subscription_tier FROM user_profiles WHERE id=%s", (user["user_id"],))
-            row = cur.fetchone()
-        tier = (row["subscription_tier"] if row else "free") or "free"
-        if tier != "pro" and _month_trade_count(conn, user["user_id"]) >= FREE_TRADE_LIMIT:
-            raise HTTPException(402, "Free plan limit: 50 trades/month. Upgrade to Pro.")
+        # free tier gate (expiry-aware: lapsed Pro counts as free)
+        tier = active_tier(conn, user["user_id"])
+        day = body.date or time.strftime("%Y-%m-%d")
+        if tier != "pro" and _day_trade_count(conn, user["user_id"], day) >= FREE_DAILY_LIMIT:
+            raise HTTPException(402, "free-daily-limit")
 
         cols = TRADE_FIELDS + ["user_id", "created_at"]
         vals = [getattr(body, f) for f in TRADE_FIELDS] + [user["user_id"], time.strftime("%Y-%m-%d %H:%M:%S")]
@@ -102,8 +101,8 @@ def delete_trade(trade_id: int, user=Depends(get_current_user)):
 
 
 @router.post("/upload")
-def upload_image(body: ImageUploadIn, user=Depends(get_pro_user)):
-    """Pro only — store screenshot in Supabase Storage via REST upload."""
+def upload_image(body: ImageUploadIn, user=Depends(get_current_user)):
+    """Store screenshot in Supabase Storage via REST upload."""
     import httpx
     from ..config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 

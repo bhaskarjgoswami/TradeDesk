@@ -9,15 +9,23 @@ create extension if not exists "uuid-ossp";
 -- ── user_profiles ────────────────────────────────────────────
 -- One row per auth.users entry. Created automatically via trigger.
 create table if not exists public.user_profiles (
-  id                   uuid primary key references auth.users(id) on delete cascade,
-  email                text,
-  subscription_tier    text not null default 'free', -- 'free' | 'pro'
-  stripe_customer_id   text,
-  delta_key            text,          -- per-user Delta API key (encrypted by Postgres at-rest)
-  delta_secret         text,
-  created_at           timestamptz default now(),
-  updated_at           timestamptz default now()
+  id                       uuid primary key references auth.users(id) on delete cascade,
+  email                    text,
+  subscription_tier        text not null default 'free', -- 'free' | 'pro'
+  subscription_plan        text,          -- 'monthly' | 'annual'
+  subscription_expires_at  timestamptz,   -- Pro is active while this is in the future
+  razorpay_payment_id      text,          -- last applied payment (idempotency)
+  stripe_customer_id       text,          -- legacy (Stripe), kept for back-compat
+  delta_key                text,          -- per-user Delta API key (encrypted by Postgres at-rest)
+  delta_secret             text,
+  created_at               timestamptz default now(),
+  updated_at               timestamptz default now()
 );
+
+-- Idempotent migration for databases created before Razorpay billing landed.
+alter table public.user_profiles add column if not exists subscription_plan       text;
+alter table public.user_profiles add column if not exists subscription_expires_at timestamptz;
+alter table public.user_profiles add column if not exists razorpay_payment_id      text;
 
 -- auto-create profile on signup
 create or replace function public.handle_new_user()

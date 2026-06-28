@@ -19,7 +19,10 @@ async function request(method, path, body) {
     let detail = `HTTP ${res.status}`;
     try {
       const j = await res.json();
-      detail = j.detail || detail;
+      const d = j.detail ?? j.message ?? j.error;
+      if (typeof d === "string") detail = d;
+      else if (Array.isArray(d)) detail = d.map((x) => x?.msg || (typeof x === "string" ? x : JSON.stringify(x))).join("; ");
+      else if (d) detail = JSON.stringify(d);
     } catch {}
     const err = new Error(detail);
     err.status = res.status;
@@ -54,8 +57,8 @@ export const api = {
   price: (symbol) => request("GET", `/api/price?symbol=${encodeURIComponent(symbol)}`),
   deltaToday: () => request("GET", "/api/delta/today"),
 
-  // subscription
+  // subscription (Razorpay)
   subStatus: () => request("GET", "/api/subscription/status"),
-  checkout: () => request("POST", "/api/subscription/checkout"),
-  portal: () => request("POST", "/api/subscription/portal"),
+  checkout: (plan, currency) => request("POST", "/api/subscription/checkout", { plan, currency }),
+  verifyPayment: (payload) => request("POST", "/api/subscription/verify", payload),
 };

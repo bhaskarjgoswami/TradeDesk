@@ -8,6 +8,12 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tier, setTier] = useState("free");
+  const [sub, setSub] = useState({ plan: null, expiresAt: null });
+
+  const applyStatus = (s) => {
+    setTier(s.tier);
+    setSub({ plan: s.plan || null, expiresAt: s.expires_at || null });
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -22,9 +28,10 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (session) {
-      api.subStatus().then((s) => setTier(s.tier)).catch(() => {});
+      api.subStatus().then(applyStatus).catch(() => {});
     } else {
       setTier("free");
+      setSub({ plan: null, expiresAt: null });
     }
   }, [session]);
 
@@ -33,8 +40,10 @@ export function AuthProvider({ children }) {
     user: session?.user || null,
     tier,
     isPro: tier === "pro",
+    plan: sub.plan,
+    expiresAt: sub.expiresAt,
     loading,
-    refreshTier: () => api.subStatus().then((s) => setTier(s.tier)).catch(() => {}),
+    refreshTier: () => api.subStatus().then(applyStatus).catch(() => {}),
     signOut: () => supabase.auth.signOut(),
   };
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;

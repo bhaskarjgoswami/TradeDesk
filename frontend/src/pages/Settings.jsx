@@ -20,7 +20,7 @@ const EXCHANGES = [
 ];
 
 export default function Settings() {
-  const { user, isPro, signOut } = useAuth();
+  const { user, isPro, expiresAt, signOut } = useAuth();
   const [ex, setEx] = useState({ has_creds: false, key_masked: "" });
   const [exId, setExId] = useState("delta");
   const [key, setKey] = useState("");
@@ -66,7 +66,7 @@ export default function Settings() {
           </div>
 
           <div className="set-sec">
-            <div className="set-label">Exchange {!isPro && <span className="pill setup">Pro to sync</span>}</div>
+            <div className="set-label">Exchange</div>
             <div className="ex-creds">
               <label>Exchange</label>
               <select value={exId} onChange={(e) => pickExchange(e.target.value)}>
@@ -95,7 +95,9 @@ export default function Settings() {
           <div className="set-sec">
             <div className="set-label">Subscription {isPro ? <span className="pill">Pro</span> : <span className="pill setup">Free</span>}</div>
             <div className="muted" style={{ fontSize: 12.5, marginBottom: 16 }}>
-              {isPro ? "You're on Pro — renews monthly, billed securely via Stripe." : "You're on the Free plan. Upgrade anytime to unlock everything."}
+              {isPro
+                ? `You're on Pro${expiresAt ? ` — active until ${new Date(expiresAt).toLocaleDateString()}` : ""}. Paid securely via Razorpay; renew anytime before it lapses.`
+                : "You're on the Free plan. Upgrade anytime to unlock everything."}
             </div>
             <PlanCards />
           </div>
