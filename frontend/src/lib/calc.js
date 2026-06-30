@@ -9,6 +9,17 @@ export function computeTrade(t) {
   const dir = t.direction === "Short" ? -1 : 1;
 
   const out = { ...t };
+  // Coerce all numeric fields to number-or-null so empty inputs ("") don't
+  // reach the API as strings — Pydantic rejects "" for float/int with a 422.
+  out.entry = entry;
+  out.stop = stop;
+  out.exit = exit;
+  out.qty = qty;
+  out.risk = num(t.risk);
+  out.pnl = num(t.pnl);
+  out.r_multiple = num(t.r_multiple);
+  out.fee = num(t.fee);
+  out.rating = t.rating === "" || t.rating == null ? null : Math.trunc(Number(t.rating)) || null;
 
   if (entry != null && stop != null && qty != null) {
     out.risk = round(Math.abs(entry - stop) * qty);

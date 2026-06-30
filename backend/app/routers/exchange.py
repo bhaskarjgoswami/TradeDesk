@@ -3,7 +3,7 @@ Delta Exchange routes — price ticker (public) and authenticated fills pull (Pr
 Keys are stored per-user in the user_profiles table (encrypted at rest by Postgres).
 """
 from fastapi import APIRouter, Depends, HTTPException
-from ..auth import get_current_user, get_pro_user
+from ..auth import get_current_user
 from ..database import get_conn
 from ..models import ExchangeIn
 import urllib.request, urllib.parse, urllib.error
@@ -142,7 +142,7 @@ def _cv(sym):
 
 
 @router.get("/delta/today")
-def delta_today(user=Depends(get_pro_user)):
+def delta_today(user=Depends(get_current_user)):
     uid = user["user_id"]
     with get_conn() as conn:
         with conn.cursor() as cur:

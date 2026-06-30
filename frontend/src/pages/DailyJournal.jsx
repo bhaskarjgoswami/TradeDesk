@@ -1,16 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { fmt } from "../lib/calc";
 import { fmtDate, fmtDateLong, TODAY } from "../lib/ui";
 import { useAuth } from "../lib/AuthContext";
 import TradeForm from "../components/TradeForm";
+import UpgradeModal from "../lib/UpgradeModal";
+
+const FREE_DAILY_LIMIT = 2;
 
 function pnlCls(n) { return n > 0 ? "pos" : n < 0 ? "neg" : "muted"; }
 
 export default function DailyJournal() {
-  const { isPro } = useAuth();
   const [params, setParams] = useSearchParams();
+  const nav = useNavigate();
+  const { isPro } = useAuth();
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [days, setDays] = useState([]);
   const [active, setActive] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -48,6 +53,11 @@ export default function DailyJournal() {
   function pickDay(date) { setFormMode(null); selectDay(date); }
 
   function addTrade() {
+    // Free tier: max 2 trades per day → prompt to upgrade instead of opening the form.
+    if (!isPro && (detail?.trades?.length || 0) >= FREE_DAILY_LIMIT) {
+      setShowUpgrade(true);
+      return;
+    }
     setFormMode("new");
     setTimeout(() => newSlotRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
   }
@@ -60,7 +70,14 @@ export default function DailyJournal() {
       for (const t of (trades || []).filter((x) => !x.open)) { await api.createTrade(t); n++; }
       setPullMsg(`Imported ${n} round-trip trade(s).`);
       await selectDay(active); loadDays();
-    } catch (e) { setPullMsg(e.message); }
+    } catch (e) {
+      const msg = e.message || "";
+      // Map the backend's raw gating codes to actionable prompts.
+      if (/free-daily-limit/i.test(msg)) { setPullMsg(""); setShowUpgrade(true); await selectDay(active); loadDays(); }
+      else if (/no.?credentials/i.test(msg)) setPullMsg("__NO_CREDS__");
+      else if (/pro subscription/i.test(msg)) setPullMsg("__NEED_PRO__");
+      else setPullMsg(msg);
+    }
   }
 
   async function afterSave() {
@@ -103,9 +120,6 @@ export default function DailyJournal() {
         <div className="dv-top">
           <div className="dv-title">{active ? fmtDateLong(active) : "Select a day"}</div>
           <div className="dv-actions">
-            <button className="btn ghost" onClick={pullDelta} disabled={!isPro} title={isPro ? "" : "Pro feature"}>
-              ↧ {isPro ? "Pull from Delta" : "Pull (Pro)"}
-            </button>
             <button className="btn" onClick={addTrade} disabled={!active}>+ Add trade</button>
           </div>
         </div>
@@ -116,7 +130,35 @@ export default function DailyJournal() {
         ) : (
           <div className="dv-grid" style={detail.trades.length === 0 ? { gridTemplateColumns: "1fr" } : undefined}>
             <div className="dv-main">
-              {pullMsg && <div className="muted" style={{ marginBottom: 12 }}>{pullMsg}</div>}
+              {pullMsg && (
+                <div className="muted" style={{ marginBottom: 12 }}>
+                  {pullMsg === "__NO_CREDS__" ? (
+                    <>
+                      No exchange API keys saved.{" "}
+                      <a
+                        href="/settings"
+                        onClick={(ev) => { ev.preventDefault(); nav("/settings"); }}
+                        style={{ color: "#d97706", fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}
+                      >
+                        Add your API credentials in Settings →
+                      </a>{" "}
+                      to auto-pull fills.
+                    </>
+                  ) : pullMsg === "__NEED_PRO__" ? (
+                    <>
+                      Auto-sync is a Pro feature.{" "}
+                      <a
+                        href="/settings"
+                        onClick={(ev) => { ev.preventDefault(); nav("/settings"); }}
+                        style={{ color: "#d97706", fontWeight: 600, textDecoration: "underline", cursor: "pointer" }}
+                      >
+                        Upgrade to Pro in Settings →
+                      </a>{" "}
+                      to connect your exchange.
+                    </>
+                  ) : pullMsg}
+                </div>
+              )}
 
               {/* trades */}
               {detail.trades.length === 0 && formMode !== "new" ? (
@@ -167,7 +209,7 @@ export default function DailyJournal() {
               {/* inline new-trade form */}
               {formMode === "new" && (
                 <div className="newtrade-slot" ref={newSlotRef}>
-                  <TradeForm initial={{ date: active, direction: "Long" }} onClose={() => setFormMode(null)} onSaved={afterSave} />
+                  <TradeForm initial={{ date: active, direction: "Long" }} onClose={() => setFormMode(null)} onSaved={afterSave} onPull={pullDelta} onLimit={() => { setFormMode(null); setShowUpgrade(true); }} />
                 </div>
               )}
             </div>
@@ -195,6 +237,8 @@ export default function DailyJournal() {
           </div>
         )}
       </main>
+
+      <UpgradeModal open={showUpgrade} onClose={() => setShowUpgrade(false)} />
     </>
   );
 }

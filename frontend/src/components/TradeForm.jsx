@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { computeTrade, fmt } from "../lib/calc";
 import { api } from "../lib/api";
-import { useAuth } from "../lib/AuthContext";
 import { loadChecklist, saveChecklist } from "../lib/ui";
 
-export default function TradeForm({ initial, onClose, onSaved }) {
-  const { isPro } = useAuth();
+export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }) {
   const [t, setT] = useState(initial || { date: new Date().toLocaleDateString("en-CA"), direction: "Long" });
   const [template, setTemplate] = useState(loadChecklist());
   const [busy, setBusy] = useState(false);
@@ -41,7 +39,6 @@ export default function TradeForm({ initial, onClose, onSaved }) {
   }, [onClose]);
 
   async function paste(e) {
-    if (!isPro) return;
     const item = [...(e.clipboardData?.items || [])].find((i) => i.type.startsWith("image/"));
     if (!item) return;
     const file = item.getAsFile();
@@ -65,7 +62,10 @@ export default function TradeForm({ initial, onClose, onSaved }) {
       const body = computeTrade(t);
       const saved = initial?.id ? await api.updateTrade(initial.id, body) : await api.createTrade(body);
       onSaved(saved);
-    } catch (e2) { setErr(e2.message); }
+    } catch (e2) {
+      if (/free-daily-limit/i.test(e2.message || "")) { onLimit?.(); return; }
+      setErr(e2.message);
+    }
     finally { setBusy(false); }
   }
 
@@ -81,7 +81,14 @@ export default function TradeForm({ initial, onClose, onSaved }) {
           <h2>{initial?.id ? "Edit trade" : "Add trade"}</h2>
           <div className="hint">Log the trade with full context — your future self reviews this.</div>
         </div>
-        <button className="tf-x" type="button" onClick={onClose} title="Close">✕</button>
+        <div className="tf-head-actions">
+          {onPull && (
+            <button className="btn ghost" type="button" onClick={onPull} title="Pull fills from Delta">
+              ↧ Pull from Delta
+            </button>
+          )}
+          <button className="tf-x" type="button" onClick={onClose} title="Close">✕</button>
+        </div>
       </div>
 
       <div className="fld full" style={{ marginBottom: 18 }}>
@@ -139,9 +146,7 @@ export default function TradeForm({ initial, onClose, onSaved }) {
           </div>
         </div>
         <div className="fld"><label>Screenshots</label>
-          {isPro
-            ? <div className="dropzone">📎 Paste a screenshot (⌘V)</div>
-            : <div className="dropzone">🔒 Pro feature</div>}
+          <div className="dropzone">📎 Paste a screenshot (⌘V)</div>
           {images.length > 0 && (
             <div className="shots">
               {images.map((p, i) => (

@@ -56,22 +56,3 @@ def get_current_user(creds: HTTPAuthorizationCredentials = Depends(bearer)) -> d
     if not uid:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     return {"user_id": uid, "email": payload.get("email", "")}
-
-
-def get_pro_user(user: dict = Depends(get_current_user)) -> dict:
-    """Dependency that checks the user has an active Pro subscription."""
-    from .database import get_conn
-    with get_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT subscription_tier FROM user_profiles WHERE id = %s",
-                (user["user_id"],),
-            )
-            row = cur.fetchone()
-    tier = (row["subscription_tier"] if row else "free") or "free"
-    if tier != "pro":
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail="Pro subscription required",
-        )
-    return user

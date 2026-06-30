@@ -44,7 +44,7 @@ export default function Auth() {
     <div className="login">
       <div className="login-card2">
         <div className="login-left">
-          <div className="brand2">{BrandMark}<span className="brandtxt">TRADE<br />JOURNAL</span></div>
+          <div className="brand2">{BrandMark}<span className="brandtxt">TradeDesk</span></div>
           <h1>{mode === "login" ? "Login to your account" : "Create your account"}</h1>
           <div className="sub">{mode === "login" ? "Enter your password to continue." : "Start your private trading journal."}</div>
 
@@ -81,7 +81,7 @@ export default function Auth() {
         <div className="login-right">
           <div className="glowbg" /><div className="sphere" />
           <div className="right-content">
-            <div className="brand2">{BrandMark}<span className="brandtxt">TRADE<br />JOURNAL</span></div>
+            <div className="brand2">{BrandMark}<span className="brandtxt">TradeDesk</span></div>
             <h2>Review every trade,<br />sharpen your edge</h2>
             <p>Log setups, screenshots, and P&amp;L in one private journal built for serious traders.</p>
           </div>
