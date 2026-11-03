@@ -1,10 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/",
-      "destination": "/app/index.html"
-    },
-    {
       "source": "/images/:name",
       "destination": "https://tradedesk-nopw.onrender.com/j/images/:name"
     },
@@ -70,6 +66,13 @@
           "value": "no-cache"
         }
       ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/app",
+      "permanent": false
     }
   ]
 }
