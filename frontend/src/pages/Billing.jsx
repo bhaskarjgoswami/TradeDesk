@@ -1,23 +1,32 @@
 import { useAuth } from "../lib/AuthContext";
 import PlanCards from "../lib/PlanCards";
+import { Icon } from "../lib/ui";
 
 export default function Billing() {
   const { session, user, isPro, expiresAt } = useAuth();
   return (
-    <main className="billing-page">
-      <a className="billing-back" href="/app">← Back to journal</a>
-      <header className="billing-heading">
-        <div><h1>Plan &amp; billing</h1><p>Compare plans and manage your TradeDesk subscription.</p></div>
-        {session && <span className="pill">{isPro ? "Pro" : "Free"} plan</span>}
-      </header>
-      {session ? <>
-        <section className="billing-status" aria-label="Current subscription">
-          <div><strong>Your current plan: {isPro ? "Pro" : "Free"}</strong><p>{user?.email}</p></div>
-          <p>{isPro && expiresAt ? `Active until ${new Date(expiresAt).toLocaleDateString()}` : "Free includes up to 2 trades per day. Pro gives you unlimited trades."}</p>
+    <div className="billing-surface">
+      <main className="billing-page">
+        <nav className="billing-topbar" aria-label="Billing navigation">
+          <a className="billing-brand" href="/app"><span>{Icon.book}</span>TradeDesk</a>
+          <div className="billing-toplinks"><a href="/contact">Need a hand?</a><a className="billing-back" href="/app"><span aria-hidden="true">←</span> Back to journal</a></div>
+        </nav>
+        <header className="billing-heading">
+          <div className="billing-hero-copy"><div className="billing-eyebrow"><span /> PLAN &amp; BILLING</div><h1>Choose your next level.</h1><p>Simple plans for a more considered trading process.</p></div>
+          {session && <aside className="billing-membership" aria-label="Current subscription">
+            <div className="billing-membership-label">YOUR MEMBERSHIP <span className="billing-active">Current plan</span></div>
+            <div className="billing-membership-plan"><span className="billing-member-icon">{isPro ? Icon.bolt : Icon.book}</span><div><strong>TradeDesk {isPro ? "Pro" : "Free"}</strong><span>{isPro && expiresAt ? `Active until ${new Date(expiresAt).toLocaleDateString()}` : isPro ? "Unlimited daily trades" : "A thoughtful place to start"}</span></div></div>
+            <div className="billing-account">{user?.email}</div>
+          </aside>}
+        </header>
+        {session ? <section className="billing-plans" aria-label="Available plans"><PlanCards /></section> : <section className="billing-status"><div><strong>Your workspace is one sign-in away.</strong><p>Sign in to compare plans and manage your subscription.</p></div><a className="btn" href="/app">Sign in to TradeDesk <span aria-hidden="true">↗</span></a></section>}
+        <section className="billing-assurances" aria-label="Payment information">
+          <div><span className="billing-assurance-icon">{Icon.card}</span><span><strong>Secure by design</strong><small>Checkout powered by Razorpay</small></span></div>
+          <div><span className="billing-assurance-icon">{Icon.check}</span><span><strong>You stay in control</strong><small>One-time payment. No auto-renew.</small></span></div>
+          <div><span className="billing-assurance-icon">{Icon.folder}</span><span><strong>Your journal comes with you</strong><small>Keep your existing trades when upgrading</small></span></div>
         </section>
-        <PlanCards />
-      </> : <section className="billing-status"><div><strong>Sign in to manage your plan</strong><p>Use your TradeDesk account to view your subscription and upgrade.</p></div><a className="btn" href="/app">Sign in</a></section>}
-      <footer className="billing-footer">Payments are processed securely by Razorpay. <a href="/refunds">Refund policy</a> · <a href="/contact">Contact support</a></footer>
-    </main>
+        <footer className="billing-footer"><span>Built for the process. Designed for you.</span><div><a href="/terms">Terms</a><a href="/refunds">Refund policy</a><a href="/contact">Contact support <span aria-hidden="true">↗</span></a></div></footer>
+      </main>
+    </div>
   );
 }

@@ -24,7 +24,7 @@ function defaultCurrency() {
 }
 
 const FREE = {
-  name: "Free", tagline: "Start journaling", icon: "book",
+  name: "Free", tagline: "A clear foundation for your daily routine.", icon: "book",
   features: ["Up to 2 trades / day", "Daily journal & calendar", "Performance stats", "Delta Exchange fill import", "Screenshot attachments"],
 };
 // Keep in sync with what the backend actually gates (trades.py FREE_DAILY_LIMIT).
@@ -103,13 +103,13 @@ export default function PlanCards() {
 
   return (
     <>
-      {msg && <div className="ex-note" style={{ marginBottom: 14 }}>{msg}</div>}
+      {msg && <div className="ex-note" role="status" aria-live="polite" style={{ marginBottom: 14 }}>{msg}</div>}
 
       {!isPro && (
-        <div className="bill-bar">
-          <div className="bill-seg">
-            <button className={cycle === "monthly" ? "on" : ""} onClick={() => setCycle("monthly")}>Monthly</button>
-            <button className={cycle === "annual" ? "on" : ""} onClick={() => setCycle("annual")}>
+        <div className="bill-bar"><span className="bill-period-label">Choose your billing period</span>
+          <div className="bill-seg" role="group" aria-label="Billing period">
+            <button className={cycle === "monthly" ? "on" : ""} aria-pressed={cycle === "monthly"} disabled={busy} onClick={() => setCycle("monthly")}>Monthly</button>
+            <button className={cycle === "annual" ? "on" : ""} aria-pressed={cycle === "annual"} disabled={busy} onClick={() => setCycle("annual")}>
               Annual {currency === "USD" && <span className="bill-save">SAVE 16%</span>}
             </button>
           </div>
@@ -117,59 +117,40 @@ export default function PlanCards() {
       )}
 
       <div className="plan-grid">
-        {/* Free */}
-        <div className={"plan-card" + (!isPro ? " current" : "")}>
+        <article className={"plan-card" + (!isPro ? " current" : "")}>
           <div className="pc-top">
-            <span className="pc-ic">{Icon[FREE.icon]}</span>
-            <div className="pc-name">{FREE.name}</div>
-            <div className="pc-tag">{FREE.tagline}</div>
-            <div className="pc-price"><span className="pc-amt">{currency === "INR" ? "₹0" : "$0"}</span></div>
-            {!isPro
-              ? <button className="pc-btn" disabled>Current plan</button>
-              : <button className="pc-btn" disabled>Free</button>}
+            <span className="pc-plan-label">ESSENTIALS</span>
+            <h2 className="pc-name">{FREE.name}</h2>
+            <p className="pc-tag">A clear foundation for your daily routine.</p>
           </div>
           <div className="pc-divider" />
           <div className="pc-body">
-            <ul className="pc-feats">
-              {FREE.features.map((f) => (
-                <li key={f}><span className="pc-check">{Icon.check}</span>{f}</li>
-              ))}
-            </ul>
+            <div className="pc-feathead">Everyday essentials</div>
+            <ul className="pc-feats">{FREE.features.map((f) => <li key={f}><span className="pc-check" aria-hidden="true">{Icon.check}</span>{f}</li>)}</ul>
           </div>
-        </div>
-
-        {/* Pro */}
-        <div className={"plan-card featured" + (isPro ? " current" : "")}>
-          {!isPro && <span className="pc-pop">Popular</span>}
+          <div className="pc-bottom">
+            <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{currency === "INR" ? "₹0" : "$0"}</span><span className="pc-unit">/ month</span></div><button className="pc-btn" disabled>{!isPro ? "Current plan" : "Free plan"}</button></div>
+            <div className="pc-note">No payment needed</div>
+          </div>
+        </article>
+        <article className={"plan-card featured" + (isPro ? " current" : "")}>
           <div className="pc-top">
-            <span className="pc-ic">{Icon.chart}</span>
-            <div className="pc-name">Pro</div>
-            <div className="pc-tag">Sync, analyze, scale</div>
-            <div className="pc-price">
-              <span className="pc-amt">{price.amt}</span>
-              <span className="pc-unit">{price.unit[0]}<br />{price.unit[1]}</span>
-            </div>
-            {isPro ? (
-              <button className="pc-btn" disabled>Current plan</button>
-            ) : (
-              <button className="pc-btn primary" onClick={upgrade} disabled={busy}>
-                Get Pro — {price.amt}
-              </button>
-            )}
-            {isPro
-              ? expiresAt && <div className="pc-note">Active until {new Date(expiresAt).toLocaleDateString()}</div>
-              : <div className="pc-note">One-time payment · no auto-renew</div>}
+            <span className="pc-plan-label">UNLIMITED TRADES</span>
+            <h2 className="pc-name">Pro</h2>
+            <p className="pc-tag">Your full process. Room to grow.</p>
           </div>
           <div className="pc-divider" />
           <div className="pc-body">
             <div className="pc-feathead">Included in Pro</div>
-            <ul className="pc-feats">
-              {PRO_FEATURES.map((f) => (
-                <li key={f}><span className="pc-check">{Icon.check}</span>{f}</li>
-              ))}
-            </ul>
+            <ul className="pc-feats">{PRO_FEATURES.map((f) => <li key={f}><span className="pc-check" aria-hidden="true">{Icon.check}</span>{f}</li>)}</ul>
           </div>
-        </div>
+          <div className="pc-bottom">
+            <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{price.amt}</span><span className="pc-unit">/ {cycle === "monthly" ? "month" : "year"}</span></div>
+              {isPro ? <button className="pc-btn" disabled>Current plan</button> : <button className="pc-btn primary" onClick={upgrade} disabled={busy}>{busy ? "Opening checkout…" : <>Get Pro <span aria-hidden="true">→</span></>}</button>}
+            </div>
+            <div className="pc-note">{isPro && expiresAt ? `Active until ${new Date(expiresAt).toLocaleDateString()}` : "One-time payment · no auto-renew"}</div>
+          </div>
+        </article>
       </div>
     </>
   );
