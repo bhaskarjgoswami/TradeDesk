@@ -17,7 +17,7 @@ import httpx, hmac, hashlib
 from ..auth import get_current_user
 from ..ratelimit import limit
 from ..database import get_conn
-from ..billing import active_tier, extend, PLAN_DAYS
+from ..billing import extend, PLAN_DAYS, _tier
 from ..config import (
     RAZORPAY_KEY_ID,
     RAZORPAY_KEY_SECRET,
@@ -56,14 +56,14 @@ def _verify_webhook_sig(payload: bytes, signature: str) -> bool:
 @router.get("/status")
 def status(user=Depends(get_current_user)):
     uid = user["user_id"]
-    with get_conn() as conn:
-        tier = active_tier(conn, uid)
+    with get_conn(readonly=True) as conn:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT subscription_plan, subscription_expires_at FROM user_profiles WHERE id=%s",
+                "SELECT subscription_tier, subscription_plan, subscription_expires_at FROM user_profiles WHERE id=%s",
                 (uid,),
             )
             row = cur.fetchone()
+    tier = _tier(row)
     exp = row["subscription_expires_at"] if row else None
     return {
         "tier": tier,

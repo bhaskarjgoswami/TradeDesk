@@ -25,7 +25,23 @@ def active_tier(conn, uid: str) -> str:
             "SELECT subscription_tier, subscription_expires_at FROM user_profiles WHERE id=%s",
             (uid,),
         )
+        return _tier(cur.fetchone())
+
+
+def tier_and_day_count(conn, uid: str, day: str) -> tuple[str, int]:
+    """Active tier and the number of trades on `day`, in one round trip."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT p.subscription_tier, p.subscription_expires_at, "
+            "(SELECT COUNT(*) FROM trades WHERE user_id=%s AND date=%s) AS n "
+            "FROM (SELECT 1) one LEFT JOIN user_profiles p ON p.id=%s",
+            (uid, day, uid),
+        )
         row = cur.fetchone()
+    return _tier(row if row and row["subscription_tier"] is not None else None), row["n"]
+
+
+def _tier(row) -> str:
     if not row:
         return "free"
     tier = (row["subscription_tier"] or "free")

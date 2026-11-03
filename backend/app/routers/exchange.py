@@ -36,7 +36,7 @@ def _norm_exchange(name: str) -> str:
 def get_exchange(exchange: str = "delta", user=Depends(get_current_user)):
     ex = _norm_exchange(exchange)
     uid = user["user_id"]
-    with get_conn() as conn:
+    with get_conn(readonly=True) as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT delta_key, exchange_creds FROM user_profiles WHERE id=%s", (uid,))
             row = cur.fetchone()
@@ -151,7 +151,7 @@ def _cv(sym):
 @router.get("/delta/today")
 def delta_today(date: str | None = None, tz: int = 0, user=Depends(limit("delta", 6))):
     uid = user["user_id"]
-    with get_conn() as conn:
+    with get_conn(readonly=True) as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT delta_key, delta_secret FROM user_profiles WHERE id=%s", (uid,))
             row = cur.fetchone()

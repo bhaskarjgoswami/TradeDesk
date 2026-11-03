@@ -95,7 +95,7 @@ def test_delta_round_trips_have_stable_ids(monkeypatch):
     monkeypatch.setattr(exchange, "_cv", lambda s: 0.001)
 
     @contextlib.contextmanager
-    def conn():
+    def conn(**kw):
         yield FakeConn({"delta_key": "k", "delta_secret": "s"})
     monkeypatch.setattr(exchange, "get_conn", conn)
 
@@ -224,3 +224,10 @@ def test_page_limits_validated():
     assert client.get("/api/trades/page?limit=0").status_code == 422
     assert client.get("/api/trades/page?limit=501").status_code == 422
     assert client.get("/api/trades/page?offset=-1").status_code == 422
+
+
+def test_tier_and_day_count():
+    from app.billing import tier_and_day_count
+    future = datetime.now(timezone.utc) + timedelta(days=3)
+    assert tier_and_day_count(FakeConn({"subscription_tier": "pro", "subscription_expires_at": future, "n": 4}), "u", "d") == ("pro", 4)
+    assert tier_and_day_count(FakeConn({"subscription_tier": None, "subscription_expires_at": None, "n": 1}), "u", "d") == ("free", 1)

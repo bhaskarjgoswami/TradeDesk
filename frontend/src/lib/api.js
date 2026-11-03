@@ -11,11 +11,18 @@ async function authHeader() {
 
 async function request(method, path, body) {
   const headers = { "Content-Type": "application/json", ...(await authHeader()) };
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const send = () => fetch(`${BASE}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  let res;
+  try {
+    res = await send();
+  } catch (e) {
+    // A dropped connection (e.g. while the API redeploys) surfaces as a TypeError.
+    // Retry reads once; never writes, which could otherwise be applied twice.
+    if (method !== "GET") throw new Error("Network error, please check your connection and try again.");
+    await new Promise((r) => setTimeout(r, 800));
+    try { res = await send(); }
+    catch { throw new Error("Can't reach the server right now. Please try again in a moment."); }
+  }
   if (!res.ok) {
     let detail = `HTTP ${res.status}`;
     try {

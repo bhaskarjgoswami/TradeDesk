@@ -19,7 +19,7 @@ def _vals(body: PlaybookIn) -> list:
 
 @router.get("")
 def list_playbooks(user=Depends(get_current_user)):
-    with get_conn() as conn:
+    with get_conn(readonly=True) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """

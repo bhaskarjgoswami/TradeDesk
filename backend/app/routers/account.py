@@ -20,7 +20,7 @@ _PROFILE_COLS = "email, subscription_tier, subscription_plan, subscription_expir
 @router.get("/export")
 def export_account(user=Depends(limit("export", 5))):
     uid = user["user_id"]
-    with get_conn() as conn:
+    with get_conn(readonly=True) as conn:
         with conn.cursor() as cur:
             cur.execute(f"SELECT {_PROFILE_COLS} FROM user_profiles WHERE id=%s", (uid,))
             profile = cur.fetchone()

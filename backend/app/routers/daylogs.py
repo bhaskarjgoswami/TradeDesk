@@ -13,7 +13,7 @@ DAY_FIELDS = ["market", "watchlist", "mistakes", "did_great", "reinforcement", "
 @router.get("/daylogs")
 def list_daylogs(user=Depends(get_current_user)):
     uid = user["user_id"]
-    with get_conn() as conn:
+    with get_conn(readonly=True) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
@@ -45,7 +45,7 @@ def list_daylogs(user=Depends(get_current_user)):
 @router.get("/daylog")
 def get_daylog(date: str, user=Depends(get_current_user)):
     uid = user["user_id"]
-    with get_conn() as conn:
+    with get_conn(readonly=True) as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM day_logs WHERE user_id=%s AND date=%s", (uid, date))
             row = cur.fetchone()

@@ -27,7 +27,7 @@ def _summary(rows) -> dict:
 @router.get("/stats")
 def stats(user=Depends(get_current_user)):
     uid = user["user_id"]
-    with get_conn() as conn:
+    with get_conn(readonly=True) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT pnl, fee, r_multiple FROM trades WHERE user_id=%s ORDER BY date, id", (uid,)

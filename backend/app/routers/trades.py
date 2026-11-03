@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
 from ..auth import get_current_user
 from ..database import get_conn
-from ..billing import active_tier
+from ..billing import active_tier, tier_and_day_count
 from ..ratelimit import limit
 from .playbooks import assert_owns_playbook
 from ..models import TradeIn, ImageUploadIn, ImageUrlsIn, ImportIn, MISTAKES, EMOTIONS
@@ -82,7 +82,7 @@ def list_trades(
 ):
     """All matching trades (full rows). Used for exports and date-bounded views."""
     where, args = _filters(user["user_id"], symbol, setup, outcome, from_date, to_date, search)
-    with get_conn() as conn:
+    with get_conn(readonly=True) as conn:
         with conn.cursor() as cur:
             cur.execute(f"SELECT * FROM trades WHERE {where} ORDER BY date DESC, id DESC", args)
             return cur.fetchall()
@@ -97,21 +97,29 @@ def page_trades(
 ):
     """One page of trades for the list view, newest first, with the total count."""
     where, args = _filters(user["user_id"], None, None, None, None, None, search)
-    with get_conn() as conn:
+    with get_conn(readonly=True) as conn:
         with conn.cursor() as cur:
-            cur.execute(f"SELECT COUNT(*) AS n FROM trades WHERE {where}", args)
-            total = cur.fetchone()["n"]
+            # one round trip: the window count rides along with the page rows
             cur.execute(
-                f"SELECT * FROM trades WHERE {where} ORDER BY date DESC, id DESC LIMIT %s OFFSET %s",
+                f"SELECT *, COUNT(*) OVER() AS _total FROM trades WHERE {where} "
+                "ORDER BY date DESC, id DESC LIMIT %s OFFSET %s",
                 args + [limit, offset],
             )
-            return {"rows": cur.fetchall(), "total": total}
+            rows = cur.fetchall()
+            if rows:
+                total = rows[0]["_total"]
+            else:  # past the end (or no matches): count separately
+                cur.execute(f"SELECT COUNT(*) AS n FROM trades WHERE {where}", args)
+                total = cur.fetchone()["n"]
+            for r in rows:
+                del r["_total"]
+            return {"rows": rows, "total": total}
 
 
 @router.get("/analytics")
 def analytics_rows(user=Depends(get_current_user)):
     """Slim rows for Performance: only the fields the breakdowns use (no notes/images)."""
-    with get_conn() as conn:
+    with get_conn(readonly=True) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT id, date, symbol, direction, setup, pnl, fee, r_multiple, review, playbook_id "
@@ -137,9 +145,9 @@ def create_trade(body: TradeIn, user=Depends(get_current_user)):
 
         assert_owns_playbook(conn, user["user_id"], body.playbook_id)
         # free tier gate (expiry-aware: lapsed Pro counts as free)
-        tier = active_tier(conn, user["user_id"])
         day = body.date or time.strftime("%Y-%m-%d")
-        if tier != "pro" and _day_trade_count(conn, user["user_id"], day) >= FREE_DAILY_LIMIT:
+        tier, day_count = tier_and_day_count(conn, user["user_id"], day)
+        if tier != "pro" and day_count >= FREE_DAILY_LIMIT:
             raise HTTPException(402, "free-daily-limit")
 
         cols = TRADE_FIELDS + ["user_id", "created_at"]
