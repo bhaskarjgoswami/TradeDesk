@@ -14,6 +14,7 @@ const Performance = lazy(() => import("./pages/Performance"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Playbook = lazy(() => import("./pages/Playbook"));
 const Landing = lazy(() => import("./pages/Landing"));
+const Billing = lazy(() => import("./pages/Billing"));
 const Legal = lazy(() => import("./pages/Legal"));
 const LEGAL_PAGES = ["terms", "privacy", "refunds", "contact"];
 
@@ -201,6 +202,7 @@ export default function App() {
   if (loading) {
     return <div className="login"><div style={{ color: "#7e7e82" }}>Loading…</div></div>;
   }
+  if (loc.pathname === "/billing") return <ErrorBoundary><Suspense fallback={<PageLoading />}><Billing /></Suspense></ErrorBoundary>;
   if (!session) {
     return (
       <ErrorBoundary>

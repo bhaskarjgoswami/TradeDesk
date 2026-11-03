@@ -558,3 +558,5 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 .preview-vercel{background:#fff;border-radius:3px}.preview-vercel:before{background:#f6f6f6}.preview-vercel i,.preview-vercel i:nth-child(3){border-radius:2px;background:#ededed}
 .preview-mercury{background:#f0effa}.preview-mercury:before{background:#252532;border-color:#252532}.preview-mercury:after{background:#a99cf1;box-shadow:0 12px 0 #5c5b70,0 24px 0 #5c5b70}.preview-mercury i{background:#d6d2ed}.preview-mercury i:nth-child(3){background:#fff;border-radius:7px}
 @media(max-width:700px){.appearance-grid{grid-template-columns:1fr;max-width:480px}.appearance-card{padding:18px}}
+
+.sidebar a.navitem{text-decoration:none}

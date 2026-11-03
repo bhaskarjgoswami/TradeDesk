@@ -116,7 +116,7 @@ function decorate() {
     item.dataset.tdBilling = "1";
     item.textContent = "Plan & billing";
     item.style.cursor = "pointer";
-    item.addEventListener("click", () => { location.href = "/settings"; });
+    item.addEventListener("click", () => { location.href = "/billing"; });
     menu.insertBefore(item, menu.lastElementChild);
   }
 }
