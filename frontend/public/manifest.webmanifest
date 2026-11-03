@@ -1,0 +1,15 @@
+{
+  "name": "TradeDesk - Trading Journal",
+  "short_name": "TradeDesk",
+  "description": "Private trading journal: log trades, review your edge.",
+  "start_url": "/journal",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f3f1fb",
+  "theme_color": "#6c5ce7",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

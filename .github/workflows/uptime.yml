@@ -1,0 +1,24 @@
+name: Uptime
+
+# Every 10 minutes: confirm the API is healthy (a failed run emails the repo
+# owner) and keep Render's free instance from idling into a ~50s cold start.
+# GitHub may delay scheduled runs by a few minutes; that is fine here.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: API health
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS -m 30 https://tradedesk-nopw.onrender.com/health; then echo; echo "API up"; exit 0; fi
+            echo "attempt $i failed, retrying (cold start?)"; sleep 15
+          done
+          echo "::error::TradeDesk API did not answer /health for ~4 minutes"; exit 1
+      - name: Web app
+        run: curl -fsS -m 30 -o /dev/null -w "web %{http_code}\n" https://trade-desk-dl66.vercel.app/

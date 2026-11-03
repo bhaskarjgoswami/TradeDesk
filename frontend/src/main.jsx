@@ -10,6 +10,11 @@ import "./styles.css";
 const saved = localStorage.getItem("td_theme");
 if (saved) document.documentElement.setAttribute("data-theme", saved);
 
+// Installable app + offline shell (production only; dev uses Vite's HMR).
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+}
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
