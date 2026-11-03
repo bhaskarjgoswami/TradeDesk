@@ -4,7 +4,7 @@ from ..auth import get_current_user
 from ..database import get_conn
 from ..billing import active_tier
 from ..models import TradeIn, ImageUploadIn
-import time, base64, secrets, os
+import time, base64, secrets
 
 router = APIRouter(prefix="/api/trades", tags=["trades"])
 

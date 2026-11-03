@@ -6,11 +6,10 @@ A full-stack trade journaling SaaS for serious traders — web + mobile, powered
 
 ```
 tradedesk/
-├── backend/        FastAPI — REST API, auth, Delta integration, Stripe
+├── backend/        FastAPI — REST API, auth, Delta integration, Razorpay
 ├── frontend/       React + Vite — web app
 ├── mobile/         React Native (Expo) — iOS + Android
 ├── supabase/       DB schema, migrations, RLS policies
-└── legacy/         Original standalone Python app (reference only)
 ```
 
 ## Stack
@@ -23,15 +22,15 @@ tradedesk/
 | Storage | Supabase Storage (trade screenshots) |
 | Web | React + Vite |
 | Mobile | React Native (Expo) |
-| Payments | Stripe |
-| Hosting | Railway (backend) · Vercel (frontend) |
+| Payments | Razorpay |
+| Hosting | Render (backend) · Vercel (frontend) |
 
 ## Subscription Tiers
 
 | Plan | Price | Limits |
 |---|---|---|
-| Free | $0 | 50 trades/month, no Delta sync, no mobile |
-| Pro | $9/mo | Unlimited trades, Delta sync, mobile app, screenshot uploads |
+| Free | $0 | 2 trades/day, Delta sync, screenshot uploads |
+| Pro | ₹199/mo (India) · $9/mo (intl) | Unlimited trades |
 
 ## Local dev (backend)
 
@@ -39,7 +38,7 @@ tradedesk/
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # fill in Supabase + Stripe keys
+cp .env.example .env   # fill in Supabase + Razorpay keys
 uvicorn app.main:app --reload --port 8787
 ```
 
@@ -47,7 +46,6 @@ uvicorn app.main:app --reload --port 8787
 
 See `backend/.env.example` for the full list.
 
-## Legacy app
+## Local journal
 
-The original local-only `app.py` is in `legacy/` — zero dependencies,
-still works standalone on `python3 legacy/app.py`.
+The local-only Python + SQLite journal lives at the repo root. See `LOCAL-JOURNAL.md`.

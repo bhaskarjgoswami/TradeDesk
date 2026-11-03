@@ -28,7 +28,6 @@ sessions.json
 *.sqlite3
 
 # ── Trade images (user uploads, not source code) ─────────
-legacy/images/
 backend/images/
 
 # ── Node / frontend ──────────────────────────────────────
@@ -55,10 +54,7 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# ── Root-level legacy launcher (kept local; canonical copy lives in legacy/) ──
-/app.py
-/index.html
-/page.html
-/Start Trade Journal.command
-/.env.example
+# ── Local journal data (user uploads + DB snapshots) ──
+/images/
+/backups/
 .vercel
