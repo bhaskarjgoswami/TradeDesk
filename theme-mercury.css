@@ -31,34 +31,34 @@
   --shadow-pop:0 0 0 1px #2c2c3b,0 16px 40px -12px rgba(0,0,0,.6);
 }
 
-/* ---------- type: light weights, 500 ceiling ---------- */
+/* ---------- type: light weights,500 ceiling ---------- */
 body,button,input,select,textarea{font-family:var(--font-ui)}
 body{font-size:14px;font-weight:400;letter-spacing:0;color:var(--txt)}
-.ws-page h1,.cal-title h1,.tf-title h1,.td-head h1,.pb-head h1{font-family:var(--font-display);font-size:30px;font-weight:480;letter-spacing:.3px;line-height:1.2;color:var(--txt)}
-.ws-page h2,.cal-bottom h2,.pb-main>h2,.tf-grid h2{font-family:var(--font-display);font-size:18px;font-weight:480;letter-spacing:.2px;line-height:1.3}
+.ws-page h1,.cal-title h1,.tf-title h1,.td-head h1{font-family:var(--font-display);font-size:30px;font-weight:480;letter-spacing:.3px;line-height:1.2;color:var(--txt)}
+.ws-page h2,.cal-bottom h2,.tf-grid h2{font-family:var(--font-display);font-size:18px;font-weight:480;letter-spacing:.2px;line-height:1.3}
 .cal-phead h2,.cal-ptrades-head h2{font-size:16px!important;font-weight:480}
 .ws-page h3,.tf-left h3,.td-left h3{font-size:13px;font-weight:500;color:var(--ink-secondary);letter-spacing:.26px}
 [data-theme="dark"] .ws-page h3,[data-theme="dark"] .tf-left h3,[data-theme="dark"] .td-left h3{color:var(--periwinkle)}
 .ws-subtitle,.cal-title p,.tf-title p{font-size:14px;font-weight:360;line-height:1.4;color:var(--mut)}
-.ws-eyebrow,.cal-plabel,.pb-label,.pb-side-head,.cal-pstats span,.td-trio span{font-size:12px;font-weight:500;letter-spacing:.28px;text-transform:none;color:var(--ink-secondary)}
-[data-theme="dark"] .ws-eyebrow,[data-theme="dark"] .cal-plabel,[data-theme="dark"] .pb-label,[data-theme="dark"] .pb-side-head,[data-theme="dark"] .cal-pstats span,[data-theme="dark"] .td-trio span{color:var(--periwinkle)}
+.ws-eyebrow,.cal-plabel,.cal-pstats span,.td-trio span{font-size:12px;font-weight:500;letter-spacing:.28px;text-transform:none;color:var(--ink-secondary)}
+[data-theme="dark"] .ws-eyebrow,[data-theme="dark"] .cal-plabel,[data-theme="dark"] .cal-pstats span,[data-theme="dark"] .td-trio span{color:var(--periwinkle)}
 .ws-kpi .ws-value,.cal-pnet{font-family:var(--font-display);font-weight:480;letter-spacing:0}
 .cal-pstats b,.td-trio b{font-weight:480}
 .num,.cal-val,.cal-ptable td,.td-row b,.cal-stat b,.cal-pnet{font-variant-numeric:tabular-nums}
 .navitem,.pb-menu button,.tf-field,.td-row b,.cal-stat b,.cal-prow b{font-weight:420}
-.btn,.ws-page .btn,.cal-seg button,.cal-this,.navitem.on,.pb-item-main b,.pb-card-title b,.cal-count,.cal-val{font-weight:480}
+.btn,.ws-page .btn,.cal-seg button,.cal-this,.navitem.on,.cal-count,.cal-val{font-weight:480}
 .tb-brand{font-family:var(--font-display);font-weight:480!important;letter-spacing:.2px;font-size:16px!important}
 
 /* ---------- surfaces: tonal cards on a soft canvas ---------- */
 .app{background:var(--page)}
 .content-card,.content-card .main,.content-card .pane{background:var(--page)}
 .content-card{border:0;border-radius:0}
-.ws-card,.cal-card,.cal-panel,.settings-card,.panel,.pb-side,.pb-main,.tf-left,.td-left,.ws-kpi{background:var(--panel);border:0!important;border-radius:16px;box-shadow:none!important}
+.ws-card,.cal-card,.cal-panel,.settings-card,.panel,.tf-left,.td-left,.ws-kpi{background:var(--panel);border:0!important;border-radius:16px;box-shadow:none!important}
 .pb-menu,.routine-panel,.ws-dialog{background:var(--panel);border:0;border-radius:12px;box-shadow:var(--shadow-pop)!important}
 .routine-panel.popup{border-radius:16px}
 .td-row,.cal-prow,.cal-stat,.cal-ptable td,.cal-ptable th{border-color:var(--line)}
 
-/* ---------- calendar: lavender-grey day cells, no outlines ---------- */
+/* ---------- calendar: lavender-grey day cells,no outlines ---------- */
 .cal-day,.cal-day:hover{box-shadow:none;border-radius:12px}
 .cal-day{background:var(--cell)}.cal-day:hover{background:var(--cell-hover)}
 .cal-day.out,.cal-day.out:hover{background:transparent}
@@ -80,7 +80,7 @@ body{font-size:14px;font-weight:400;letter-spacing:0;color:var(--txt)}
 #routineOpen:hover{background:rgba(175,178,206,.3)}
 .mobilebar{background:var(--night);color:var(--on-dark);border-bottom:0}.mobilebar .mbrand{color:var(--on-dark)}
 
-/* ---------- sidebar: app-shell rows, primary indicator ---------- */
+/* ---------- sidebar: app-shell rows,primary indicator ---------- */
 .sidebar{background:var(--sidebar);border-right:0}
 .navitem{border-radius:8px;color:var(--ink-secondary)}
 [data-theme="dark"] .navitem{color:var(--mut)}
@@ -90,20 +90,20 @@ body{font-size:14px;font-weight:400;letter-spacing:0;color:var(--txt)}
 [data-theme="dark"] .navitem.on,[data-theme="dark"] .navitem.on .ic{color:var(--periwinkle)!important}
 .app.collapsed .navitem.on::before{background:var(--primary)}
 
-/* ---------- buttons: one solid indigo pill, translucent pills elsewhere ---------- */
+/* ---------- buttons: one solid indigo pill,translucent pills elsewhere ---------- */
 .btn,.ws-page .btn,.logday{border-radius:40px;height:40px;padding:0 20px;font-size:14px;letter-spacing:.07px;box-shadow:none;display:inline-flex;align-items:center;justify-content:center;transition:background-color .15s ease}
 .btn:not(.ghost),.logday{background:var(--primary)!important;color:var(--on-primary);border:0}
 .btn:not(.ghost):hover,.logday:hover{background:#4558d9!important}
 .btn:disabled:not(.ghost){background:var(--grey-tint)!important;color:var(--dim);opacity:1}
 .btn.ghost{background:var(--tint);color:var(--txt);border:0}
 .btn.ghost:hover{background:var(--tint-hover)}
-.cal-arrow,.cal-this,.pb-icon{border-radius:9999px;border:0;background:var(--grey-tint);color:var(--txt)}
-.cal-arrow:hover,.cal-this:hover,.pb-icon:hover{background:var(--tint)}
+.cal-arrow,.cal-this{border-radius:9999px;border:0;background:var(--grey-tint);color:var(--txt)}
+.cal-arrow:hover,.cal-this:hover{background:var(--tint)}
 .ws-link,.tf-lightbox-bar a,.td-back{color:var(--link);font-weight:480}
 .tf-delete{color:var(--red);font-weight:480}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--primary)!important;outline-offset:2px}
 
-/* ---------- segmented toggles: tinted track, white selected pill ---------- */
+/* ---------- segmented toggles: tinted track,white selected pill ---------- */
 .cal-seg{background:var(--grey-tint);border:0;border-radius:40px;padding:3px;gap:2px}
 .cal-seg button{border-radius:40px;color:var(--ink-secondary);height:30px;padding:0 14px;width:auto}
 [data-theme="dark"] .cal-seg button{color:var(--mut)}
@@ -114,8 +114,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* ---------- badges ---------- */
 .cal-today{background:var(--primary);color:#fff;border-radius:40px;font-weight:480;font-size:11px;padding:2px 9px}
-.pb-active{background:var(--tint);color:var(--primary);border-radius:40px;font-weight:480;font-size:11px;padding:2px 9px}
-[data-theme="dark"] .pb-active{color:var(--periwinkle)}
 .ws-tag{background:var(--grey-tint);color:var(--ink-secondary);border-radius:40px;font-weight:480;font-size:11px;padding:2px 9px}
 [data-theme="dark"] .ws-tag{color:var(--fog)}
 .cal-missing{background:var(--primary)}
@@ -130,19 +128,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .tf-chart{border-radius:16px;border:1px dashed var(--fog);background:var(--surface-tint)}
 [data-theme="dark"] .tf-chart{background:#252533;border-color:#3a3a4e}
 .tf-check input,.tf-field .tf-check input{box-shadow:none!important;min-height:0!important;height:auto;padding:0!important;border:0;accent-color:var(--primary)}
-
-/* ---------- playbook: lavender feature cards ---------- */
-.pb-card{background:var(--panel);border:0!important;border-radius:16px;padding:14px;box-shadow:none}
-.pb-card:hover,.pb-card:focus-visible,.pb-card.flash{background:var(--surface-tint);box-shadow:0 0 0 2px var(--tint)}
-.pb-card-body{border:0;border-radius:12px;background:var(--lavender)}
-[data-theme="dark"] .pb-card-body{background:#252533}
-.pb-card-body::after{background:linear-gradient(transparent,var(--lavender))}
-[data-theme="dark"] .pb-card-body::after{background:linear-gradient(transparent,#252533)}
-.pb-shot{background:var(--surface);border:0;border-radius:8px}
-[data-theme="dark"] .pb-shot{background:var(--night-raised)}
-.pb-steps li::before{background:var(--primary);color:#fff}
-.pb-criteria li span{border-color:var(--ink-secondary);border-radius:4px}
-.pb-dot,.pb-dot.preset{background:var(--periwinkle)!important}
 .pb-item{border-radius:8px}.pb-item:hover{background:var(--grey-tint)}
 
 /* ---------- data accents ---------- */

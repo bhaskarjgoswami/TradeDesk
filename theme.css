@@ -35,33 +35,33 @@
   --shadow-pop:0 0 0 1px #2e2e2e,0 16px 32px -8px rgba(0,0,0,.7);
 }
 
-/* ---------- type: Geist 400/500/600, tight tracking, mono for technical labels ---------- */
+/* ---------- type: Geist 400/500/600,tight tracking,mono for technical labels ---------- */
 body,button,input,select,textarea{font-family:var(--font-sans)}
 body{font-size:14px;letter-spacing:-.28px;color:var(--txt)}
-.ws-page h1,.cal-title h1,.tf-title h1,.td-head h1,.pb-head h1{font-size:32px;font-weight:600;letter-spacing:-1.28px;line-height:40px;color:var(--txt)}
-.ws-page h2,.cal-bottom h2,.pb-main>h2,.tf-grid h2{font-size:16px;font-weight:600;letter-spacing:-.32px;line-height:24px}
+.ws-page h1,.cal-title h1,.tf-title h1,.td-head h1{font-size:32px;font-weight:600;letter-spacing:-1.28px;line-height:40px;color:var(--txt)}
+.ws-page h2,.cal-bottom h2,.tf-grid h2{font-size:16px;font-weight:600;letter-spacing:-.32px;line-height:24px}
 .cal-phead h2,.cal-ptrades-head h2{font-size:15px!important;font-weight:600;letter-spacing:-.3px}
 .ws-page h3,.tf-left h3,.td-left h3{font-size:13px;font-weight:500;color:var(--body);letter-spacing:-.13px}
 .ws-subtitle,.cal-title p,.tf-title p{font-size:14px;line-height:20px;color:var(--body)}
-/* eyebrow / stat labels are technical captions: Geist Mono, sentence case, no all-caps */
-.ws-eyebrow,.cal-plabel,.pb-label,.pb-side-head,.cal-pstats span,.td-trio span{font-family:var(--font-mono);font-size:12px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--mut)}
+/* eyebrow / stat labels are technical captions: Geist Mono,sentence case,no all-caps */
+.ws-eyebrow,.cal-plabel,.cal-pstats span,.td-trio span{font-family:var(--font-mono);font-size:12px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--mut)}
 .ws-kpi .ws-value,.cal-pnet{font-weight:600;letter-spacing:-1.28px}
 .num,.cal-val,.cal-ptable td.num,.td-row b,.cal-stat b,.cal-pnet{font-variant-numeric:tabular-nums}
 .cal-num,.cal-ptable td.num,.cal-hist-y,.cal-hist-x{font-family:var(--font-mono);letter-spacing:0}
 .navitem,.pb-menu button,.tf-field{font-weight:400}
-.btn,.ws-page .btn,.cal-seg button,.cal-this,.navitem.on,.pb-item-main b,.pb-card-title b,.cal-count{font-weight:500}
+.btn,.ws-page .btn,.cal-seg button,.cal-this,.navitem.on,.cal-count{font-weight:500}
 .tb-brand{font-weight:600!important;letter-spacing:-.4px;font-size:15px!important}
 
-/* ---------- surfaces: soft canvas, white borderless cards with stacked shadow ---------- */
+/* ---------- surfaces: soft canvas,white borderless cards with stacked shadow ---------- */
 .app{background:var(--page)}
 .content-card,.content-card .main,.content-card .pane{background:var(--page)}
 .content-card{border:0;border-radius:0}
-.ws-card,.cal-card,.cal-panel,.settings-card,.panel,.pb-side,.pb-main,.tf-left,.td-left,.ws-kpi{background:var(--panel);border:0!important;border-radius:12px;box-shadow:var(--shadow-card)!important}
+.ws-card,.cal-card,.cal-panel,.settings-card,.panel,.tf-left,.td-left,.ws-kpi{background:var(--panel);border:0!important;border-radius:12px;box-shadow:var(--shadow-card)!important}
 .pb-menu,.routine-panel,.ws-dialog{background:var(--panel);border:0;border-radius:8px;box-shadow:var(--shadow-pop)!important}
 .routine-panel.popup{border-radius:12px}
 .td-row,.cal-prow,.cal-stat,.cal-ptable td,.cal-ptable th{border-color:var(--hairline)}
 
-/* ---------- calendar: grey-filled day cells, no outlines ---------- */
+/* ---------- calendar: grey-filled day cells,no outlines ---------- */
 .cal-day,.cal-day:hover{box-shadow:none;border-radius:8px}
 .cal-day{background:var(--cell)}.cal-day:hover{background:var(--cell-hover)}
 .cal-day.out,.cal-day.out:hover{background:transparent}
@@ -89,7 +89,7 @@ body{font-size:14px;letter-spacing:-.28px;color:var(--txt)}
 .navitem.on .ic{color:var(--txt)!important}
 .app.collapsed .navitem.on::before{background:var(--ink)}
 
-/* ---------- buttons: app scale, 6px radius ---------- */
+/* ---------- buttons: app scale,6px radius ---------- */
 .btn,.ws-page .btn,.logday{border-radius:6px;height:36px;padding:0 14px;font-size:14px;line-height:20px;letter-spacing:-.28px;box-shadow:none;display:inline-flex;align-items:center;justify-content:center;transition:background-color .15s ease,box-shadow .15s ease}
 .btn:not(.ghost),.logday{background:var(--primary)!important;color:var(--on-primary);border:0}
 .btn:not(.ghost):hover,.logday:hover{background:#383838!important}
@@ -97,14 +97,14 @@ body{font-size:14px;letter-spacing:-.28px;color:var(--txt)}
 .btn:disabled:not(.ghost){background:var(--canvas-soft-2)!important;color:var(--dim);opacity:1}
 .btn.ghost{background:var(--canvas);color:var(--txt);border:0;box-shadow:0 0 0 1px var(--hairline)}
 .btn.ghost:hover{background:var(--canvas-soft-2)}
-.cal-arrow,.cal-this,.pb-icon{border-radius:6px;border:0;box-shadow:0 0 0 1px var(--hairline);background:var(--canvas);color:var(--txt)}
-.cal-arrow:hover,.cal-this:hover,.pb-icon:hover{background:var(--canvas-soft-2)}
+.cal-arrow,.cal-this{border-radius:6px;border:0;box-shadow:0 0 0 1px var(--hairline);background:var(--canvas);color:var(--txt)}
+.cal-arrow:hover,.cal-this:hover{background:var(--canvas-soft-2)}
 .ws-link,.tf-lightbox-bar a,.td-back{color:var(--link);font-weight:500}
 .tf-delete{color:var(--red);font-weight:500}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--link)!important;outline-offset:2px}
 ::selection{background:#171717;color:#f2f2f2}
 
-/* ---------- tabs: ghost pills, selected = ink ---------- */
+/* ---------- tabs: ghost pills,selected = ink ---------- */
 .cal-seg{background:var(--canvas-soft-2);border:0;border-radius:6px;padding:2px;gap:2px}
 .cal-seg button{border-radius:4px;color:var(--body);height:28px;padding:0 12px;width:auto}
 .cal-seg button+button{border-left:0}
@@ -114,12 +114,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* ---------- badges ---------- */
 .cal-today{background:var(--primary);color:var(--on-primary);border-radius:9999px;font-weight:500;font-size:12px;padding:1px 8px}
-.pb-active{background:var(--canvas-soft-2);color:var(--body);border-radius:9999px;font-weight:500;font-size:12px;padding:1px 8px}
 .ws-tag{background:var(--canvas-soft-2);color:var(--body);border-radius:9999px;font-weight:500;font-size:12px;padding:1px 8px}
 .ws-tag.amber{background:var(--missing-bg);color:var(--missing-txt)}
 .cal-missing{background:#f5a623}
 
-/* ---------- inputs: 40px, 6px radius ---------- */
+/* ---------- inputs: 40px,6px radius ---------- */
 .tf-field input,.tf-field select,.tf-field textarea,.ws-field input,.ws-field select,.ws-field textarea,.loop-date{background:var(--canvas);border:0;box-shadow:0 0 0 1px var(--hairline);border-radius:6px;min-height:40px;padding:0 12px;font-size:14px;color:var(--txt)}
 .tf-field textarea,.ws-field textarea{padding:10px 12px}
 .tf-field input:hover,.tf-field select:hover,.tf-field textarea:hover{box-shadow:0 0 0 1px var(--hairline-strong)}
@@ -127,18 +126,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 [data-theme="dark"] .tf-field input:focus,[data-theme="dark"] .tf-field select:focus,[data-theme="dark"] .tf-field textarea:focus{box-shadow:0 0 0 1px var(--hairline-strong),0 0 0 4px rgba(255,255,255,.08)}
 .cal-pfilter input,.cal-note{background:var(--canvas);border:0;box-shadow:0 0 0 1px var(--hairline);border-radius:6px}
 .tf-chart{border-radius:8px;border:1px dashed var(--hairline-strong);background:var(--canvas-soft)}
-
-/* ---------- playbook ---------- */
-.pb-card{background:var(--panel);border:0!important;border-radius:12px;padding:14px;box-shadow:0 0 0 1px var(--hairline)}
-.pb-card:hover,.pb-card:focus-visible,.pb-card.flash{box-shadow:0 0 0 1px var(--hairline-strong),0 8px 16px -8px rgba(0,0,0,.1)}
-.pb-card-body{border:0;border-radius:8px;background:var(--canvas-soft)}
-[data-theme="dark"] .pb-card-body{background:#161616}
-.pb-card-body::after{background:linear-gradient(transparent,var(--canvas-soft))}
-[data-theme="dark"] .pb-card-body::after{background:linear-gradient(transparent,#161616)}
-.pb-shot{background:var(--canvas);border:0;box-shadow:0 0 0 1px var(--hairline);border-radius:6px}
-.pb-steps li::before{background:var(--primary);color:var(--on-primary)}
-.pb-criteria li span{border-color:var(--hairline-strong);border-radius:4px}
-.pb-dot,.pb-dot.preset{background:var(--hairline-strong)!important}
 .pb-item{border-radius:6px}.pb-item:hover{background:var(--canvas-soft-2)}
 
 /* ---------- data accents ---------- */

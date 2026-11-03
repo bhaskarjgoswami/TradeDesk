@@ -69,6 +69,19 @@ def string_list(value,label,limit=30):
     return clean
 
 
+def plan_limits(value):
+    # Optional per-plan risk controls and trading window; blank fields are stored as None.
+    value=value if isinstance(value,dict) else {}
+    opt=lambda key,label,maximum: None if value.get(key) in (None,'') else number(value.get(key),label,0,maximum)
+    clock=lambda key,label: None if not value.get(key) else (text(value.get(key),label,5) if re.fullmatch(r'([01]\d|2[0-3]):[0-5]\d',str(value.get(key))) else (_ for _ in ()).throw(ValueError(label+' must use HH:MM')))
+    clean=dict(maxTrades=opt('maxTrades','Max trades per day',1000),maxLoss=opt('maxLoss','Max daily loss',1e12),
+               maxProfit=opt('maxProfit','Max daily profit',1e12),riskPct=opt('riskPct','Risk per trade',100),
+               start=clock('start','Window start'),end=clock('end','Window end'),tz=text(value.get('tz') or 'UTC','Timezone',40))
+    if clean['maxTrades'] is not None:
+        clean['maxTrades']=int(clean['maxTrades'])
+    return clean
+
+
 def image_list(value):
     if not isinstance(value,list) or len(value)>8 or any(not isinstance(v,str) or not re.fullmatch(r'images/[a-zA-Z0-9_.-]+\.(png|jpg|jpeg|gif|webp)',v) for v in value):
         raise ValueError('Use up to eight uploaded reference charts')
@@ -99,7 +112,7 @@ def validate_item(data):
                    notes=string_list(body.get('notes',[]),'Trading notes',25),
                    setupImages=image_list(body.get('setupImages',[])),entryImages=image_list(body.get('entryImages',[])),
                    description=text(body.get('description',''),'Description',2000),active=body.get('active',True) is True,
-                   primary=body.get('primary') is True)
+                   primary=body.get('primary') is True,limits=plan_limits(body.get('limits')))
         if not clean['criteria']:
             raise ValueError('Add at least one entry criterion')
     elif kind=='event':
