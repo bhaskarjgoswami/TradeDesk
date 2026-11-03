@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import FRONTEND_URL
 from .routers import trades, stats, daylogs, exchange, subscription, account, playbooks
+from .journal.router import router as journal_router
 
 if os.environ.get("SENTRY_DSN"):
     import sentry_sdk
@@ -44,6 +45,7 @@ app.include_router(exchange.router)
 app.include_router(subscription.router)
 app.include_router(account.router)
 app.include_router(playbooks.router)
+app.include_router(journal_router)
 
 
 @app.get("/health")

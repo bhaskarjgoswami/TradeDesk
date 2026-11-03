@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test src/lib/*.test.js"
+    "test": "node --test src/lib/*.test.js",
+    "sync:journal": "node scripts/sync-journal-ui.mjs",
+    "check:journal": "node scripts/sync-journal-ui.mjs --check",
+    "prebuild": "npm run sync:journal"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

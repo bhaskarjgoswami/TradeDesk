@@ -29,8 +29,8 @@ export function PublicHeader() {
       <Link to="/" className="pub-brand"><span className="pub-mark">{Icon.book}</span>{BRAND}</Link>
       <nav>
         <a href="/#pricing">Pricing</a>
-        <Link to="/login" className="btn ghost">Sign in</Link>
-        <Link to="/login?mode=signup" className="btn">Start free</Link>
+        <a href="/app" className="btn ghost">Sign in</a>
+        <a href="/app?signup=1" className="btn">Start free</a>
       </nav>
     </header>
   );
@@ -45,7 +45,7 @@ export default function Landing() {
           <h1>Review every trade.<br />Sharpen your edge.</h1>
           <p>A private trading journal for crypto and Indian traders. Log setups, screenshots and P&amp;L, import your Delta Exchange fills, and see what is really working.</p>
           <div className="pub-cta">
-            <Link to="/login?mode=signup" className="btn">Start journaling free</Link>
+            <a href="/app?signup=1" className="btn">Start journaling free</a>
             <a href="#features" className="btn ghost">See features</a>
           </div>
         </section>

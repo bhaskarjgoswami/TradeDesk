@@ -51,6 +51,11 @@ def delete_account(user=Depends(limit("delete", 3))):
             d = c.request("DELETE", f"{SUPABASE_URL}/storage/v1/object/{BUCKET}", json={"prefixes": names})
             if d.status_code != 200:
                 raise HTTPException(502, "Could not delete screenshots")
+        # the journal (local-app UI) keeps each user's data in a private schema
+        from ..journal.pgcompat import schema_for
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(f'DROP SCHEMA IF EXISTS "{schema_for(uid)}" CASCADE')
         r = c.delete(f"{SUPABASE_URL}/auth/v1/admin/users/{uid}")
         if r.status_code not in (200, 204):
             raise HTTPException(502, "Could not delete account")

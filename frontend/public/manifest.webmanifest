@@ -2,7 +2,7 @@
   "name": "TradeDesk - Trading Journal",
   "short_name": "TradeDesk",
   "description": "Private trading journal: log trades, review your edge.",
-  "start_url": "/journal",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f3f1fb",
