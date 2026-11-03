@@ -614,7 +614,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
 
     <div class="sidefoot">
       <a class="sidebar-membership" id="sidebarMembership" href="https://trade-desk-dl66.vercel.app/billing" aria-label="View membership and billing" hidden>
-        <div class="sidebar-member-header"><span>Your membership</span><span id="sidebarMemberStatus">Current plan</span></div>
+        <div class="sidebar-member-header"><span>Your membership</span></div>
         <div class="sidebar-member-body"><span class="sidebar-member-icon"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-8 12h6l-1 8 9-13h-6l1-7z"/></svg></span><div class="sidebar-member-copy"><strong id="sidebarMemberPlan">Your journal</strong><span id="sidebarMemberDetail">View membership details</span></div></div>
         <span class="sidebar-member-upgrade" id="sidebarMemberUpgrade">Upgrade account <span aria-hidden="true">↗</span></span>
       </a>
@@ -880,7 +880,7 @@ function closeDrawer(){$('#sidebar').classList.remove('open');$('#backdrop').cla
 // ---------- login (server-verified session) ----------
 let userEmail='';
 function setAvatar(email){userEmail=email||userEmail;const c=(userEmail||'T').trim()[0];$('#tbAvatar').textContent=(c||'T').toUpperCase();
-  const membership=$('#sidebarMembership');if(membership){membership.hidden=Boolean(window.__td)&&!userEmail;if(!window.__td){$('#sidebarMemberPlan').textContent='TradeDesk';$('#sidebarMemberDetail').textContent='Unlock unlimited daily trades';$('#sidebarMemberStatus').textContent='Upgrade';$('#sidebarMemberUpgrade').hidden=false;membership.title='Upgrade your TradeDesk account';}}}
+  const membership=$('#sidebarMembership');if(membership){membership.hidden=Boolean(window.__td)&&!userEmail;if(!window.__td){$('#sidebarMemberPlan').textContent='TradeDesk';$('#sidebarMemberDetail').textContent='Unlock unlimited daily trades';$('#sidebarMemberUpgrade').hidden=false;membership.title='Upgrade your TradeDesk account';}}}
 function showLogin(){$('#loginScreen').classList.remove('hidden');$('#loginEmail').focus();}
 function hideLogin(){$('#loginScreen').classList.add('hidden');}
 $('#eyeBtn').onclick=()=>{const i=$('#loginPass'),show=i.type==='password';i.type=show?'text':'password';$('#eyeBtn').setAttribute('aria-label',show?'Hide password':'Show password');$('#eyeBtn').setAttribute('aria-pressed',String(show));};

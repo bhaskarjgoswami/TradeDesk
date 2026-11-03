@@ -34,11 +34,9 @@ async function refreshSidebarMembership(session, force = false) {
   const revision = ++sidebarMemberRevision;
   const plan = document.getElementById("sidebarMemberPlan");
   const detail = document.getElementById("sidebarMemberDetail");
-  const status = document.getElementById("sidebarMemberStatus");
   const upgrade = document.getElementById("sidebarMemberUpgrade");
   plan.textContent = "Loading plan…";
   detail.textContent = "Membership details";
-  status.textContent = "";
   upgrade.hidden = true;
   try {
     const membership = await api.subStatus();
@@ -46,7 +44,6 @@ async function refreshSidebarMembership(session, force = false) {
     const pro = membership.tier === "pro";
     plan.textContent = pro ? "TradeDesk Pro" : "TradeDesk Free";
     detail.textContent = pro ? "Unlimited daily trades" : "Up to 2 trades per day";
-    status.textContent = "Current plan";
     upgrade.hidden = pro;
     card.title = `${plan.textContent} · ${detail.textContent}`;
     card.setAttribute("aria-label", pro ? "TradeDesk Pro: view plan and billing" : "Upgrade your TradeDesk Free account");
@@ -55,7 +52,6 @@ async function refreshSidebarMembership(session, force = false) {
     sidebarMemberUser = null;
     plan.textContent = "Plan & billing";
     detail.textContent = "View membership details";
-    status.textContent = "View plan";
     upgrade.hidden = true;
     card.title = "View plan and billing";
     card.setAttribute("aria-label", "View plan and billing");
