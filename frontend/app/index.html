@@ -1441,16 +1441,16 @@ let routineOpenSec=null;
 // One-line summary shown beside the "Review your trade plan" heading.
 function routinePlanSub(step){const p=routineActivePlan(),done=new Set(routineState.planChecked||[]),keys=routinePlanKeys(step);return `${esc(p.name)} · ${keys.filter(k=>done.has(k)).length}/${keys.length} checked`;}
 function routinePlanChecklist(step){const p=routineActivePlan(),done=new Set(routineState.planChecked||[]),keys=routinePlanKeys(step),n=keys.filter(k=>done.has(k)).length;
-  const secs=ROUTINE_PLAN_SECTIONS.filter(([key])=>p[key].length);
+  const secs=ROUTINE_PLAN_SECTIONS.filter(([key])=>p[key].length||(key==='charting'&&p.images.length));
   if(!routineOpenSec||!secs.some(x=>x[0]===routineOpenSec))routineOpenSec=(secs.find(([key,pre])=>pre&&p[key].some((_,i)=>!done.has(step.id+'::'+pre+i)))||secs[0]||[])[0];
   const body=([key,pre])=>key==='images'?`<div class="rp-shots">${p.images.slice(0,4).map(src=>`<img src="/${esc(src)}" alt="Entry model example">`).join('')}</div>`:key==='notes'?`<ul class="rp-notes">${p.notes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:p[key].map((text,i)=>{const k=step.id+'::'+pre+i;return `<label class="rp-item" for="rp_${esc(k)}"><input id="rp_${esc(k)}" type="checkbox" data-complete-step="${esc(k)}" ${done.has(k)?'checked':''}><span>${esc(text)}</span></label>`;}).join('');
-  const count=([key,pre])=>pre?`<span class="rp-count">${p[key].filter((_,i)=>done.has(step.id+'::'+pre+i)).length}/${p[key].length}</span>`:'';
+  const count=([key,pre])=>pre&&p[key].length?`<span class="rp-count">${p[key].filter((_,i)=>done.has(step.id+'::'+pre+i)).length}/${p[key].length}</span>`:'';
   const shots=(label,list)=>list.length?`<div class="rp-ref-group"><span>${label}</span><div class="rp-ref-row">${list.slice(0,8).map((src,i)=>`<button type="button" class="rp-ref" data-ref="${esc(src)}" data-ref-label="${esc(label)} ${i+1}" aria-label="Open ${esc(label)} chart ${i+1}"><img src="/${esc(src)}" alt="${esc(label)} chart ${i+1}"></button>`).join('')}</div></div>`:'';
   const refs=shots('Setup reference',p.setupImages)+shots('Entry examples',p.entryImages);
-  // Reference charts live inside Entry Criteria, above the checklist: they show what a valid entry looks like.
-  const hasCriteria=secs.some(x=>x[0]==='criteria'),refsInline=refs?`<div class="rp-refs inline">${refs}</div>`:'',refsBlock=!hasCriteria&&refs?`<div class="rp-refs"><div class="rp-refs-title">Reference charts</div>${refs}</div>`:'';
+  // Setup and entry reference charts sit above the Charting Process checklist.
+  const hasCharting=secs.some(x=>x[0]==='charting'),refsInline=refs?`<div class="rp-refs inline">${refs}</div>`:'',refsBlock=!hasCharting&&refs?`<div class="rp-refs"><div class="rp-refs-title">Reference charts</div>${refs}</div>`:'';
   return `<div class="rp-plan">
-   ${secs.map(sec=>`<details class="rp-acc" data-sec="${sec[0]}" ${sec[0]===routineOpenSec?'open':''}><summary><svg viewBox="0 0 24 24" aria-hidden="true">${sec[3]}</svg><span>${sec[2]}</span>${count(sec)}<i class="rp-chev" aria-hidden="true"></i></summary><div class="rp-acc-body"><div class="rp-acc-inner">${sec[0]==='criteria'?refsInline:''}${body(sec)}</div></div></details>`).join('')}${refsBlock}</div>`;}
+   ${secs.map(sec=>`<details class="rp-acc" data-sec="${sec[0]}" ${sec[0]===routineOpenSec?'open':''}><summary><svg viewBox="0 0 24 24" aria-hidden="true">${sec[3]}</svg><span>${sec[2]}</span>${count(sec)}<i class="rp-chev" aria-hidden="true"></i></summary><div class="rp-acc-body"><div class="rp-acc-inner">${sec[0]==='charting'?refsInline:''}${body(sec)}</div></div></details>`).join('')}${refsBlock}</div>`;}
 // Left column of the full-screen routine: a sunrise over a small candle chart.
 // One candle per routine step lights up when that step is done; the sun rises with overall progress.
 let routineJust=null;
