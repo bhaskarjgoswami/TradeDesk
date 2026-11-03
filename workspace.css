@@ -185,7 +185,9 @@ a.tf-chart{display:block}button.tf-chart{width:100%;border-style:dashed;font:inh
 .rp-main{overflow:auto;padding:36px 44px;min-width:0}
 .rp-fs .routine-panel-head{position:sticky;top:-36px;background:var(--panel);padding:8px 0 14px;margin-bottom:6px;z-index:2}
 .rp-fs .routine-panel-head b{font-size:22px;font-weight:600;letter-spacing:-.3px}
-.rp-fs .routine-panel-head button{font-size:13px;padding:6px 12px;border-radius:9999px;background:var(--panel2)}
+.routine-panel-head #routineClose{display:grid;place-items:center;width:32px;height:32px;padding:0;border-radius:6px;background:transparent;flex-shrink:0}
+.routine-panel-head #routineClose:hover{background:var(--panel2);color:var(--txt)}
+.routine-panel-head #routineClose:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .rp-fs .routine-item{margin:18px 0;font-size:15px}.rp-fs .rp-plan{max-width:640px}
 /* tick micro-interaction on the row just toggled */
 .just input{animation:rp-pop .35s cubic-bezier(.2,.8,.2,1.4)}.just span{animation:rp-fade .4s ease}
@@ -291,6 +293,8 @@ a.tf-chart{display:block}button.tf-chart{width:100%;border-style:dashed;font:inh
 /* Routine popup footer with Done CTA (sticks to the bottom of the checklist column). */
 .rp-main{display:flex;flex-direction:column}
 .rp-footer{position:sticky;bottom:-36px;margin:auto -44px -36px;padding:16px 44px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--panel);border-top:1px solid var(--line);font-size:13px;color:var(--mut);z-index:2}
+.rp-footer-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-shrink:0}
+.rp-cancel-btn{height:42px!important;padding:0 18px!important;font-size:14px!important}
 .rp-done-btn{min-width:120px;height:42px!important;font-size:14px!important;font-weight:600!important;transition:transform .12s ease,background-color .15s ease,box-shadow .15s ease}
 .rp-done-btn:hover{box-shadow:0 6px 16px -6px color-mix(in srgb,var(--accent) 60%,transparent)}.rp-done-btn:active{transform:scale(.96)}
 .rp-fs .routine-foot{margin-bottom:20px}
@@ -527,3 +531,5 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 @media(max-width:760px){.pbv,.pbv.collapsed{grid-template-columns:1fr}.pbv-side{position:static}.pbv-models{grid-template-columns:1fr}.pbv-main{padding:14px}.pbv-head{flex-wrap:wrap}}
 @media(hover:none){.pbv-row-acts{opacity:1}}
 @media(prefers-reduced-motion:reduce){.pbv-switch,.pbv-switch span,.pbv-row-acts{transition:none}}
+
+@media(max-width:480px){.rp-footer{flex-wrap:wrap;gap:10px}.rp-footer-actions{margin-left:auto;gap:8px}.rp-done-btn{min-width:100px}}
