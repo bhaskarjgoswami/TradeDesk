@@ -23,7 +23,11 @@ export default function AllTrades() {
     try { setTrades(await api.listTrades(q ? { search: q } : {})); }
     finally { setLoading(false); }
   }
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [q]);
+  useEffect(() => {
+    const id = setTimeout(load, q ? 300 : 0); // debounce typing
+    return () => clearTimeout(id);
+    /* eslint-disable-next-line */
+  }, [q]);
 
   // editing/adding happens inline in the Daily Journal, mirroring the original app
   const editInJournal = (t) => nav(`/journal?date=${encodeURIComponent(t.date || TODAY())}&edit=${t.id}`);

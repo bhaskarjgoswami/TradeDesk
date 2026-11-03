@@ -16,23 +16,30 @@ def list_daylogs(user=Depends(get_current_user)):
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT DISTINCT date FROM trades WHERE user_id=%s AND date IS NOT NULL AND date<>''",
-                (uid,),
+                """
+                SELECT COALESCE(t.date, l.date) AS date,
+                       COALESCE(t.net_pnl, 0)   AS net_pnl,
+                       COALESCE(t.n, 0)         AS total_trades,
+                       l.date IS NOT NULL       AS has_log
+                FROM (
+                    SELECT date,
+                           SUM(CASE WHEN pnl IS NOT NULL THEN pnl - COALESCE(fee, 0) ELSE 0 END) AS net_pnl,
+                           COUNT(*) AS n
+                    FROM trades
+                    WHERE user_id=%s AND date IS NOT NULL AND date<>''
+                    GROUP BY date
+                ) t
+                FULL OUTER JOIN (SELECT date FROM day_logs WHERE user_id=%s) l ON l.date = t.date
+                ORDER BY 1 DESC
+                """,
+                (uid, uid),
             )
-            trade_dates = {r["date"] for r in cur.fetchall()}
-            cur.execute("SELECT date FROM day_logs WHERE user_id=%s", (uid,))
-            logged = {r["date"] for r in cur.fetchall()}
-        dates = sorted(trade_dates | logged, reverse=True)
-        out = []
-        for d in dates:
-            s = _day_stats(conn, uid, d)
-            out.append({
-                "date": d,
-                "net_pnl": s["net_pnl"],
-                "total_trades": s["total_trades"],
-                "has_log": d in logged,
-            })
-    return out
+            rows = cur.fetchall()
+    return [
+        {"date": r["date"], "net_pnl": round(float(r["net_pnl"]), 2),
+         "total_trades": r["total_trades"], "has_log": r["has_log"]}
+        for r in rows
+    ]
 
 
 @router.get("/daylog")

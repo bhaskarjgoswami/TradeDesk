@@ -65,7 +65,7 @@ export default function DailyJournal() {
   async function pullDelta() {
     setPullMsg("Pulling…");
     try {
-      const { trades } = await api.deltaToday();
+      const { trades } = await api.deltaToday(active);
       let n = 0, dup = 0;
       for (const t of (trades || []).filter((x) => !x.open)) {
         const r = await api.createTrade(t);

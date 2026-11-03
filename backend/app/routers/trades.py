@@ -96,6 +96,15 @@ def update_trade(trade_id: int, body: TradeIn, user=Depends(get_current_user)):
     vals = [getattr(body, f) for f in TRADE_FIELDS] + [user["user_id"], trade_id]
     with get_conn() as conn:
         with conn.cursor() as cur:
+            cur.execute("SELECT date FROM trades WHERE user_id=%s AND id=%s", (user["user_id"], trade_id))
+            old = cur.fetchone()
+            if not old:
+                raise HTTPException(404, "Trade not found")
+        # moving a trade onto another day must respect the free daily cap too
+        if body.date and body.date != old["date"] and active_tier(conn, user["user_id"]) != "pro" \
+                and _day_trade_count(conn, user["user_id"], body.date) >= FREE_DAILY_LIMIT:
+            raise HTTPException(402, "free-daily-limit")
+        with conn.cursor() as cur:
             cur.execute(
                 f"UPDATE trades SET {sets} WHERE user_id=%s AND id=%s RETURNING *", vals
             )

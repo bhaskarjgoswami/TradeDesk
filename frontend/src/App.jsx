@@ -107,9 +107,9 @@ function Shell() {
           <input value={search} onChange={(e) => onSearch(e.target.value)} placeholder="Search trades, setups, notes…" />
         </div>
         <div className="tb-right">
-          <div className="tb-bell">{Icon.bell}</div>
           <div className="tb-acct" ref={acctRef}>
-            <div className="tb-avatar" title="Account" onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o); }}>{initial}</div>
+            <button type="button" className="tb-avatar" title="Account" aria-label="Account menu" aria-expanded={menuOpen}
+                    onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o); }}>{initial}</button>
             <div className={"tb-menu" + (menuOpen ? " show" : "")}>
               <div className="tb-menu-item" onClick={() => { setMenuOpen(false); nav("/settings"); }}>{Icon.gear} Settings</div>
               <div className="tb-menu-item danger" onClick={async () => { setMenuOpen(false); await signOut(); nav("/login"); }}>{Icon.logout} Log out</div>

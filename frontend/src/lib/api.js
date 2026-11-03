@@ -56,7 +56,9 @@ export const api = {
   getExchange: (exchange = "delta") => request("GET", "/api/exchange?exchange=" + encodeURIComponent(exchange)),
   saveExchange: (e) => request("POST", "/api/exchange", e),
   price: (symbol) => request("GET", `/api/price?symbol=${encodeURIComponent(symbol)}`),
-  deltaToday: () => request("GET", "/api/delta/today"),
+  // date = journal day to import (YYYY-MM-DD, local); tz lets the server bucket fills by the user's day
+  deltaToday: (date) =>
+    request("GET", `/api/delta/today?tz=${new Date().getTimezoneOffset()}${date ? "&date=" + encodeURIComponent(date) : ""}`),
 
   // subscription (Razorpay)
   subStatus: () => request("GET", "/api/subscription/status"),

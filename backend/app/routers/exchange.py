@@ -8,19 +8,12 @@ from ..database import get_conn
 from ..models import ExchangeIn
 from ..secretbox import encrypt, decrypt
 import urllib.request, urllib.parse, urllib.error
-import json, time, hmac, hashlib, socket
+import json, time, hmac, hashlib
+from datetime import datetime, timedelta, timezone
 
 router = APIRouter(prefix="/api", tags=["exchange"])
 
 DELTA_BASE = "https://api.india.delta.exchange"
-
-# Force IPv4 (home Jio IPv6 rotates and breaks Delta IP whitelist)
-_orig = socket.getaddrinfo
-def _v4(host, *a, **k):
-    res = _orig(host, *a, **k)
-    v4 = [r for r in res if r[0] == socket.AF_INET]
-    return v4 or res
-socket.getaddrinfo = _v4
 
 
 # ── Exchange key CRUD ────────────────────────────────────
@@ -120,14 +113,26 @@ def _signed_get(key: str, secret: str, path: str, query: str = ""):
         return json.loads(resp.read().decode())
 
 
-def _fill_day(ts):
+def _fill_day(ts, tz_offset_min: int = 0):
+    """Calendar day of a Delta timestamp in the user's timezone.
+
+    `tz_offset_min` follows JS Date.getTimezoneOffset() (UTC minus local,
+    e.g. -330 for IST), so the server's own timezone never matters.
+    """
     s = str(ts)
     if s.isdigit():
         n = int(s)
         if n > 1e14: n //= 1_000_000
         elif n > 1e11: n //= 1000
-        return time.strftime("%Y-%m-%d", time.localtime(n))
-    return s[:10]
+        dt = datetime.fromtimestamp(n, timezone.utc)
+    else:
+        try:
+            dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+        except ValueError:
+            return s[:10]
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+    return (dt.astimezone(timezone.utc) - timedelta(minutes=tz_offset_min)).strftime("%Y-%m-%d")
 
 
 _CV: dict = {}
@@ -143,7 +148,7 @@ def _cv(sym):
 
 
 @router.get("/delta/today")
-def delta_today(user=Depends(get_current_user)):
+def delta_today(date: str | None = None, tz: int = 0, user=Depends(get_current_user)):
     uid = user["user_id"]
     with get_conn() as conn:
         with conn.cursor() as cur:
@@ -153,13 +158,13 @@ def delta_today(user=Depends(get_current_user)):
         raise HTTPException(400, "no-credentials")
     key, secret = decrypt(row["delta_key"]), decrypt(row["delta_secret"])
     try:
-        today = time.strftime("%Y-%m-%d")
+        today = date or _fill_day(int(time.time()), tz)
         fills = (_signed_get(key, secret, "/v2/fills", "?page_size=500").get("result") or [])
-        todays = [f for f in fills if _fill_day(f.get("created_at", "")) == today]
+        todays = [f for f in fills if _fill_day(f.get("created_at", ""), tz) == today]
         stop_orders = []
         try:
             for o in (_signed_get(key, secret, "/v2/orders/history", "?page_size=200").get("result") or []):
-                if o.get("stop_order_type") == "stop_loss_order" and _fill_day(o.get("created_at", "")) == today:
+                if o.get("stop_order_type") == "stop_loss_order" and _fill_day(o.get("created_at", ""), tz) == today:
                     if o.get("product_symbol") and o.get("stop_price"):
                         stop_orders.append((str(o["created_at"]), o["product_symbol"], float(o["stop_price"])))
         except Exception:
