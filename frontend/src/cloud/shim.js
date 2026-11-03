@@ -6,6 +6,7 @@
 //   - adds sign-up and password reset to the existing login card, and the TradeDesk brand
 import { supabase } from "../lib/supabase";
 import { config } from "../lib/config";
+import { api } from "../lib/api";
 import { SUPPORT_EMAIL } from "../lib/brand";
 
 const API = config.apiUrl + "/j";
@@ -19,6 +20,44 @@ function setImageCookie(session) {
   document.cookie = session
     ? `td_img=${session.access_token}; Path=/images; Max-Age=3600; SameSite=Lax${secure}`
     : `td_img=; Path=/images; Max-Age=0; SameSite=Lax${secure}`;
+}
+
+let sidebarMemberUser = null;
+let sidebarMemberRevision = 0;
+async function refreshSidebarMembership(session, force = false) {
+  const card = document.getElementById("sidebarMembership");
+  if (!card) return;
+  card.hidden = !session;
+  if (!session) { sidebarMemberUser = null; sidebarMemberRevision++; return; }
+  const email = document.getElementById("sidebarMemberEmail");
+  if (email) email.textContent = session.user.email || "";
+  if (sidebarMemberUser === session.user.id && !force) return;
+  sidebarMemberUser = session.user.id;
+  const revision = ++sidebarMemberRevision;
+  const plan = document.getElementById("sidebarMemberPlan");
+  const detail = document.getElementById("sidebarMemberDetail");
+  const status = document.getElementById("sidebarMemberStatus");
+  plan.textContent = "Loading plan…";
+  detail.textContent = "Membership details";
+  status.textContent = "";
+  try {
+    const membership = await api.subStatus();
+    if (revision !== sidebarMemberRevision) return;
+    const pro = membership.tier === "pro";
+    plan.textContent = pro ? "TradeDesk Pro" : "TradeDesk Free";
+    detail.textContent = pro ? "Unlimited daily trades" : "Up to 2 trades per day";
+    status.textContent = "Current plan";
+    card.title = `${plan.textContent} · ${detail.textContent}`;
+    card.setAttribute("aria-label", `${plan.textContent}: view plan and billing`);
+  } catch {
+    if (revision !== sidebarMemberRevision) return;
+    sidebarMemberUser = null;
+    plan.textContent = "Plan & billing";
+    detail.textContent = "View membership details";
+    status.textContent = "View plan";
+    card.title = "View plan and billing";
+    card.setAttribute("aria-label", "View plan and billing");
+  }
 }
 
 async function token() {
@@ -125,9 +164,10 @@ style.textContent = ".login-left .forgot[hidden]{display:none}";
 document.head.appendChild(style);
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", decorate); else decorate();
 
-supabase.auth.getSession().then(({ data }) => setImageCookie(data.session));
+supabase.auth.getSession().then(({ data }) => { setImageCookie(data.session); refreshSidebarMembership(data.session); });
 supabase.auth.onAuthStateChange((event, session) => {
   setImageCookie(session);
+  refreshSidebarMembership(session);
   if (event === "PASSWORD_RECOVERY") {
     // Arrived from the reset email: choose a new password before continuing.
     setTimeout(async () => {
@@ -139,4 +179,7 @@ supabase.auth.onAuthStateChange((event, session) => {
   }
 });
 
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted) supabase.auth.getSession().then(({ data }) => refreshSidebarMembership(data.session, true));
+});
 window.__td.resolve({ handle });
