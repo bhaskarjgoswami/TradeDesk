@@ -85,8 +85,6 @@
   .set-label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);font-weight:600;margin-bottom:11px}
   .set-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .set-row>span{font-size:13.5px;color:var(--txt)}
-  #setTheme,#setDesign{width:180px}
-  #setTheme button.on,#setDesign button.on{background:var(--primary,var(--accent));color:var(--on-primary,#fff)}
   .set-chk{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 12px;margin-bottom:7px;font-size:13.5px}
   .set-chk .grip{display:flex;color:var(--dim);cursor:grab;flex-shrink:0}
   .set-chk .grip svg{width:14px;height:14px;fill:currentColor}
@@ -550,11 +548,11 @@
   @media(max-width:640px){#routineMobileOpen{padding:7px 9px;font-size:11px;white-space:nowrap}}
 </style>
 <link rel="stylesheet" href="/workspace.css">
-<link rel="stylesheet" href="/theme.css" id="designCss">
-<script>/* Design system: Vercel (theme.css, default) or Mercury (theme-mercury.css). */
+<link rel="stylesheet" href="/theme-mercury.css" id="designCss">
+<script>/* Design system: Mercury by default; Vercel remains available in Appearance. */
 const DESIGNS={vercel:'/theme.css',mercury:'/theme-mercury.css'};
-function applyDesign(d){document.getElementById('designCss').href=DESIGNS[d]||DESIGNS.vercel;document.documentElement.dataset.design=DESIGNS[d]?d:'vercel';}
-try{applyDesign(localStorage.getItem('tj_design')||'vercel');}catch{}</script>
+function applyDesign(d){document.getElementById('designCss').href=DESIGNS[d]||DESIGNS.mercury;document.documentElement.dataset.design=DESIGNS[d]?d:'mercury';}
+try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
 </head>
 <body>
 <div class="login" id="loginScreen">
@@ -676,7 +674,23 @@ try{applyDesign(localStorage.getItem('tj_design')||'vercel');}catch{}</script>
         <div class="settings-card"><div class="settings-tabs" role="tablist" aria-label="Settings sections"><button type="button" role="tab" id="settings-tab-account" data-settings-tab="account" aria-controls="settings-panel-account">Account</button><button type="button" role="tab" id="settings-tab-integrations" data-settings-tab="integrations" aria-controls="settings-panel-integrations">Integrations</button><button type="button" role="tab" id="settings-tab-data" data-settings-tab="data" aria-controls="settings-panel-data">Data</button><button type="button" role="tab" id="settings-tab-appearance" data-settings-tab="appearance" aria-controls="settings-panel-appearance">Appearance</button></div>
           <div class="set-sec settings-panel" data-settings-panel="appearance" role="tabpanel" hidden>
             <div class="set-label">Appearance</div>
-            <div class="set-row"><span>Theme</span><div class="seg" id="setTheme"><button type="button" data-t="light">Light</button><button type="button" data-t="dark">Dark</button></div></div><div class="set-row"><span>Design</span><div class="seg" id="setDesign"><button type="button" data-d="vercel">Vercel</button><button type="button" data-d="mercury">Mercury</button></div></div>
+            <p class="appearance-intro">Make your journal feel like your workspace. Changes apply instantly.</p>
+            <div class="appearance-grid">
+              <section class="appearance-card" aria-labelledby="appearanceThemeTitle">
+                <h2 id="appearanceThemeTitle">Theme</h2><p>Choose a light or dark workspace.</p>
+                <div class="appearance-options" id="setTheme" role="group" aria-label="Theme">
+                  <button type="button" class="appearance-option" data-t="light" aria-pressed="false"><span class="appearance-preview preview-light" aria-hidden="true"><i></i><i></i><i></i></span><span class="appearance-option-label">Light<span class="appearance-selected" aria-hidden="true">✓</span></span></button>
+                  <button type="button" class="appearance-option" data-t="dark" aria-pressed="false"><span class="appearance-preview preview-dark" aria-hidden="true"><i></i><i></i><i></i></span><span class="appearance-option-label">Dark<span class="appearance-selected" aria-hidden="true">✓</span></span></button>
+                </div>
+              </section>
+              <section class="appearance-card" aria-labelledby="appearanceDesignTitle">
+                <h2 id="appearanceDesignTitle">Design</h2><p>Choose the style of your journal.</p>
+                <div class="appearance-options" id="setDesign" role="group" aria-label="Design">
+                  <button type="button" class="appearance-option" data-d="vercel" aria-pressed="false"><span class="appearance-preview preview-vercel" aria-hidden="true"><i></i><i></i><i></i></span><span class="appearance-option-label">Vercel<span class="appearance-selected" aria-hidden="true">✓</span></span></button>
+                  <button type="button" class="appearance-option" data-d="mercury" aria-pressed="false"><span class="appearance-preview preview-mercury" aria-hidden="true"><i></i><i></i><i></i></span><span class="appearance-option-label">Mercury<span class="appearance-selected" aria-hidden="true">✓</span></span></button>
+                </div>
+              </section>
+            </div>
           </div>
           <div class="set-sec settings-panel" data-settings-panel="integrations" role="tabpanel" hidden>
             <div class="set-label">Exchange</div>
@@ -888,7 +902,7 @@ let settingsTab='account';
 function openSettings(){setView('settings');}
 function renderSettings(){
   if(['playbook','routine','preferences'].includes(settingsTab))settingsTab='account';  // these live on Trading Edge now
-  $$('#setTheme button').forEach(b=>b.classList.toggle('on',b.dataset.t===theme));$$('#setDesign button').forEach(b=>b.classList.toggle('on',b.dataset.d===document.documentElement.dataset.design));
+  $$('#setTheme button').forEach(b=>{const selected=b.dataset.t===theme;b.classList.toggle('on',selected);b.setAttribute('aria-pressed',String(selected));});$$('#setDesign button').forEach(b=>{const selected=b.dataset.d===document.documentElement.dataset.design;b.classList.toggle('on',selected);b.setAttribute('aria-pressed',String(selected));});
   renderSetChecklist();renderRoutineEditor();showSettingsTab(settingsTab);renderExchange();
   $('#setEmail').textContent=userEmail||'Signed in';
   $('#setDelta').textContent='Not tested yet';
@@ -931,8 +945,8 @@ async function savePlanDefaults(){if(settingsBusy||settingsUploads)return;readSe
   try{const response=await fetch('/api/plan-settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({settings:settingsDraft,revision:settingsRevision})});const result=await response.json();if(!response.ok)throw Error(result.error||'Could not save defaults');PLAN_SETTINGS=result.settings;settingsRevision=result.revision;settingsDraft=clonePlan(PLAN_SETTINGS);renderPlanOptions();$('#planSettingsStatus').textContent='Saved. New trades will use these defaults. Open drafts and saved trades keep their plan.';toast('Checklist defaults saved');}
   catch(error){$('#planSettingsStatus').textContent=error.message||'Could not save. Your edits are still here.';}finally{settingsBusy=false;updateSettingsBusy();}
 }
-$$('#setDesign button').forEach(b=>b.onclick=()=>{try{localStorage.setItem('tj_design',b.dataset.d);}catch{}applyDesign(b.dataset.d);$$('#setDesign button').forEach(x=>x.classList.toggle('on',x===b));setTimeout(()=>renderEquity(),300);});
-$$('#setTheme button').forEach(b=>b.onclick=()=>{theme=b.dataset.t;localStorage.setItem('tj_theme',theme);applyTheme(theme);$$('#setTheme button').forEach(x=>x.classList.toggle('on',x===b));});
+$$('#setDesign button').forEach(b=>b.onclick=()=>{try{localStorage.setItem('tj_design',b.dataset.d);}catch{}applyDesign(b.dataset.d);$$('#setDesign button').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-pressed',String(x===b));});setTimeout(()=>renderEquity(),300);});
+$$('#setTheme button').forEach(b=>b.onclick=()=>{theme=b.dataset.t;localStorage.setItem('tj_theme',theme);applyTheme(theme);$$('#setTheme button').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-pressed',String(x===b));});});
 $('#setLogout').onclick=()=>{if(confirm('Log out of Trade Journal?'))doLogout();};
 $('#setDeltaTest').onclick=async()=>{$('#setDelta').textContent='Testing…';
   try{const r=await(await fetch('/api/delta/today')).json();
