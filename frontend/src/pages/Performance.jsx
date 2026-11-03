@@ -88,7 +88,7 @@ export default function Performance() {
   const [err, setErr] = useState("");
 
   useEffect(() => {
-    Promise.all([api.stats(), api.listTrades(), api.listPlaybooks().catch(() => [])])
+    Promise.all([api.stats(), api.analytics(), api.listPlaybooks().catch(() => [])])
       .then(([st, tr, pb]) => { setS(st); setTrades(tr); setPbNames(Object.fromEntries(pb.map((p) => [p.id, p.name]))); })
       .catch((e) => setErr(e.message));
   }, []);

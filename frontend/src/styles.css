@@ -497,3 +497,5 @@ table.grp .num{text-align:right;font-variant-numeric:tabular-nums}
 .cell.wk{background:var(--panel2);border-style:dashed}
 @media(max-width:640px){.cal-head.cal-8,.cal-grid.cal-8{grid-template-columns:repeat(7,1fr)}.cell.wk,.cal-head.cal-8>div:last-child{display:none}}
 .cell.has .d{color:var(--txt);opacity:.6}
+
+.loadmore{display:flex;align-items:center;justify-content:center;gap:14px;padding:14px;border-top:1px solid var(--line);font-size:13px}

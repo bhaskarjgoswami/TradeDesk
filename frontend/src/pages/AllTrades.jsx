@@ -14,7 +14,9 @@ export default function AllTrades() {
   const [params, setParams] = useSearchParams();
   const nav = useNavigate();
   const q = params.get("q") || "";
-  const [trades, setTrades] = useState([]);
+  const [trades, setTrades] = useState([]);      // list view: loaded pages
+  const [total, setTotal] = useState(0);
+  const [monthTrades, setMonthTrades] = useState([]); // calendar view: visible month only
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("list"); // list | calendar
   const [importOpen, setImportOpen] = useState(false);
@@ -24,25 +26,41 @@ export default function AllTrades() {
   const [cal, setCal] = useState({ y: now.getFullYear(), m: now.getMonth() });
   const [unit, setUnit] = useState("$"); // "$" net P&L | "R" sum of R-multiples
 
-  async function load() {
+  const PAGE = 100;
+  async function load(more = false) {
     setLoading(true);
-    try { setTrades(await api.listTrades(q ? { search: q } : {})); }
-    finally { setLoading(false); }
+    try {
+      const params = { limit: PAGE, offset: more ? trades.length : 0, ...(q ? { search: q } : {}) };
+      const { rows, total: n } = await api.pageTrades(params);
+      setTrades((cur) => (more ? [...cur, ...rows] : rows));
+      setTotal(n);
+    } finally { setLoading(false); }
   }
+  async function loadMonth() {
+    const last = new Date(cal.y, cal.m + 1, 0).getDate();
+    const mm = String(cal.m + 1).padStart(2, "0");
+    setMonthTrades(await api.listTrades({ from: `${cal.y}-${mm}-01`, to: `${cal.y}-${mm}-${last}` }));
+  }
+  function reload() { load(); if (view === "calendar") loadMonth(); }
   useEffect(() => {
-    const id = setTimeout(load, q ? 300 : 0); // debounce typing
+    const id = setTimeout(() => load(), q ? 300 : 0); // debounce typing
     return () => clearTimeout(id);
     /* eslint-disable-next-line */
   }, [q]);
+  useEffect(() => {
+    if (view === "calendar") loadMonth().catch(() => setMonthTrades([]));
+    /* eslint-disable-next-line */
+  }, [view, cal.y, cal.m]);
 
   // editing/adding happens inline in the Daily Journal, mirroring the original app
   const editInJournal = (t) => nav(`/journal?date=${encodeURIComponent(t.date || TODAY())}&edit=${t.id}`);
   const addInJournal = () => nav(`/journal?date=${encodeURIComponent(TODAY())}&edit=new`);
   const gotoDay = (ds) => nav(`/journal?date=${encodeURIComponent(ds)}`);
 
-  function exportCsv() {
+  async function exportCsv() {
+    const all = await api.listTrades(q ? { search: q } : {}); // every matching trade, not just loaded pages
     const cols = ["date", "symbol", "direction", "setup", "entry", "stop", "exit", "qty", "pnl", "fee", "risk", "r_multiple", "outcome", "rating", "tags", "notes"];
-    const rows = trades.map((t) => cols.map((c) => `"${(t[c] ?? "").toString().replace(/"/g, '""')}"`).join(","));
+    const rows = all.map((t) => cols.map((c) => `"${(t[c] ?? "").toString().replace(/"/g, '""')}"`).join(","));
     const blob = new Blob([cols.join(",") + "\n" + rows.join("\n")], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
@@ -55,7 +73,7 @@ export default function AllTrades() {
 
   // build per-day P&L map for the visible month
   const dayMap = {};
-  trades.forEach((t) => {
+  monthTrades.forEach((t) => {
     if (!t.date) return;
     const [ty, tm] = t.date.split("-").map(Number);
     if (ty === cal.y && tm === cal.m + 1) {
@@ -98,7 +116,7 @@ export default function AllTrades() {
     <main className="main">
       <div className="pane-pad">
         <div className="pane-head">
-          <h1>All Trades <span className="muted" style={{ fontWeight: 400 }}>({trades.length})</span></h1>
+          <h1>All Trades <span className="muted" style={{ fontWeight: 400 }}>({total})</span></h1>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <div className="viewseg">
               <button className={view === "list" ? "on" : ""} onClick={() => setView("list")}>List</button>
@@ -124,7 +142,7 @@ export default function AllTrades() {
             setNotice(`Imported ${r.imported} trade${r.imported === 1 ? "" : "s"}.` +
               (r.duplicates ? ` Skipped ${r.duplicates} duplicate${r.duplicates === 1 ? "" : "s"}.` : "") +
               (r.over_free_limit ? ` Skipped ${r.over_free_limit} over the Free daily limit.` : ""));
-            load();
+            reload();
           }}
         />
         {view === "list" ? (
@@ -136,10 +154,10 @@ export default function AllTrades() {
                 <th className="num">P&amp;L</th><th>Result</th><th></th>
               </tr></thead>
               <tbody>
-                {loading ? (
+                {loading && trades.length === 0 ? (
                   <tr><td colSpan={10} className="muted" style={{ padding: 28, textAlign: "center" }}>Loading…</td></tr>
                 ) : trades.length === 0 ? (
-                  <tr><td colSpan={10} className="muted" style={{ padding: 28, textAlign: "center" }}>No trades yet.</td></tr>
+                  <tr><td colSpan={10} className="muted" style={{ padding: 28, textAlign: "center" }}>{q ? "No trades match your search." : "No trades yet."}</td></tr>
                 ) : trades.map((t) => (
                   <tr key={t.id} style={{ cursor: "pointer" }} onClick={() => editInJournal(t)}>
                     <td className="num muted">{t.date || "—"}</td>
@@ -155,13 +173,21 @@ export default function AllTrades() {
                       <button className="btn danger" style={{ padding: "5px 10px" }}
                               onClick={async () => {
                                 if (!(await ask({ title: "Delete this trade?", body: `${t.symbol || "Trade"} on ${t.date || "—"} will be removed permanently.`, confirmLabel: "Delete", danger: true }))) return;
-                                await api.deleteTrade(t.id); toast("Trade deleted"); load();
+                                await api.deleteTrade(t.id); toast("Trade deleted"); reload();
                               }}>Del</button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {trades.length < total && (
+              <div className="loadmore">
+                <span className="muted">Showing {trades.length} of {total}</span>
+                <button type="button" className="btn ghost" onClick={() => load(true)} disabled={loading}>
+                  {loading ? "Loading…" : `Load ${Math.min(PAGE, total - trades.length)} more`}
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <>

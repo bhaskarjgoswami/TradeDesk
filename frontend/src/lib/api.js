@@ -39,6 +39,8 @@ export const api = {
     const q = new URLSearchParams(params).toString();
     return request("GET", `/api/trades${q ? "?" + q : ""}`);
   },
+  pageTrades: (params) => request("GET", `/api/trades/page?${new URLSearchParams(params)}`),
+  analytics: () => request("GET", "/api/trades/analytics"),
   createTrade: (t) => request("POST", "/api/trades", t),
   updateTrade: (id, t) => request("PUT", `/api/trades/${id}`, t),
   deleteTrade: (id) => request("DELETE", `/api/trades/${id}`),
