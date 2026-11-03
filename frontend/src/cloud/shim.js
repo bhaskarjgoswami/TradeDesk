@@ -117,17 +117,7 @@ function decorate() {
   }
   render();
 
-  // Billing still lives on the TradeDesk page; same login (same origin).
-  const menu = document.getElementById("avatarMenu");
-  if (menu && !menu.querySelector("[data-td-billing]")) {
-    const item = document.createElement("div");
-    item.className = menu.firstElementChild?.className || "";
-    item.dataset.tdBilling = "1";
-    item.textContent = "Plan & billing";
-    item.style.cursor = "pointer";
-    item.addEventListener("click", () => { location.href = "/billing"; });
-    menu.insertBefore(item, menu.lastElementChild);
-  }
+
 }
 
 const style = document.createElement("style");
