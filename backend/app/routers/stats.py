@@ -29,12 +29,20 @@ def stats(user=Depends(get_current_user)):
     uid = user["user_id"]
     with get_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT pnl, fee, r_multiple FROM trades WHERE user_id=%s", (uid,))
+            cur.execute(
+                "SELECT pnl, fee, r_multiple FROM trades WHERE user_id=%s ORDER BY date, id", (uid,)
+            )
             rows = cur.fetchall()
     s = _summary(rows)
     wins, losses, nets = s["wins"], s["losses"], s["nets"]
     rs = [float(r["r_multiple"]) for r in rows if r["r_multiple"] is not None]
+    gross = sum(float(r["pnl"]) for r in rows if r["pnl"] is not None)
     return {
+        "closed": len(nets),
+        "gross_pnl": round(gross, 2),
+        "fees": round(gross - s["net_pnl"], 2),
+        "expectancy": round(sum(nets) / len(nets), 2) if nets else 0,
+        "max_drawdown": _max_drawdown(nets),
         "total": len(rows),
         "net_pnl": s["net_pnl"],
         "win_rate": s["win_rate"],
@@ -47,6 +55,16 @@ def stats(user=Depends(get_current_user)):
         "best": round(max(nets), 2) if nets else 0,
         "worst": round(min(nets), 2) if nets else 0,
     }
+
+
+def _max_drawdown(nets) -> float:
+    """Largest fall from a running equity peak (equity starts at 0), as a negative number."""
+    peak = equity = dd = 0.0
+    for n in nets:
+        equity += n
+        peak = max(peak, equity)
+        dd = min(dd, equity - peak)
+    return round(dd, 2)
 
 
 def _day_stats(conn, uid: str, date: str) -> dict:

@@ -161,3 +161,10 @@ def test_import_reports_errors_without_writing():
     r = client.post("/api/trades/import", json={"rows": [{"date": "bad", "symbol": "X", "direction": "Long"}]}).json()
     assert r["ok"] is False and r["error_count"] == 1 and "Row 2" in r["errors"][0]
     assert client.post("/api/trades/import", json={"rows": []}).status_code == 400
+
+
+def test_max_drawdown_and_expectancy():
+    from app.routers.stats import _max_drawdown
+    assert _max_drawdown([10, -4, -8, 5, 20, -3]) == -12  # peak 10 -> trough -2
+    assert _max_drawdown([-5, -5]) == -10                  # below the zero start
+    assert _max_drawdown([]) == 0
