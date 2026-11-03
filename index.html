@@ -588,14 +588,14 @@ try{applyDesign(localStorage.getItem('tj_design')||'vercel');}catch{}</script>
 </div>
 <div class="mobilebar">
   <button class="hamb" id="hamb" aria-label="Menu"><svg class="hi" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-  <div class="mbrand"><span class="logo-ic"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></span> Trade Journal</div><button type="button" class="btn ghost" id="routineMobileOpen" style="margin-left:auto">Pre-market</button>
+  <div class="mbrand"><span class="logo-ic"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></span> Trade Journal</div><button type="button" class="btn ghost" id="routineMobileOpen" style="margin-left:auto">Pre-Market Routine</button>
 </div>
 <div class="backdrop" id="backdrop"></div>
 <div class="app" id="app">
   <!-- TOP BAR -->
   <div class="topbar">
     <div class="tb-brand"><div class="logo"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></div> Trade Journal</div>
-    <div class="tb-right"><button type="button" class="btn ghost" id="routineOpen" aria-controls="routinePanel" aria-expanded="false">Pre-market</button><div class="tb-bell"><svg class="hi" viewBox="0 0 24 24"><path d="M6 9.5a6 6 0 0 1 12 0c0 4.5 1.8 5.5 1.8 5.5H4.2S6 14 6 9.5"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></div>
+    <div class="tb-right"><button type="button" class="btn ghost" id="routineOpen" aria-controls="routinePanel" aria-expanded="false">Pre-Market Routine</button><div class="tb-bell"><svg class="hi" viewBox="0 0 24 24"><path d="M6 9.5a6 6 0 0 1 12 0c0 4.5 1.8 5.5 1.8 5.5H4.2S6 14 6 9.5"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></div>
       <div class="tb-acct">
         <div class="tb-avatar" id="tbAvatar" title="Account">B</div>
         <div class="tb-menu" id="avatarMenu">
@@ -1346,7 +1346,7 @@ function showSettingsTab(key){settingsTab=key;
 $$('[data-settings-tab]').forEach(button=>{button.onclick=()=>showSettingsTab(button.dataset.settingsTab);button.onkeydown=event=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(event.key))return;event.preventDefault();const tabs=$$('[data-settings-tab]'),i=tabs.indexOf(button);const target=event.key==='Home'?tabs[0]:event.key==='End'?tabs.at(-1):tabs[(i+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length];target.click();target.focus();};});
 const ROUTINE_ICONS={calendar:'◷',target:'◎',chart:'↗',calm:'❋'};
 let routineState=null,routineDraft=null,routineRevision=0,routineBusy=false,routineTimer=null,routineHiddenPeriod=null,routineForced=false;
-async function loadRoutine(){try{const response=await fetch('/api/routine');if(!response.ok)throw Error();routineState=await response.json();routineAfterReset();renderRoutinePanel();return true;}catch{if(!routineState)$('#routineOpen').textContent='Pre-market · retry';return false;}}
+async function loadRoutine(){try{const response=await fetch('/api/routine');if(!response.ok)throw Error();routineState=await response.json();routineAfterReset();renderRoutinePanel();return true;}catch{if(!routineState)$('#routineOpen').textContent='Pre-Market Routine';return false;}}
 function routineChanged(){$('#routineStatus').textContent='Unsaved changes';}
 function readRoutineEditor(){if(!routineDraft||!$('#routineEnabled'))return;routineDraft.enabled=$('#routineEnabled').checked;routineDraft.showAll=$('#routineAll').checked;routineDraft.autoHide=$('#routineHide').checked;routineDraft.popup=$('#routinePopup').checked;routineDraft.resetTime=$('#routineReset').value;
   $$('#routineSteps .rs-row').forEach((row,i)=>{routineDraft.steps[i].title=row.querySelector('.rs-title').value.trim();});  // icon + link live in the draft (set from the tile popover)
@@ -1504,7 +1504,7 @@ function routineArt(state){if(RM.active)return rmView();const steps=state.settin
 let routineJustArt=null;
 function routinePopupDismissed(){try{return localStorage.getItem('tj_routine_popup');}catch{return null;}}
 function renderRoutinePanel(){const el=$('#routinePanel');if(!routineState){el.hidden=true;return;}const {settings,period,checked}=routineState,complete=settings.steps.every(step=>checked.includes(step.id));
-  $('#routineOpen').textContent=`Pre-market · ${checked.length}/${settings.steps.length}`;$('#routineMobileOpen').textContent=`Pre-market ${checked.length}/${settings.steps.length}`;
+  [$('#routineOpen'),$('#routineMobileOpen')].forEach(button=>{button.textContent='Pre-Market Routine';button.title=`${checked.length} of ${settings.steps.length} steps complete`;});
   // Popup mode: a centered window shown once per routine period until closed.
   const popup=settings.popup===true,dismissed=routineHiddenPeriod===period||(popup&&routinePopupDismissed()===period);
   const visible=routineForced||(settings.enabled&&!dismissed&&!(complete&&settings.autoHide)&&(popup||settings.showAll||view==='journal'||view==='month'));el.hidden=!visible;
