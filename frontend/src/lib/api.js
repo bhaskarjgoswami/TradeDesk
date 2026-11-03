@@ -62,6 +62,12 @@ export const api = {
   deltaToday: (date) =>
     request("GET", `/api/delta/today?tz=${new Date().getTimezoneOffset()}${date ? "&date=" + encodeURIComponent(date) : ""}`),
 
+  // playbooks
+  listPlaybooks: () => request("GET", "/api/playbooks"),
+  createPlaybook: (p) => request("POST", "/api/playbooks", p),
+  updatePlaybook: (id, p) => request("PUT", `/api/playbooks/${id}`, p),
+  deletePlaybook: (id) => request("DELETE", `/api/playbooks/${id}`),
+
   // account
   exportAccount: () => request("GET", "/api/account/export"),
   deleteAccount: () => request("DELETE", "/api/account"),

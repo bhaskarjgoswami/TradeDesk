@@ -4,6 +4,7 @@ from ..auth import get_current_user
 from ..database import get_conn
 from ..billing import active_tier
 from ..ratelimit import limit
+from .playbooks import assert_owns_playbook
 from ..models import TradeIn, ImageUploadIn, ImageUrlsIn, ImportIn, MISTAKES, EMOTIONS
 from ..config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 import time, base64, secrets, hashlib, json, math, re
@@ -17,7 +18,7 @@ router = APIRouter(prefix="/api/trades", tags=["trades"])
 TRADE_FIELDS = [
     "date", "symbol", "direction", "setup", "tf_bias", "logic",
     "entry", "stop", "exit", "qty", "risk", "pnl", "r_multiple",
-    "outcome", "rating", "tags", "notes", "images", "checklist", "fee", "ext_id", "review",
+    "outcome", "rating", "tags", "notes", "images", "checklist", "fee", "ext_id", "review", "playbook_id",
 ]
 
 
@@ -96,6 +97,7 @@ def create_trade(body: TradeIn, user=Depends(get_current_user)):
             if existing:
                 return {**existing, "duplicate": True}
 
+        assert_owns_playbook(conn, user["user_id"], body.playbook_id)
         # free tier gate (expiry-aware: lapsed Pro counts as free)
         tier = active_tier(conn, user["user_id"])
         day = body.date or time.strftime("%Y-%m-%d")
@@ -233,6 +235,7 @@ def update_trade(trade_id: int, body: TradeIn, user=Depends(get_current_user)):
             old = cur.fetchone()
             if not old:
                 raise HTTPException(404, "Trade not found")
+        assert_owns_playbook(conn, user["user_id"], body.playbook_id)
         # moving a trade onto another day must respect the free daily cap too
         if body.date and body.date != old["date"] and active_tier(conn, user["user_id"]) != "pro" \
                 and _day_trade_count(conn, user["user_id"], body.date) >= FREE_DAILY_LIMIT:

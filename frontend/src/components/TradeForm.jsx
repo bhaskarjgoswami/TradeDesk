@@ -7,7 +7,11 @@ import { loadReviewOptions, QUALITIES } from "../lib/review";
 export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }) {
   const [t, setT] = useState(initial || { date: new Date().toLocaleDateString("en-CA"), direction: "Long" });
   const { prefs, savePrefs } = useAuth();
-  const template = prefs.checklist;
+  const [playbooks, setPlaybooks] = useState([]);
+  useEffect(() => { api.listPlaybooks().then(setPlaybooks).catch(() => {}); }, []);
+  const playbook = playbooks.find((p) => p.id === Number(t.playbook_id)) || null;
+  // A chosen playbook supplies the checklist; otherwise the personal default list.
+  const template = playbook ? playbook.checklist : prefs.checklist;
   const setTemplate = (nt) => savePrefs({ checklist: nt }).catch((e) => setErr(e.message));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -113,8 +117,21 @@ export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }
         </div>
       </div>
 
+      <div className="fld full" style={{ marginBottom: 14 }}>
+        <label>Playbook</label>
+        <select value={t.playbook_id ?? ""} onChange={(e) => {
+          const id = e.target.value ? Number(e.target.value) : null;
+          const pb = playbooks.find((p) => p.id === id);
+          // setup defaults to the playbook name; checklist ticks reset because the criteria changed
+          setT((cur) => ({ ...cur, playbook_id: id, checklist: null, setup: cur.setup || pb?.name || "" }));
+        }}>
+          <option value="">No playbook (default checklist)</option>
+          {playbooks.filter((p) => p.active || p.id === Number(t.playbook_id)).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+      </div>
+
       <div className="fld full" style={{ marginBottom: 18 }}>
-        <label>Pre-trade checklist</label>
+        <label>Pre-trade checklist{playbook ? ` · ${playbook.name}` : ""}</label>
         <div className="checklist">
           {template.map((item) => {
             const on = checked.has(item);
@@ -124,11 +141,13 @@ export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }
                       onClick={() => toggleChk(item)}
                       onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggleChk(item); } }}>{on ? "✓" : ""}</span>
                 <span className="lbl" onClick={() => toggleChk(item)}>{item}</span>
-                <button type="button" className="chk-del" onClick={() => removeChkItem(item)} title="Remove">×</button>
+                {!playbook && <button type="button" className="chk-del" onClick={() => removeChkItem(item)} title="Remove">×</button>}
               </div>
             );
           })}
-          <div className="chk-add" onClick={addChkItem}>+ Add item</div>
+          {playbook
+            ? template.length === 0 && <div className="muted" style={{ fontSize: 12.5 }}>This playbook has no checklist yet. Add criteria on the Playbook page.</div>
+            : <div className="chk-add" onClick={addChkItem}>+ Add item</div>}
         </div>
       </div>
 

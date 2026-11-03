@@ -84,11 +84,12 @@ function MistakeTable({ closed }) {
 export default function Performance() {
   const [s, setS] = useState(null);
   const [trades, setTrades] = useState([]);
+  const [pbNames, setPbNames] = useState({});
   const [err, setErr] = useState("");
 
   useEffect(() => {
-    Promise.all([api.stats(), api.listTrades()])
-      .then(([st, tr]) => { setS(st); setTrades(tr); })
+    Promise.all([api.stats(), api.listTrades(), api.listPlaybooks().catch(() => [])])
+      .then(([st, tr, pb]) => { setS(st); setTrades(tr); setPbNames(Object.fromEntries(pb.map((p) => [p.id, p.name]))); })
       .catch((e) => setErr(e.message));
   }, []);
 
@@ -140,6 +141,7 @@ export default function Performance() {
         </div>
 
         <div className="grp-grid">
+          <GroupTable title="By playbook" rows={groupBy(closed, (t) => pbNames[t.playbook_id] || "No playbook")} />
           <GroupTable title="By setup" rows={groupBy(closed, (t) => t.setup)} />
           <GroupTable title="By symbol" rows={groupBy(closed, (t) => t.symbol)} />
           <GroupTable title="By direction" rows={groupBy(closed, (t) => t.direction)} />

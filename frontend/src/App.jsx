@@ -8,12 +8,14 @@ import DailyJournal from "./pages/DailyJournal";
 import AllTrades from "./pages/AllTrades";
 import Performance from "./pages/Performance";
 import Settings from "./pages/Settings";
+import Playbook from "./pages/Playbook";
 import Landing from "./pages/Landing";
 import Legal, { LEGAL_PAGES } from "./pages/Legal";
 
 const NAV = [
   { to: "/journal", label: "Daily Journal", icon: Icon.book, bg: "rgba(108,92,231,.15)", fg: "#6c5ce7" },
   { to: "/trades", label: "All Trades", icon: Icon.folder, bg: "rgba(22,163,74,.14)", fg: "#16a34a" },
+  { to: "/playbook", label: "Playbook", icon: Icon.bolt, bg: "rgba(236,72,153,.13)", fg: "#db2777" },
   { to: "/performance", label: "Performance", icon: Icon.chart, bg: "rgba(59,130,246,.14)", fg: "#3b82f6" },
   { to: "/settings", label: "Settings", icon: Icon.gear, bg: "rgba(217,119,6,.15)", fg: "#d97706" },
 ];
@@ -162,6 +164,7 @@ function Shell() {
           <Routes>
             <Route path="/journal" element={<DailyJournal />} />
             <Route path="/trades" element={<AllTrades />} />
+            <Route path="/playbook" element={<Playbook />} />
             <Route path="/performance" element={<Performance />} />
             <Route path="/subscription" element={<Navigate to="/settings" replace />} />
             <Route path="/settings" element={<Settings />} />

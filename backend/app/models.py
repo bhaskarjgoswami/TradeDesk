@@ -55,6 +55,7 @@ class TradeIn(BaseModel):
     fee: Optional[float] = None
     ext_id: Optional[str] = None  # exchange round-trip id, for import dedupe
     review: Optional[Review] = None
+    playbook_id: Optional[int] = None
 
 
 class DayLogIn(BaseModel):
@@ -78,6 +79,32 @@ class ExchangeIn(BaseModel):
 
 class ImageUploadIn(BaseModel):
     data: str  # data:image/...;base64,...
+
+
+class PlaybookIn(BaseModel):
+    name: str
+    description: Optional[str] = None
+    checklist: list[str] = []
+    exit_rules: Optional[str] = None
+    management: Optional[str] = None
+    notes: Optional[str] = None
+    active: bool = True
+
+    @field_validator("name")
+    @classmethod
+    def _name(cls, v):
+        v = (v or "").strip()
+        if not v or len(v) > 120:
+            raise ValueError("name is required (max 120 characters)")
+        return v
+
+    @field_validator("checklist")
+    @classmethod
+    def _checklist(cls, v):
+        items = [s.strip() for s in v if s and s.strip()]
+        if len(items) > 50 or any(len(s) > 300 for s in items):
+            raise ValueError("checklist: up to 50 items of 300 characters")
+        return list(dict.fromkeys(items))
 
 
 class ImportIn(BaseModel):

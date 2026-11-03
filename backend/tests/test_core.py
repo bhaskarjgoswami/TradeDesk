@@ -190,3 +190,23 @@ def test_review_stored_as_json():
     r = v[TRADE_FIELDS.index("review")]
     assert isinstance(r, Json) and r.adapted["followed_plan"] is True
     assert _vals(TradeIn())[TRADE_FIELDS.index("review")] is None
+
+
+# ── playbooks ────────────────────────────────────────────
+def test_playbook_validation():
+    from pydantic import ValidationError
+    from app.models import PlaybookIn
+    p = PlaybookIn(name="  QML  ", checklist=["HTF bias", " ", "HTF bias", "Liquidity sweep"])
+    assert p.name == "QML" and p.checklist == ["HTF bias", "Liquidity sweep"]
+    for bad in ({"name": " "}, {"name": "x" * 121}, {"name": "ok", "checklist": ["x"] * 51}):
+        with pytest.raises(ValidationError):
+            PlaybookIn(**bad)
+
+
+def test_trade_rejects_someone_elses_playbook():
+    from app.routers.playbooks import assert_owns_playbook
+    from fastapi import HTTPException
+    assert_owns_playbook(FakeConn(None), "u1", None)        # no link: fine
+    assert_owns_playbook(FakeConn({"?column?": 1}), "u1", 5)  # owned: fine
+    with pytest.raises(HTTPException):
+        assert_owns_playbook(FakeConn(None), "u1", 5)       # not owned
