@@ -26,7 +26,7 @@ export default function UpgradeModal({ open, onClose }) {
         </p>
         <ul className="um-feats">
           <li>Unlimited trades — no daily cap</li>
-          <li>Delta auto-sync & screenshot attachments</li>
+          <li>Import every Delta round-trip, not just two</li>
           <li>Everything in Free</li>
         </ul>
         <div className="um-actions">

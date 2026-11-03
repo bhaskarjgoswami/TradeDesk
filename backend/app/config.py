@@ -22,5 +22,9 @@ RAZORPAY_PRICE_INR_ANNUAL = int(os.environ.get("RAZORPAY_PRICE_INR_ANNUAL", "199
 RAZORPAY_PRICE_USD_MONTHLY = int(os.environ.get("RAZORPAY_PRICE_USD_MONTHLY", "900"))
 RAZORPAY_PRICE_USD_ANNUAL = int(os.environ.get("RAZORPAY_PRICE_USD_ANNUAL", "9000"))
 
+# Fernet key for encrypting exchange API credentials at rest.
+# Generate: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+EXCHANGE_ENC_KEY = os.environ.get("EXCHANGE_ENC_KEY", "")
+
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 PORT = int(os.environ.get("PORT", "8787"))

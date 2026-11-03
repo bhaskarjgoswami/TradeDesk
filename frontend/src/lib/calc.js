@@ -21,10 +21,12 @@ export function computeTrade(t) {
   out.fee = num(t.fee);
   out.rating = t.rating === "" || t.rating == null ? null : Math.trunc(Number(t.rating)) || null;
 
-  if (entry != null && stop != null && qty != null) {
+  // Only fill risk / P&L when blank. A typed value or an exchange-imported one
+  // (which accounts for contract size, e.g. 0.001 BTC per Delta lot) wins.
+  if (out.risk == null && entry != null && stop != null && qty != null) {
     out.risk = round(Math.abs(entry - stop) * qty);
   }
-  if (entry != null && exit != null && qty != null) {
+  if (out.pnl == null && entry != null && exit != null && qty != null) {
     out.pnl = round((exit - entry) * dir * qty);
   }
   if (entry != null && stop != null && exit != null) {

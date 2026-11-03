@@ -77,7 +77,9 @@ export default function Settings() {
               <div className="muted" style={{ fontSize: 12.5, marginTop: 10 }}>
                 {ex.has_creds
                   ? `Connected · key ${ex.key_masked}`
-                  : `No keys saved. Add your ${exDef.name} API key to auto-pull fills.`}
+                  : exId === "delta"
+                    ? "No keys saved. Add your Delta API key to import fills."
+                    : `No keys saved. Fill import for ${exDef.name} is coming soon; Delta is the only exchange that syncs today.`}
               </div>
               <label>API Key</label><input value={key} onChange={(e) => setKey(e.target.value)} placeholder="Enter API key" />
               <label>API Secret</label><input type="password" value={secret} onChange={(e) => setSecret(e.target.value)} placeholder="Enter API secret" />

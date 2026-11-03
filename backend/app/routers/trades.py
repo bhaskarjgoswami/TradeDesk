@@ -3,15 +3,17 @@ from typing import Optional
 from ..auth import get_current_user
 from ..database import get_conn
 from ..billing import active_tier
-from ..models import TradeIn, ImageUploadIn
+from ..models import TradeIn, ImageUploadIn, ImageUrlsIn
+from ..config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 import time, base64, secrets
+import httpx
 
 router = APIRouter(prefix="/api/trades", tags=["trades"])
 
 TRADE_FIELDS = [
     "date", "symbol", "direction", "setup", "tf_bias", "logic",
     "entry", "stop", "exit", "qty", "risk", "pnl", "r_multiple",
-    "outcome", "rating", "tags", "notes", "images", "checklist", "fee",
+    "outcome", "rating", "tags", "notes", "images", "checklist", "fee", "ext_id",
 ]
 
 # Free tier: max 2 trades per day. Everything else is unlocked.
@@ -63,6 +65,17 @@ def list_trades(
 @router.post("", status_code=201)
 def create_trade(body: TradeIn, user=Depends(get_current_user)):
     with get_conn() as conn:
+        # exchange imports: skip round-trips we already have
+        if body.ext_id:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT * FROM trades WHERE user_id=%s AND ext_id=%s",
+                    (user["user_id"], body.ext_id),
+                )
+                existing = cur.fetchone()
+            if existing:
+                return {**existing, "duplicate": True}
+
         # free tier gate (expiry-aware: lapsed Pro counts as free)
         tier = active_tier(conn, user["user_id"])
         day = body.date or time.strftime("%Y-%m-%d")
@@ -100,31 +113,57 @@ def delete_trade(trade_id: int, user=Depends(get_current_user)):
     return {"ok": True}
 
 
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+IMAGE_TYPES = {"png": "png", "jpeg": "jpg", "jpg": "jpg", "gif": "gif", "webp": "webp"}
+BUCKET = "trade-images"
+
+
 @router.post("/upload")
 def upload_image(body: ImageUploadIn, user=Depends(get_current_user)):
     """Store screenshot in Supabase Storage via REST upload."""
-    import httpx
-    from ..config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-
-    header, b64 = body.data.split(",", 1)
-    ext = "png"
-    if "image/" in header:
-        ext = header.split("image/")[1].split(";")[0]
-        if ext == "jpeg":
-            ext = "jpg"
-    if ext not in ("png", "jpg", "gif", "webp"):
-        ext = "png"
-    raw = base64.b64decode(b64)
+    header, sep, b64 = body.data.partition(",")
+    if not sep or not header.startswith("data:image/"):
+        raise HTTPException(400, "Expected a base64 image data URL")
+    ext = IMAGE_TYPES.get(header[len("data:image/"):].split(";")[0].lower())
+    if not ext:
+        raise HTTPException(400, "Unsupported image type")
+    if len(b64) > MAX_IMAGE_BYTES * 4 // 3 + 4:
+        raise HTTPException(413, "Image too large (max 5 MB)")
+    try:
+        raw = base64.b64decode(b64, validate=True)
+    except ValueError:
+        raise HTTPException(400, "Invalid base64 image")
     filename = f"{user['user_id']}/{int(time.time())}_{secrets.token_hex(4)}.{ext}"
-    url = f"{SUPABASE_URL}/storage/v1/object/trade-images/{filename}"
     resp = httpx.put(
-        url,
+        f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{filename}",
         content=raw,
         headers={
             "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-            "Content-Type": f"image/{ext}",
+            "Content-Type": "image/" + ("jpeg" if ext == "jpg" else ext),
         },
+        timeout=30,
     )
     if resp.status_code not in (200, 201):
         raise HTTPException(502, "Storage upload failed")
     return {"path": filename}
+
+
+@router.post("/image-urls")
+def image_urls(body: ImageUrlsIn, user=Depends(get_current_user)):
+    """Short-lived signed URLs for the caller's own screenshots (bucket is private)."""
+    prefix = user["user_id"] + "/"
+    paths = [p for p in body.paths[:50] if p.startswith(prefix) and ".." not in p]
+    if not paths:
+        return {}
+    resp = httpx.post(
+        f"{SUPABASE_URL}/storage/v1/object/sign/{BUCKET}",
+        json={"expiresIn": 3600, "paths": paths},
+        headers={"Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}"},
+        timeout=20,
+    )
+    if resp.status_code != 200:
+        raise HTTPException(502, "Could not sign image URLs")
+    return {
+        r["path"]: SUPABASE_URL + "/storage/v1" + r["signedURL"]
+        for r in resp.json() if r.get("signedURL")
+    }

@@ -25,9 +25,10 @@ function defaultCurrency() {
 
 const FREE = {
   name: "Free", tagline: "Start journaling", icon: "book",
-  features: ["Up to 2 trades / day", "Manual trade entry", "Daily journal & calendar", "Performance stats"],
+  features: ["Up to 2 trades / day", "Daily journal & calendar", "Performance stats", "Delta Exchange fill import", "Screenshot attachments"],
 };
-const PRO_FEATURES = ["Unlimited trades", "Exchange auto sync", "Screenshot attachments", "Mobile app access", "Priority support"];
+// Keep in sync with what the backend actually gates (trades.py FREE_DAILY_LIMIT).
+const PRO_FEATURES = ["Unlimited trades per day", "No daily cap on Delta imports"];
 
 function loadRazorpay() {
   return new Promise((resolve) => {

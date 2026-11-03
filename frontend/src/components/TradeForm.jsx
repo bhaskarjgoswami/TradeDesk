@@ -31,6 +31,13 @@ export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }
   const set = (k) => (e) => setT({ ...t, [k]: e.target.value });
   const preview = computeTrade(t);
   const images = (() => { try { return JSON.parse(t.images || "[]"); } catch { return []; } })();
+  // Screenshots live in a private bucket — fetch short-lived signed URLs to display them.
+  const [shotUrls, setShotUrls] = useState({});
+  useEffect(() => {
+    const missing = images.filter((p) => !p.startsWith("http") && !shotUrls[p]);
+    if (!missing.length) return;
+    api.imageUrls(missing).then((m) => setShotUrls((u) => ({ ...u, ...m }))).catch(() => {});
+  }, [t.images]); // eslint-disable-line
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -46,7 +53,11 @@ export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }
     reader.onload = async () => {
       try {
         const { path } = await api.uploadImage(reader.result);
-        setT({ ...t, images: JSON.stringify([...images, path]) });
+        setT((cur) => {
+          let prev = [];
+          try { prev = JSON.parse(cur.images || "[]"); } catch {}
+          return { ...cur, images: JSON.stringify([...prev, path]) };
+        });
       } catch (e2) { setErr(e2.message); }
     };
     reader.readAsDataURL(file);
@@ -131,7 +142,7 @@ export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }
         <div className="fld"><label>Exit</label><input type="number" step="any" value={t.exit ?? ""} onChange={set("exit")} /></div>
         <div className="fld"><label>Qty / size</label><input type="number" step="any" value={t.qty ?? ""} onChange={set("qty")} /></div>
         <div className="fld"><label>Risk ($ at stop)</label><input type="number" step="any" value={t.risk ?? preview.risk ?? ""} onChange={set("risk")} /></div>
-        <div className="fld"><label>P&L (realized)</label><input type="number" step="any" value={t.pnl ?? preview.pnl ?? ""} onChange={set("pnl")} /></div>
+        <div className="fld"><label title="Auto-calculated while blank. Clear it to recalculate from prices.">P&L (realized)</label><input type="number" step="any" value={t.pnl ?? preview.pnl ?? ""} onChange={set("pnl")} /></div>
         <div className="fld"><label>Platform fee</label><input type="number" step="any" value={t.fee ?? ""} onChange={set("fee")} /></div>
         <div className="fld"><label>Tags</label><input value={t.tags || ""} onChange={set("tags")} placeholder="comma,separated" /></div>
 
@@ -151,7 +162,7 @@ export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }
             <div className="shots">
               {images.map((p, i) => (
                 <div className="shot" key={i}>
-                  <img src={p.startsWith("http") ? p : "/" + p} alt="" />
+                  {(p.startsWith("http") || shotUrls[p]) && <img src={p.startsWith("http") ? p : shotUrls[p]} alt="" />}
                   <button type="button" onClick={() => rmShot(i)}>×</button>
                 </div>
               ))}

@@ -18,6 +18,7 @@ create table if not exists public.user_profiles (
   stripe_customer_id       text,          -- legacy (Stripe), kept for back-compat
   delta_key                text,          -- per-user Delta API key (encrypted by Postgres at-rest)
   delta_secret             text,
+  exchange_creds           jsonb,         -- {exchange: {key,secret,passphrase}}, app-encrypted (secretbox.py)
   created_at               timestamptz default now(),
   updated_at               timestamptz default now()
 );
@@ -26,6 +27,7 @@ create table if not exists public.user_profiles (
 alter table public.user_profiles add column if not exists subscription_plan       text;
 alter table public.user_profiles add column if not exists subscription_expires_at timestamptz;
 alter table public.user_profiles add column if not exists razorpay_payment_id      text;
+alter table public.user_profiles add column if not exists exchange_creds           jsonb;
 
 -- auto-create profile on signup
 create or replace function public.handle_new_user()
@@ -68,10 +70,13 @@ create table if not exists public.trades (
   images       text,                -- JSON array of Supabase Storage paths
   checklist    text,
   fee          numeric,
+  ext_id       text,                -- exchange round-trip id (import dedupe)
   created_at   timestamptz default now()
 );
 
+alter table public.trades add column if not exists ext_id text;
 create index if not exists trades_user_date on trades(user_id, date);
+create unique index if not exists trades_user_ext_id on trades(user_id, ext_id) where ext_id is not null;
 
 
 -- ── day_logs ─────────────────────────────────────────────────
@@ -103,41 +108,21 @@ alter table public.user_profiles enable row level security;
 alter table public.trades        enable row level security;
 alter table public.day_logs      enable row level security;
 
--- user_profiles: own row only
-create policy "users: own profile"
-  on public.user_profiles for all
-  using (auth.uid() = id);
-
--- trades: own rows only
-create policy "trades: own rows"
-  on public.trades for all
-  using (auth.uid() = user_id);
-
--- day_logs: own rows only
-create policy "daylogs: own rows"
-  on public.day_logs for all
-  using (auth.uid() = user_id);
+-- No policies on purpose: the browser uses Supabase for auth only and all
+-- data goes through the FastAPI backend (table owner, bypasses RLS). RLS with
+-- no policies + revoked grants = the public anon key cannot read or write
+-- these tables (otherwise users could PATCH themselves to Pro).
+revoke all on public.user_profiles from anon, authenticated;
+revoke all on public.trades        from anon, authenticated;
+revoke all on public.day_logs      from anon, authenticated;
 
 
 -- ============================================================
---  Storage bucket — trade-images
---  Run separately in Supabase Dashboard → Storage → New bucket
---  OR use the SQL below (requires storage schema access)
+--  Storage bucket — trade-images (private; backend uploads with the
+--  service role and serves short-lived signed URLs)
 -- ============================================================
 
--- insert into storage.buckets (id, name, public)
--- values ('trade-images', 'trade-images', false)
--- on conflict do nothing;
-
--- -- Users can only read/write their own folder (user_id/filename)
--- create policy "trade-images: upload own"
---   on storage.objects for insert
---   with check (bucket_id = 'trade-images' and auth.uid()::text = (storage.foldername(name))[1]);
-
--- create policy "trade-images: read own"
---   on storage.objects for select
---   using (bucket_id = 'trade-images' and auth.uid()::text = (storage.foldername(name))[1]);
-
--- create policy "trade-images: delete own"
---   on storage.objects for delete
---   using (bucket_id = 'trade-images' and auth.uid()::text = (storage.foldername(name))[1]);
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('trade-images', 'trade-images', false, 5242880,
+        array['image/png','image/jpeg','image/gif','image/webp'])
+on conflict (id) do nothing;

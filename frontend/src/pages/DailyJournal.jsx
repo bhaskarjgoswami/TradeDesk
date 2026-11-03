@@ -66,9 +66,12 @@ export default function DailyJournal() {
     setPullMsg("Pulling…");
     try {
       const { trades } = await api.deltaToday();
-      let n = 0;
-      for (const t of (trades || []).filter((x) => !x.open)) { await api.createTrade(t); n++; }
-      setPullMsg(`Imported ${n} round-trip trade(s).`);
+      let n = 0, dup = 0;
+      for (const t of (trades || []).filter((x) => !x.open)) {
+        const r = await api.createTrade(t);
+        r?.duplicate ? dup++ : n++;
+      }
+      setPullMsg(`Imported ${n} round-trip trade(s).` + (dup ? ` Skipped ${dup} already imported.` : ""));
       await selectDay(active); loadDays();
     } catch (e) {
       const msg = e.message || "";

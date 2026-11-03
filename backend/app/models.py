@@ -23,6 +23,7 @@ class TradeIn(BaseModel):
     images: Optional[str] = None
     checklist: Optional[str] = None
     fee: Optional[float] = None
+    ext_id: Optional[str] = None  # exchange round-trip id, for import dedupe
 
 
 class DayLogIn(BaseModel):
@@ -46,3 +47,7 @@ class ExchangeIn(BaseModel):
 
 class ImageUploadIn(BaseModel):
     data: str  # data:image/...;base64,...
+
+
+class ImageUrlsIn(BaseModel):
+    paths: list[str]

@@ -1,11 +1,12 @@
 """
 Delta Exchange routes — price ticker (public) and authenticated fills pull (Pro).
-Keys are stored per-user in the user_profiles table (encrypted at rest by Postgres).
+Keys are stored per-user in user_profiles, Fernet-encrypted by the app (see secretbox.py).
 """
 from fastapi import APIRouter, Depends, HTTPException
 from ..auth import get_current_user
 from ..database import get_conn
 from ..models import ExchangeIn
+from ..secretbox import encrypt, decrypt
 import urllib.request, urllib.parse, urllib.error
 import json, time, hmac, hashlib, socket
 
@@ -46,10 +47,10 @@ def get_exchange(exchange: str = "delta", user=Depends(get_current_user)):
             cur.execute("SELECT delta_key, exchange_creds FROM user_profiles WHERE id=%s", (uid,))
             row = cur.fetchone()
     creds = (row["exchange_creds"] or {}) if row else {}
-    key = (creds.get(ex) or {}).get("key") or ""
+    key = decrypt((creds.get(ex) or {}).get("key"))
     # backward-compat: legacy Delta keys may only live in the dedicated column
     if ex == "delta" and not key and row:
-        key = row["delta_key"] or ""
+        key = decrypt(row["delta_key"])
     return {
         "exchange": ex,
         "has_creds": bool(key),
@@ -62,9 +63,9 @@ def save_exchange(body: ExchangeIn, user=Depends(get_current_user)):
     ex = _norm_exchange(body.exchange)
     uid = user["user_id"]
     entry = {
-        "key": (body.key or "").strip(),
-        "secret": (body.secret or "").strip(),
-        "passphrase": (body.passphrase or "").strip(),
+        "key": encrypt((body.key or "").strip()),
+        "secret": encrypt((body.secret or "").strip()),
+        "passphrase": encrypt((body.passphrase or "").strip()),
     }
     with get_conn() as conn:
         with conn.cursor() as cur:
@@ -150,7 +151,7 @@ def delta_today(user=Depends(get_current_user)):
             row = cur.fetchone()
     if not row or not row["delta_key"]:
         raise HTTPException(400, "no-credentials")
-    key, secret = row["delta_key"], row["delta_secret"]
+    key, secret = decrypt(row["delta_key"]), decrypt(row["delta_secret"])
     try:
         today = time.strftime("%Y-%m-%d")
         fills = (_signed_get(key, secret, "/v2/fills", "?page_size=500").get("result") or [])
@@ -179,10 +180,10 @@ def delta_today(user=Depends(get_current_user)):
             cv = _cv(sym)
             pos = op_side = None
             op_sz = op_not = cl_sz = cl_not = realized = fee = 0.0
-            t_open = None
+            t_open = open_id = None
 
             def flush(t_close):
-                nonlocal pos, op_side, op_sz, op_not, cl_sz, cl_not, realized, fee, t_open
+                nonlocal pos, op_side, op_sz, op_not, cl_sz, cl_not, realized, fee, t_open, open_id
                 entry = round(op_not / op_sz, 4) if op_sz else None
                 exit_ = round(cl_not / cl_sz, 4) if cl_sz else None
                 direction = "Long" if op_side == "buy" else "Short"
@@ -195,8 +196,10 @@ def delta_today(user=Depends(get_current_user)):
                     "qty": op_sz, "pnl": pnl, "fee": round(fee, 4),
                     "outcome": ("Win" if pnl > 0 else "Loss" if pnl < 0 else "BE") if pnl is not None else "",
                     "open": cl_sz == 0, "time": (t_open or "")[11:16],
+                    "ext_id": f"delta:{sym}:{open_id}",
                 })
                 pos, op_side, op_sz, op_not, cl_sz, cl_not, realized, fee, t_open = None, None, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, None
+                open_id = None
 
             for f in fs:
                 side = (f.get("side") or "").lower()
@@ -208,6 +211,7 @@ def delta_today(user=Depends(get_current_user)):
                 if pos is None or pos == 0:
                     op_side, op_sz, op_not, cl_sz, cl_not, realized, fee = side, sz, sz * px, 0.0, 0.0, 0.0, comm
                     pos, t_open = signed, str(f.get("created_at", ""))
+                    open_id = f.get("id") or t_open
                 elif (pos > 0 and side == "buy") or (pos < 0 and side == "sell"):
                     op_sz += sz; op_not += sz * px; fee += comm; pos += signed
                 else:

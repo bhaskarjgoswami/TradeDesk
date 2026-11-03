@@ -48,7 +48,7 @@ def extend(conn, uid: str, plan: str, payment_id: str):
         raise ValueError(f"unknown plan: {plan}")
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT subscription_expires_at, razorpay_payment_id FROM user_profiles WHERE id=%s",
+            "SELECT subscription_expires_at, razorpay_payment_id FROM user_profiles WHERE id=%s FOR UPDATE",
             (uid,),
         )
         row = cur.fetchone()
