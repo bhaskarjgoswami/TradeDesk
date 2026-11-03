@@ -8,6 +8,7 @@ import TradeForm from "../components/TradeForm";
 import UpgradeModal from "../lib/UpgradeModal";
 import { useFeedback } from "../lib/feedback";
 import { RoutinePanel } from "../components/Routine";
+import DayNotes from "../components/DayNotes";
 
 const FREE_DAILY_LIMIT = 2;
 
@@ -220,6 +221,8 @@ export default function DailyJournal() {
                   <TradeForm initial={{ date: active, direction: "Long" }} onClose={() => setFormMode(null)} onSaved={afterSave} onPull={pullDelta} onLimit={() => { setFormMode(null); setShowUpgrade(true); }} />
                 </div>
               )}
+
+              <DayNotes key={detail.date} date={detail.date} initial={detail.log} onSaved={loadDays} />
             </div>
 
             {/* RAIL — stats (hidden until the day has trades) */}
