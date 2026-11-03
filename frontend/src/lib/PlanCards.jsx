@@ -6,8 +6,8 @@ import { Icon } from "./ui";
 // Prices shown to the user. Keep in sync with backend RAZORPAY_PRICE_* config.
 const PRICING = {
   INR: {
-    monthly: { amt: "₹199", unit: ["INR / month", "billed monthly"], desc: "Pro — Monthly" },
-    annual: { amt: "₹1,990", unit: ["INR / year", "2 months free"], desc: "Pro — Annual" },
+    monthly: { amt: "₹99", unit: ["INR / month", "billed monthly"], desc: "Pro — Monthly" },
+    annual: { amt: "₹1,990", unit: ["INR / year", "billed annually"], desc: "Pro — Annual" },
   },
   USD: {
     monthly: { amt: "$9", unit: ["USD / month", "billed monthly"], desc: "Pro — Monthly" },
@@ -28,7 +28,14 @@ const FREE = {
   features: ["Up to 2 trades / day", "Daily journal & calendar", "Performance stats", "Delta Exchange fill import", "Screenshot attachments"],
 };
 // Keep in sync with what the backend actually gates (trades.py FREE_DAILY_LIMIT).
-const PRO_FEATURES = ["Unlimited trades per day", "No daily cap on Delta imports"];
+const PRO_FEATURES = [
+  "Unlimited trades per day",
+  "No daily cap on Delta imports",
+  "Daily journal & calendar",
+  "Performance stats",
+  "Delta Exchange fill import",
+  "Screenshot attachments",
+];
 
 function loadRazorpay() {
   return new Promise((resolve) => {
@@ -103,7 +110,7 @@ export default function PlanCards() {
           <div className="bill-seg">
             <button className={cycle === "monthly" ? "on" : ""} onClick={() => setCycle("monthly")}>Monthly</button>
             <button className={cycle === "annual" ? "on" : ""} onClick={() => setCycle("annual")}>
-              Annual <span className="bill-save">SAVE 16%</span>
+              Annual {currency === "USD" && <span className="bill-save">SAVE 16%</span>}
             </button>
           </div>
         </div>
@@ -155,7 +162,7 @@ export default function PlanCards() {
           </div>
           <div className="pc-divider" />
           <div className="pc-body">
-            <div className="pc-feathead">Everything in Free, and:</div>
+            <div className="pc-feathead">Included in Pro</div>
             <ul className="pc-feats">
               {PRO_FEATURES.map((f) => (
                 <li key={f}><span className="pc-check">{Icon.check}</span>{f}</li>

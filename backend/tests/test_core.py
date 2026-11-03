@@ -231,3 +231,21 @@ def test_tier_and_day_count():
     future = datetime.now(timezone.utc) + timedelta(days=3)
     assert tier_and_day_count(FakeConn({"subscription_tier": "pro", "subscription_expires_at": future, "n": 4}), "u", "d") == ("pro", 4)
     assert tier_and_day_count(FakeConn({"subscription_tier": None, "subscription_expires_at": None, "n": 1}), "u", "d") == ("free", 1)
+
+
+def test_inr_monthly_checkout_charges_99_rupees(monkeypatch):
+    import httpx
+    from app.routers import subscription
+    captured = {}
+
+    def create_order(url, **kwargs):
+        captured.update(kwargs["json"])
+        return httpx.Response(200, json={"id": "order_monthly_99"})
+
+    monkeypatch.setattr(subscription, "RAZORPAY_KEY_ID", "rzp_test")
+    monkeypatch.setattr(subscription.httpx, "post", create_order)
+    response = client.post("/api/subscription/checkout", json={"plan": "monthly", "currency": "INR"})
+    assert response.status_code == 200
+    assert captured["amount"] == 9900  # Razorpay expects paise.
+    assert captured["currency"] == "INR"
+    assert response.json()["amount"] == 9900

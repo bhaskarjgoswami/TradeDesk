@@ -16,8 +16,8 @@ RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "")
 RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "")
 # Region pricing in the smallest currency unit (paise for INR, cents for USD).
-# India: ₹199/mo, ₹1,990/yr.  International: $9/mo, $90/yr.
-RAZORPAY_PRICE_INR_MONTHLY = int(os.environ.get("RAZORPAY_PRICE_INR_MONTHLY", "19900"))
+# India: ₹99/mo, ₹1,990/yr.  International: $9/mo, $90/yr.
+RAZORPAY_PRICE_INR_MONTHLY = int(os.environ.get("RAZORPAY_PRICE_INR_MONTHLY", "9900"))
 RAZORPAY_PRICE_INR_ANNUAL = int(os.environ.get("RAZORPAY_PRICE_INR_ANNUAL", "199000"))
 RAZORPAY_PRICE_USD_MONTHLY = int(os.environ.get("RAZORPAY_PRICE_USD_MONTHLY", "900"))
 RAZORPAY_PRICE_USD_ANNUAL = int(os.environ.get("RAZORPAY_PRICE_USD_ANNUAL", "9000"))

@@ -30,7 +30,7 @@ tradedesk/
 | Plan | Price | Limits |
 |---|---|---|
 | Free | $0 | 2 trades/day, Delta sync, screenshot uploads |
-| Pro | ₹199/mo (India) · $9/mo (intl) | Unlimited trades |
+| Pro | ₹99/mo (India) · $9/mo (intl) | Unlimited trades |
 
 ## Local dev (backend)
 
