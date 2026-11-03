@@ -22,6 +22,7 @@ export default function AllTrades() {
   const [notice, setNotice] = useState("");
   const now = new Date();
   const [cal, setCal] = useState({ y: now.getFullYear(), m: now.getMonth() });
+  const [unit, setUnit] = useState("$"); // "$" net P&L | "R" sum of R-multiples
 
   async function load() {
     setLoading(true);
@@ -58,11 +59,24 @@ export default function AllTrades() {
     if (!t.date) return;
     const [ty, tm] = t.date.split("-").map(Number);
     if (ty === cal.y && tm === cal.m + 1) {
-      const d = (dayMap[t.date] = dayMap[t.date] || { pnl: 0, n: 0 });
-      d.pnl += Number(t.pnl) || 0; d.n++;
+      const d = (dayMap[t.date] = dayMap[t.date] || { pnl: 0, r: 0, n: 0 });
+      if (t.pnl != null && t.pnl !== "") d.pnl += Number(t.pnl) - (Number(t.fee) || 0); // net of fees
+      if (t.r_multiple != null && t.r_multiple !== "") d.r += Number(t.r_multiple);
+      d.n++;
     }
   });
-  const maxAbs = Math.max(1, ...Object.values(dayMap).map((d) => Math.abs(d.pnl)));
+  const val = (d) => (unit === "R" ? d.r : d.pnl);
+  const show = (v) => (unit === "R" ? (v > 0 ? "+" : "") + fmt.num(v) + "R" : (v > 0 ? "+" : "") + fmt.money(v));
+  const days = Object.entries(dayMap);
+  const maxAbs = Math.max(1e-9, ...days.map(([, d]) => Math.abs(val(d))));
+  const month = {
+    total: days.reduce((a, [, d]) => a + val(d), 0),
+    trades: days.reduce((a, [, d]) => a + d.n, 0),
+    green: days.filter(([, d]) => val(d) > 0).length,
+    red: days.filter(([, d]) => val(d) < 0).length,
+    best: days.length ? Math.max(...days.map(([, d]) => val(d))) : null,
+    worst: days.length ? Math.min(...days.map(([, d]) => val(d))) : null,
+  };
   const firstDow = new Date(cal.y, cal.m, 1).getDay();
   const daysInMonth = new Date(cal.y, cal.m + 1, 0).getDate();
   const todayStr = TODAY();
@@ -71,6 +85,13 @@ export default function AllTrades() {
   for (let d = 1; d <= daysInMonth; d++) {
     const ds = `${cal.y}-${String(cal.m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
     cells.push({ d, ds, info: dayMap[ds] });
+  }
+  while (cells.length % 7) cells.push(null);
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) {
+    const wk = cells.slice(i, i + 7);
+    const has = wk.filter((c) => c?.info);
+    weeks.push({ cells: wk, total: has.reduce((a, c) => a + val(c.info), 0), n: has.reduce((a, c) => a + c.info.n, 0) });
   }
 
   return (
@@ -144,37 +165,62 @@ export default function AllTrades() {
           </div>
         ) : (
           <>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, gap: 10, flexWrap: "wrap" }}>
               <div style={{ fontSize: 16, fontWeight: 650 }}>{MON[cal.m]} {cal.y}</div>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <button className="icobtn" onClick={prevMonth}>‹</button>
+                <div className="viewseg" role="group" aria-label="Calendar unit">
+                  <button className={unit === "$" ? "on" : ""} onClick={() => setUnit("$")}>P&amp;L</button>
+                  <button className={unit === "R" ? "on" : ""} onClick={() => setUnit("R")}>R</button>
+                </div>
+                <button className="icobtn" onClick={prevMonth} aria-label="Previous month">‹</button>
                 <button className="btn ghost" onClick={() => setCal({ y: now.getFullYear(), m: now.getMonth() })}>Today</button>
-                <button className="icobtn" onClick={nextMonth}>›</button>
+                <button className="icobtn" onClick={nextMonth} aria-label="Next month">›</button>
               </div>
             </div>
+
+            <div className="cal-sum">
+              <div><span>Month {unit === "R" ? "R" : "net"}</span><b className={pnlCls(month.total)}>{days.length ? show(month.total) : "—"}</b></div>
+              <div><span>Trading days</span><b>{days.length} · {month.trades} trade{month.trades === 1 ? "" : "s"}</b></div>
+              <div><span>Green / red days</span><b><span className="pos">{month.green}</span> / <span className="neg">{month.red}</span></b></div>
+              <div><span>Best day</span><b className={pnlCls(month.best)}>{month.best == null ? "—" : show(month.best)}</b></div>
+              <div><span>Worst day</span><b className={pnlCls(month.worst)}>{month.worst == null ? "—" : show(month.worst)}</b></div>
+            </div>
+
             <div className="panel">
-              <div className="cal-head">{DOW.map((d) => <div key={d}>{d}</div>)}</div>
-              <div className="cal-grid">
-                {cells.map((c, i) => {
-                  if (!c) return <div className="cell blank" key={"b" + i} />;
-                  const info = c.info;
-                  let cls = "cell";
-                  let style;
-                  if (info) {
-                    cls += info.pnl > 0 ? " has win" : info.pnl < 0 ? " has loss" : " has";
-                    style = { "--i": (0.12 + 0.45 * Math.abs(info.pnl) / maxAbs).toFixed(2) };
-                  }
-                  if (c.ds === todayStr) cls += " today";
-                  return (
-                    <div className={cls} key={c.ds} style={style} onClick={info ? () => gotoDay(c.ds) : undefined}>
-                      <div className="d">{c.d}</div>
-                      {info && <>
-                        <div className="cpnl">{info.pnl > 0 ? "+" : ""}{fmt.money(info.pnl)}</div>
-                        <div className="ct">{info.n} trade{info.n > 1 ? "s" : ""}</div>
-                      </>}
-                    </div>
-                  );
-                })}
+              <div className="cal-head cal-8">{DOW.map((d) => <div key={d}>{d}</div>)}<div>Week</div></div>
+              <div className="cal-grid cal-8">
+                {weeks.map((w, wi) => [
+                  ...w.cells.map((c, i) => {
+                    if (!c) return <div className="cell blank" key={`b${wi}-${i}`} />;
+                    const info = c.info;
+                    let cls = "cell";
+                    let style;
+                    if (info) {
+                      const v = val(info);
+                      cls += v > 0 ? " has win" : v < 0 ? " has loss" : " has";
+                      style = { "--i": (0.12 + 0.45 * Math.abs(v) / maxAbs).toFixed(2) };
+                    }
+                    if (c.ds === todayStr) cls += " today";
+                    return (
+                      <div className={cls} key={c.ds} style={style} onClick={info ? () => gotoDay(c.ds) : undefined}
+                           role={info ? "button" : undefined} tabIndex={info ? 0 : undefined}
+                           onKeyDown={info ? (e) => e.key === "Enter" && gotoDay(c.ds) : undefined}>
+                        <div className="d">{c.d}</div>
+                        {info && <>
+                          <div className="cpnl">{show(val(info))}</div>
+                          <div className="ct">{info.n} trade{info.n > 1 ? "s" : ""}</div>
+                        </>}
+                      </div>
+                    );
+                  }),
+                  <div className="cell wk" key={`w${wi}`}>
+                    <div className="d">W{wi + 1}</div>
+                    {w.n > 0 && <>
+                      <div className={"cpnl " + pnlCls(w.total)}>{show(w.total)}</div>
+                      <div className="ct">{w.n} trade{w.n > 1 ? "s" : ""}</div>
+                    </>}
+                  </div>,
+                ])}
               </div>
             </div>
           </>
