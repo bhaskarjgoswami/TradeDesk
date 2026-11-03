@@ -105,44 +105,29 @@
   .ex-creds input:focus{border-color:var(--accent)}
   .ex-note{font-size:12px;color:var(--dim);margin-top:12px;line-height:1.55}
 
-  /* ---------- dark split login screen ---------- */
-  .login{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;background:#070708}
+  /* ---------- split authentication page ---------- */
+  .login{position:fixed;inset:0;z-index:200;display:block;padding:0;background:#fff;overflow:auto;color:#22261f}
   .login.hidden{display:none}
-  .login-card2{display:grid;grid-template-columns:1fr 1fr;width:100%;max-width:880px;min-height:486px;border-radius:18px;overflow:hidden;border:1px solid #242424;background:#0f0f10}
-  .login-left{background:#131314;padding:36px 38px;display:flex;flex-direction:column}
-  .brand2{display:flex;align-items:center;gap:9px;margin-bottom:30px}
-  .brand2 .mark{width:30px;height:30px;border:1.5px solid #fff;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .brand2 .mark svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-  .brand2 .brandtxt{font-size:9.5px;font-weight:700;letter-spacing:1.6px;line-height:1.3;color:#fff}
-  .login-left h1{font-size:21px;font-weight:700;color:#fff;margin-bottom:6px;letter-spacing:-.3px}
-  .login-left .sub{font-size:12.5px;color:#7e7e82;margin-bottom:22px}
-  .seg2{display:flex;gap:5px;background:#1a1a1c;border:1px solid #2a2a2c;border-radius:11px;padding:4px;margin-bottom:22px}
-  .seg2 button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px;border:none;border-radius:8px;background:transparent;color:#86868a;font-weight:600;font-size:12.5px;cursor:pointer}
-  .seg2 button svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-  .seg2 button.on{background:#2f2f33;color:#fff}
-  .login-left label{display:block;font-size:12px;color:#b6b6ba;margin:0 0 7px;font-weight:500}
-  .ic-field{display:flex;align-items:center;gap:9px;background:#19191b;border:1px solid #2c2c2e;border-radius:10px;padding:11px 13px;margin-bottom:16px}
-  .ic-field svg{width:16px;height:16px;stroke:#6f6f73;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
-  .ic-field input{flex:1;background:none;border:none;outline:none;color:#fff;font-size:13.5px}
-  .ic-field input::placeholder{color:#5e5e62}
-  .ic-field .eye{background:none;border:none;cursor:pointer;padding:0;display:flex;color:#6f6f73}
-  .ic-field:focus-within{border-color:#4a4a4e}
-  .forgot{display:block;text-align:right;font-size:12px;color:#8e8e92;text-decoration:none;margin:-6px 0 18px}
-  .forgot:hover{color:#bdbdbd}
-  .login-err{color:#f87171;font-size:12.5px;margin:-6px 0 14px;min-height:0}
-  .login-btn{width:100%;padding:12px;border:none;border-radius:10px;background:#fff;color:#111;font-weight:650;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .14s}
-  .login-btn:hover{background:#e9e9e9}
-  .login-btn svg{width:16px;height:16px;stroke:#111;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-  .login-foot{margin-top:auto;padding-top:24px;font-size:12px;color:#7a7a7e}
-  .login-foot a{color:#cfcfcf;text-decoration:none}
-  .login-right{position:relative;overflow:hidden;background:#0c0c0d;display:flex;align-items:flex-end;padding:34px}
-  .login-right .glowbg{position:absolute;inset:0;background:radial-gradient(55% 45% at 62% 12%, rgba(255,255,255,.16), transparent 60%),radial-gradient(90% 90% at 85% 100%, #262628, #0c0c0d 70%)}
-  .login-right .sphere{position:absolute;width:320px;height:320px;right:-50px;bottom:-70px;border-radius:50%;background:radial-gradient(34% 34% at 36% 30%, #7d7d82, #2c2c2f 55%, #131315 100%)}
-  .login-right .right-content{position:relative;z-index:2;color:#fff}
-  .login-right .brand2{margin-bottom:14px}
-  .login-right h2{font-size:23px;font-weight:700;letter-spacing:-.4px;line-height:1.16;margin-bottom:10px}
-  .login-right p{font-size:12.5px;color:rgba(255,255,255,.58);max-width:290px;line-height:1.6}
-  @media(max-width:680px){.login-card2{grid-template-columns:1fr;max-width:420px}.login-right{display:none}}
+  .login-card2{display:grid;grid-template-columns:1fr 1fr;width:100%;max-width:none;min-height:100dvh;border:0;border-radius:0;overflow:hidden;background:#fff}
+  .login-left{grid-column:2;grid-row:1;background:#fafbf9;padding:72px clamp(35px,7vw,120px);display:flex;flex-direction:column;justify-content:center}
+  .login-left>h1,.login-left>.sub,.login-left>form,.login-left>.td-mode,.login-left>.login-foot{width:100%;max-width:370px;margin-left:auto;margin-right:auto}
+  .brand2{display:flex;align-items:center;gap:10px}.brand2 .mark{width:31px;height:31px;border:1px solid #58644c;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}.brand2 .mark svg{width:17px;height:17px;stroke:#536149;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}.brand2 .brandtxt{font-size:15px;font-weight:600;letter-spacing:-.4px;line-height:1.2;color:#333c2d}.login-left>.brand2{display:none}
+  .login-left h1{font-family:Georgia,'Times New Roman',serif;font-size:31px;line-height:1.2;font-weight:600;color:#23271f;margin-bottom:9px;letter-spacing:-.7px}
+  .login-left .sub{font-size:12px;line-height:1.7;color:#8b9185;margin-bottom:32px}
+  .login-left label{display:block;font-size:11px;color:#737d69;margin:0 0 7px;font-weight:400}
+  .login-left .ic-field{display:flex;align-items:center;gap:10px;background:transparent;border:1px solid #e0e5db;border-radius:3px;padding:13px 12px;margin-bottom:20px;min-height:48px;transition:border-color .15s,box-shadow .15s}
+  .login-left .ic-field>svg{display:none}.login-left .ic-field input{flex:1;min-width:0;width:100%;background:none;border:none;outline:none;color:#343d2d;font-size:13px;line-height:1.4}.login-left .ic-field input::placeholder{color:#a0a799}.login-left .ic-field:focus-within{border-color:#83a865;box-shadow:0 0 0 3px #83a86512}
+  .login-left .eye{display:flex;align-items:center;justify-content:center;background:none;border:0;padding:2px;color:#8a9480;cursor:pointer}.login-left .eye svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.5}
+  .login-left .forgot{display:block;text-align:right;font-size:11px;color:#7a8d69;text-decoration:none;margin:-9px 0 25px}.login-left .forgot:hover{color:#496936}
+  .login-err{color:#b44b45;font-size:12px;line-height:1.6;min-height:0;margin:0 0 16px}.login-err:empty{display:none}
+  .login-left .login-btn{width:100%;min-height:44px;margin-top:16px;padding:12px 18px;border:1px solid #7fa45f;border-radius:3px;background:#7fa45f;color:#fff;font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s}.login-left .login-btn:hover{background:#719653}.login-left .login-btn:disabled{opacity:.6;cursor:wait}.login-left .login-btn svg{display:none}
+  .login-left .login-foot{margin-top:28px;padding-top:20px;border-top:1px solid #e6e9e1;font-size:10px;line-height:1.8;text-align:center;color:#949c8b}.login-left .login-foot a{color:#687f55;text-decoration:none}.login-left .login-foot a:hover{text-decoration:underline}
+  .login-right{grid-column:1;grid-row:1;position:relative;overflow:hidden;background:#fff;display:flex;align-items:flex-start;padding:48px clamp(28px,5vw,78px);min-height:640px}.login-right .right-content{position:relative;z-index:2;color:#23271f;width:100%}.login-right .brand2{margin:0 0 85px}.login-right h2{font-family:Georgia,'Times New Roman',serif;font-size:clamp(29px,3vw,40px);font-weight:600;letter-spacing:-1px;line-height:1.22;margin-bottom:20px;max-width:430px}.login-right p{font-size:13px;color:#6c7664;max-width:370px;line-height:1.9}
+  .auth-art{position:absolute;left:-6%;right:-6%;bottom:-2%;height:46%;min-height:260px;pointer-events:none}.auth-globe{width:100%;height:100%;overflow:visible;opacity:.8}.auth-promo-card{position:absolute;width:170px;padding:16px 18px;border:1px solid #f0f2ed;border-radius:5px;background:#ffffffed;box-shadow:0 8px 35px #34432b0b;color:#313c28}.auth-promo-card:first-of-type{left:17%;bottom:19%;transform:rotate(-3deg)}.auth-promo-card:last-of-type{right:11%;bottom:58%;transform:rotate(3deg)}.auth-promo-card small{display:block;font-size:8px;letter-spacing:1px;color:#99a38e;margin-bottom:7px}.auth-promo-card strong{display:block;font-family:Georgia,'Times New Roman',serif;font-size:12px;line-height:1.6;font-weight:500}.auth-promo-check{position:absolute;bottom:-13px;right:14px;width:26px;height:26px;border:4px solid #fff;border-radius:50%;background:#809968;color:#fff;display:grid;place-items:center;font-size:10px}
+  .login-left .td-mode{margin-top:28px;text-align:center;font-size:12px;color:#727e66;line-height:1.8}.login-left .td-mode a{color:#587a3f;text-decoration:none;font-weight:500}.login-left .td-mode a:hover{text-decoration:underline}.login-left .td-mode span{display:block;margin-top:13px;font-size:10px;line-height:1.8;color:#919b86}
+  .login button:focus-visible,.login a:focus-visible{outline:2px solid #719653;outline-offset:4px}
+  @media(max-width:900px){.login-left{padding:64px 36px}.login-right{padding:40px 32px}.login-right .brand2{margin-bottom:75px}.login-right h2{font-size:32px}.auth-promo-card{width:145px;padding:13px}.auth-promo-card:last-of-type{right:6%}}
+  @media(max-width:680px){.login-card2{grid-template-columns:1fr;min-height:100dvh}.login-left{grid-column:1;padding:44px 26px;min-height:100dvh;justify-content:center}.login-left>.brand2{display:flex;width:100%;max-width:370px;margin:0 auto 46px}.login-left h1{font-size:30px}.login-right{display:none}}
   @media(max-width:980px){.topbar{display:none}}
 
   /* ---------- sidebar ---------- */
@@ -564,27 +549,32 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
   <div class="login-card2">
     <div class="login-left">
       <div class="brand2"><span class="mark"><svg viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></span><span class="brandtxt">TRADE<br>JOURNAL</span></div>
-      <h1>Login to your account</h1>
-      <div class="sub">Enter your password to continue.</div>
+      <h1>Welcome back</h1>
+      <div class="sub">Sign in to continue your trading journal.</div>
       <form id="loginForm">
-        <label>Email Address</label>
-        <div class="ic-field"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 5.5L20 7"/></svg><input type="email" id="loginEmail" placeholder="you@example.com"></div>
+        <div id="loginNameField" hidden><label for="loginName">Full name</label><div class="ic-field"><input type="text" id="loginName" name="name" placeholder="Your full name" autocomplete="name" maxlength="100"></div></div>
+        <label for="loginEmail">Email address</label>
+        <div class="ic-field"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 5.5L20 7"/></svg><input type="email" id="loginEmail" name="email" placeholder="you@example.com" autocomplete="email" required></div>
         <div id="passField">
-          <label>Password</label>
-          <div class="ic-field"><svg viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg><input type="password" id="loginPass" placeholder="Enter your password"><button type="button" class="eye" id="eyeBtn"><svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg></button></div>
+          <label for="loginPass">Password</label>
+          <div class="ic-field"><svg viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg><input type="password" id="loginPass" name="password" placeholder="Enter your password" autocomplete="current-password" required><button type="button" class="eye" id="eyeBtn" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg></button></div>
           <a class="forgot" href="#" onclick="return false">Forgot password?</a>
         </div>
-        <div class="login-err" id="loginErr"></div>
+        <div class="login-err" id="loginErr" role="status" aria-live="polite"></div>
         <button class="login-btn" type="submit">Sign In <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       </form>
       <div class="login-foot">Need help? Contact <a href="#" onclick="return false">support@tradejournal.app</a></div>
     </div>
     <div class="login-right">
-      <div class="glowbg"></div><div class="sphere"></div>
       <div class="right-content">
-        <div class="brand2"><span class="mark"><svg viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></span><span class="brandtxt">TRADE<br>JOURNAL</span></div>
-        <h2>Review every trade,<br>sharpen your edge</h2>
-        <p>Log setups, screenshots, and P&amp;L in one private journal built for serious traders.</p>
+        <div class="brand2"><span class="mark"><svg viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></span><span class="brandtxt">TradeDesk</span></div>
+        <h2>Every trade tells a story.<br>Make yours count.</h2>
+        <p>Bring your setups, screenshots and reflections together. Build a clearer picture of how you trade, one session at a time.</p>
+      </div>
+      <div class="auth-art" aria-hidden="true">
+        <svg class="auth-globe" viewBox="0 0 620 360" fill="none"><defs><pattern id="authDots" width="11" height="11" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.5" fill="#ccd4df"/></pattern><clipPath id="authGlobeClip"><ellipse cx="300" cy="240" rx="325" ry="180" transform="rotate(-20 300 240)"/></clipPath></defs><g clip-path="url(#authGlobeClip)"><ellipse cx="300" cy="240" rx="325" ry="180" transform="rotate(-20 300 240)" fill="url(#authDots)"/><g opacity=".5" stroke="#e7ebef"><ellipse cx="300" cy="240" rx="260" ry="180" transform="rotate(-20 300 240)"/><ellipse cx="300" cy="240" rx="180" ry="180" transform="rotate(-20 300 240)"/><ellipse cx="300" cy="240" rx="80" ry="180" transform="rotate(-20 300 240)"/><path d="M-20 210 600 80M-20 265 630 140M-10 320 650 200"/></g><path d="m30 300 58-30 45 8 50-56 48 12 60-55 40 14 60-60 42 9 70-48" stroke="#abc08e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+        <div class="auth-promo-card"><small>PLAN WITH INTENTION</small><strong>A clear setup.<br>A defined risk.</strong><span class="auth-promo-check">✓</span></div>
+        <div class="auth-promo-card"><small>REVIEW WITH CLARITY</small><strong>Find the patterns.<br>Refine your process.</strong><span class="auth-promo-check">✓</span></div>
       </div>
     </div>
   </div>
@@ -884,14 +874,14 @@ let userEmail='';
 function setAvatar(email){userEmail=email||userEmail;const c=(userEmail||'T').trim()[0];$('#tbAvatar').textContent=(c||'T').toUpperCase();}
 function showLogin(){$('#loginScreen').classList.remove('hidden');$('#loginEmail').focus();}
 function hideLogin(){$('#loginScreen').classList.add('hidden');}
-$('#eyeBtn').onclick=()=>{const i=$('#loginPass');i.type=i.type==='password'?'text':'password';};
+$('#eyeBtn').onclick=()=>{const i=$('#loginPass'),show=i.type==='password';i.type=show?'text':'password';$('#eyeBtn').setAttribute('aria-label',show?'Hide password':'Show password');$('#eyeBtn').setAttribute('aria-pressed',String(show));};
 $('#loginForm').addEventListener('submit',async e=>{
   e.preventDefault();$('#loginErr').textContent='';
   const email=$('#loginEmail').value.trim();
   const secret=$('#loginPass').value;
   if(!email||!secret){$('#loginErr').textContent='Enter your email and password.';return;}
   try{
-    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:secret})});
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:secret,name:$('#loginName').value.trim()})});
     if(r.ok){setAvatar(email);hideLogin();boot();}
     else{const d=await r.json().catch(()=>({}));$('#loginErr').textContent=d.error||'Login failed';}
   }catch{$('#loginErr').textContent='Could not reach the server.';}

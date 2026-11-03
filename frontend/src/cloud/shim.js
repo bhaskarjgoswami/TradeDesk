@@ -35,9 +35,9 @@ async function handle(url, init, nativeFetch) {
     return json(data.session ? { authed: true, email: data.session.user.email } : { authed: false });
   }
   if (path === "/api/login" && method === "POST") {
-    const { email, password } = JSON.parse(init.body || "{}");
+    const { email, password, name } = JSON.parse(init.body || "{}");
     if (mode === "signup") {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: String(name || "").trim().slice(0, 100) } } });
       if (error) return json({ error: error.message }, 400);
       if (!data.session) return json({ error: "Account created. Check your email to confirm it, then sign in." }, 400);
       return json({ ok: true });
@@ -71,7 +71,7 @@ function decorate() {
   if (!card || card.dataset.td) return;
   card.dataset.td = "1";
   document.title = "TradeDesk";
-  document.querySelectorAll(".brandtxt").forEach((el) => { el.innerHTML = "TRADE<br>DESK"; });
+  document.querySelectorAll(".brandtxt").forEach((el) => { el.textContent = "TradeDesk"; });
   const foot = card.querySelector(".login-foot");
   if (foot) foot.innerHTML = `Need help? Contact <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a> · <a href="/">Home</a>`;
 
@@ -82,12 +82,20 @@ function decorate() {
   card.querySelector("#loginForm")?.after(toggle);
   const render = () => {
     const up = mode === "signup";
-    if (h1) h1.textContent = up ? "Create your account" : "Login to your account";
-    if (sub) sub.textContent = up ? "Start your private trading journal." : "Enter your password to continue.";
-    if (btn) btn.innerHTML = (up ? "Create account " : "Sign In ") + btnIcon;
+    const nameField = document.getElementById("loginNameField");
+    const nameInput = document.getElementById("loginName");
+    const passwordInput = document.getElementById("loginPass");
+    if (nameField) nameField.hidden = !up;
+    if (nameInput) nameInput.required = up;
+    if (passwordInput) { passwordInput.autocomplete = up ? "new-password" : "current-password"; passwordInput.minLength = up ? 8 : 1; }
+    const resetLink = card.querySelector(".forgot");
+    if (resetLink) resetLink.hidden = up;
+    if (h1) h1.textContent = up ? "Get started" : "Welcome back";
+    if (sub) sub.textContent = up ? "Create your account to start journaling." : "Sign in to continue your trading journal.";
+    if (btn) btn.innerHTML = (up ? "Sign up " : "Sign in ") + btnIcon;
     toggle.innerHTML = up
       ? 'Already have an account? <a href="#" data-m="login">Sign in</a><br><span>By creating an account you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</span>'
-      : 'New to TradeDesk? <a href="#" data-m="signup">Create an account</a>';
+      : 'New to TradeDesk? <a href="#" data-m="signup">Sign up</a>';
     const err = document.getElementById("loginErr"); if (err) err.textContent = "";
   };
   toggle.addEventListener("click", (e) => {
@@ -122,7 +130,7 @@ function decorate() {
 }
 
 const style = document.createElement("style");
-style.textContent = ".td-mode{margin-top:14px;font-size:13px;color:#8e8e92;line-height:1.6}.td-mode a{color:#e8e8ea}.td-mode span{font-size:11.5px}";
+style.textContent = ".login-left .forgot[hidden]{display:none}";
 document.head.appendChild(style);
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", decorate); else decorate();
 
