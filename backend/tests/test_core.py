@@ -210,3 +210,17 @@ def test_trade_rejects_someone_elses_playbook():
     assert_owns_playbook(FakeConn({"?column?": 1}), "u1", 5)  # owned: fine
     with pytest.raises(HTTPException):
         assert_owns_playbook(FakeConn(None), "u1", 5)       # not owned
+
+
+# ── listing ──────────────────────────────────────────────
+def test_search_escapes_like_wildcards():
+    from app.routers.trades import _filters
+    where, args = _filters("u1", None, None, None, "2026-01-01", None, "50%_off")
+    assert "date>=%s" in where and args[1] == "2026-01-01"
+    assert args[2] == r"%50\%\_off%"
+
+
+def test_page_limits_validated():
+    assert client.get("/api/trades/page?limit=0").status_code == 422
+    assert client.get("/api/trades/page?limit=501").status_code == 422
+    assert client.get("/api/trades/page?offset=-1").status_code == 422

@@ -50,18 +50,9 @@ def review_options(user=Depends(get_current_user)):
     return {"mistakes": MISTAKES, "emotions": EMOTIONS}
 
 
-@router.get("")
-def list_trades(
-    symbol: Optional[str] = None,
-    setup: Optional[str] = None,
-    outcome: Optional[str] = None,
-    from_date: Optional[str] = Query(None, alias="from"),
-    to_date: Optional[str] = Query(None, alias="to"),
-    search: Optional[str] = None,
-    user=Depends(get_current_user),
-):
-    q = "SELECT * FROM trades WHERE user_id=%s"
-    args = [user["user_id"]]
+def _filters(uid, symbol, setup, outcome, from_date, to_date, search):
+    """WHERE clause + args shared by the list endpoints."""
+    q, args = "user_id=%s", [uid]
     if symbol:
         q += " AND symbol=%s"; args.append(symbol)
     if setup:
@@ -73,13 +64,60 @@ def list_trades(
     if to_date:
         q += " AND date<=%s"; args.append(to_date)
     if search:
-        s = "%" + search + "%"
+        s = "%" + search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
         q += " AND (logic ILIKE %s OR notes ILIKE %s OR tags ILIKE %s OR symbol ILIKE %s OR setup ILIKE %s)"
         args += [s, s, s, s, s]
-    q += " ORDER BY date DESC, id DESC"
+    return q, args
+
+
+@router.get("")
+def list_trades(
+    symbol: Optional[str] = None,
+    setup: Optional[str] = None,
+    outcome: Optional[str] = None,
+    from_date: Optional[str] = Query(None, alias="from"),
+    to_date: Optional[str] = Query(None, alias="to"),
+    search: Optional[str] = None,
+    user=Depends(get_current_user),
+):
+    """All matching trades (full rows). Used for exports and date-bounded views."""
+    where, args = _filters(user["user_id"], symbol, setup, outcome, from_date, to_date, search)
     with get_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute(q, args)
+            cur.execute(f"SELECT * FROM trades WHERE {where} ORDER BY date DESC, id DESC", args)
+            return cur.fetchall()
+
+
+@router.get("/page")
+def page_trades(
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    search: Optional[str] = None,
+    user=Depends(get_current_user),
+):
+    """One page of trades for the list view, newest first, with the total count."""
+    where, args = _filters(user["user_id"], None, None, None, None, None, search)
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT COUNT(*) AS n FROM trades WHERE {where}", args)
+            total = cur.fetchone()["n"]
+            cur.execute(
+                f"SELECT * FROM trades WHERE {where} ORDER BY date DESC, id DESC LIMIT %s OFFSET %s",
+                args + [limit, offset],
+            )
+            return {"rows": cur.fetchall(), "total": total}
+
+
+@router.get("/analytics")
+def analytics_rows(user=Depends(get_current_user)):
+    """Slim rows for Performance: only the fields the breakdowns use (no notes/images)."""
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, date, symbol, direction, setup, pnl, fee, r_multiple, review, playbook_id "
+                "FROM trades WHERE user_id=%s ORDER BY date, id",
+                (user["user_id"],),
+            )
             return cur.fetchall()
 
 
