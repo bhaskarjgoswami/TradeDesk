@@ -436,3 +436,11 @@ tbody tr:hover td{background:var(--panel2)}
 .pub-foot a{color:var(--mut);text-decoration:none}
 .pub-foot a:hover{color:var(--txt)}
 @media(max-width:560px){.pub-head nav>a:not(.btn){display:none}.pub-hero{padding:44px 0 36px}}
+
+/* ---------- CSV import dialog ---------- */
+.imp-card{max-width:560px;text-align:left}
+.imp-actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.imp-actions label.btn{cursor:pointer}
+.imp-errors{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13px;max-height:220px;overflow:auto}
+.imp-errors ul{margin:8px 0 0;padding-left:18px;color:var(--red)}
+.imp-summary{font-size:14px;display:flex;flex-direction:column;gap:6px}

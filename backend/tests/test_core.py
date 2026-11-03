@@ -128,3 +128,36 @@ def test_rate_limit_blocks_after_quota():
     codes = [client.post("/api/trades/upload", json={"data": "bad"}).status_code for _ in range(21)]
     assert codes[:20] == [400] * 20 and codes[20] == 429
     ratelimit._hits.clear()
+
+
+# ── CSV import ───────────────────────────────────────────
+def test_import_row_derives_values_with_contract_size():
+    from app.routers.trades import _import_row
+    r = _import_row({"date": "2026-11-01", "symbol": "btcusd", "direction": "short", "entry": "70,100",
+                     "stop": "70200", "exit": "70000", "qty": "10", "fee": "0.2", "contract_value": "0.001"}, 2)
+    assert r["symbol"] == "BTCUSD" and r["direction"] == "Short"
+    assert r["pnl"] == 1.0 and r["risk"] == 1.0 and r["r_multiple"] == 1.0 and r["outcome"] == "Win"
+    assert r["ext_id"].startswith("csv:") and "contract_value" not in r
+    same = _import_row({"date": "2026-11-01", "symbol": "BTCUSD", "direction": "Short", "entry": "70100",
+                        "stop": "70200", "exit": "70000", "qty": "10", "fee": "0.2", "contract_value": "0.001"}, 3)
+    assert same["ext_id"] == r["ext_id"]  # identical record -> same dedupe key
+
+
+@pytest.mark.parametrize("raw,msg", [
+    ({"date": "01/11/2026", "symbol": "X", "direction": "Long"}, "YYYY-MM-DD"),
+    ({"date": "2026-02-30", "symbol": "X", "direction": "Long"}, "YYYY-MM-DD"),
+    ({"date": "2026-11-01", "symbol": "", "direction": "Long"}, "symbol"),
+    ({"date": "2026-11-01", "symbol": "X", "direction": "Up"}, "Long/Short"),
+    ({"date": "2026-11-01", "symbol": "X", "direction": "Long", "qty": "-1"}, "qty"),
+    ({"date": "2026-11-01", "symbol": "X", "direction": "Long", "pnl": "abc"}, "pnl"),
+])
+def test_import_row_rejects_bad_rows(raw, msg):
+    from app.routers.trades import _import_row
+    with pytest.raises(ValueError, match=msg):
+        _import_row(raw, 7)
+
+
+def test_import_reports_errors_without_writing():
+    r = client.post("/api/trades/import", json={"rows": [{"date": "bad", "symbol": "X", "direction": "Long"}]}).json()
+    assert r["ok"] is False and r["error_count"] == 1 and "Row 2" in r["errors"][0]
+    assert client.post("/api/trades/import", json={"rows": []}).status_code == 400

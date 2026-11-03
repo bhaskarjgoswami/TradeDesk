@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { fmt } from "../lib/calc";
 import { Icon, TODAY } from "../lib/ui";
+import ImportCsv from "../components/ImportCsv";
 
 function pnlCls(n) { return n > 0 ? "pos" : n < 0 ? "neg" : ""; }
 const MON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -15,6 +16,8 @@ export default function AllTrades() {
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("list"); // list | calendar
+  const [importOpen, setImportOpen] = useState(false);
+  const [notice, setNotice] = useState("");
   const now = new Date();
   const [cal, setCal] = useState({ y: now.getFullYear(), m: now.getMonth() });
 
@@ -35,7 +38,7 @@ export default function AllTrades() {
   const gotoDay = (ds) => nav(`/journal?date=${encodeURIComponent(ds)}`);
 
   function exportCsv() {
-    const cols = ["date", "symbol", "direction", "setup", "entry", "stop", "exit", "qty", "risk", "pnl", "r_multiple", "outcome", "rating", "tags"];
+    const cols = ["date", "symbol", "direction", "setup", "entry", "stop", "exit", "qty", "pnl", "fee", "risk", "r_multiple", "outcome", "rating", "tags", "notes"];
     const rows = trades.map((t) => cols.map((c) => `"${(t[c] ?? "").toString().replace(/"/g, '""')}"`).join(","));
     const blob = new Blob([cols.join(",") + "\n" + rows.join("\n")], { type: "text/csv" });
     const a = document.createElement("a");
@@ -83,11 +86,24 @@ export default function AllTrades() {
                 <input placeholder="Search…" value={q} onChange={(e) => setParams(e.target.value ? { q: e.target.value } : {})} />
               </div>
             )}
+            <button className="btn ghost" onClick={() => setImportOpen(true)}>Import CSV</button>
             <button className="btn ghost" onClick={exportCsv}>Export CSV</button>
             <button className="btn" onClick={addInJournal}>+ Add trade</button>
           </div>
         </div>
 
+        {notice && <div className="ex-note" style={{ marginBottom: 14 }}>{notice}</div>}
+        <ImportCsv
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          onImported={(r) => {
+            setImportOpen(false);
+            setNotice(`Imported ${r.imported} trade${r.imported === 1 ? "" : "s"}.` +
+              (r.duplicates ? ` Skipped ${r.duplicates} duplicate${r.duplicates === 1 ? "" : "s"}.` : "") +
+              (r.over_free_limit ? ` Skipped ${r.over_free_limit} over the Free daily limit.` : ""));
+            load();
+          }}
+        />
         {view === "list" ? (
           <div className="tablewrap">
             <table>

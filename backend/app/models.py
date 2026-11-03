@@ -49,5 +49,10 @@ class ImageUploadIn(BaseModel):
     data: str  # data:image/...;base64,...
 
 
+class ImportIn(BaseModel):
+    rows: list[dict]
+    dry_run: bool = False
+
+
 class ImageUrlsIn(BaseModel):
     paths: list[str]

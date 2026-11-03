@@ -4,10 +4,13 @@ from ..auth import get_current_user
 from ..database import get_conn
 from ..billing import active_tier
 from ..ratelimit import limit
-from ..models import TradeIn, ImageUploadIn, ImageUrlsIn
+from ..models import TradeIn, ImageUploadIn, ImageUrlsIn, ImportIn
 from ..config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-import time, base64, secrets
+import time, base64, secrets, hashlib, json, math, re
+from collections import Counter
+from datetime import datetime
 import httpx
+import psycopg2.extras
 
 router = APIRouter(prefix="/api/trades", tags=["trades"])
 
@@ -89,6 +92,119 @@ def create_trade(body: TradeIn, user=Depends(get_current_user)):
         with conn.cursor() as cur:
             cur.execute(f"INSERT INTO trades ({','.join(cols)}) VALUES ({ph}) RETURNING *", vals)
             return cur.fetchone()
+
+
+# ── CSV import ───────────────────────────────────────────
+# Same column format as the local journal's importer, so it can migrate here.
+IMPORT_TEXT = ["date", "symbol", "direction", "setup", "notes", "tags"]
+IMPORT_NUM = ["entry", "stop", "exit", "qty", "pnl", "fee", "risk", "r_multiple", "contract_value"]
+NON_NEGATIVE = {"entry", "stop", "exit", "qty", "fee", "risk"}
+MAX_IMPORT_ROWS = 1000
+
+
+def _import_row(raw: dict, n: int) -> dict:
+    """Validate one CSV row; raise ValueError naming the row on bad input."""
+    if not isinstance(raw, dict):
+        raise ValueError(f"Row {n}: invalid row")
+    row = {}
+    for f in IMPORT_TEXT:
+        v = str(raw.get(f) or "").strip()
+        if len(v) > (10000 if f == "notes" else 2000):
+            raise ValueError(f"Row {n}: {f} is too long")
+        row[f] = v
+    for f in IMPORT_NUM:
+        v = raw.get(f)
+        if v in ("", None):
+            row[f] = None
+            continue
+        try:
+            x = float(str(v).replace(",", ""))
+        except ValueError:
+            raise ValueError(f"Row {n}: {f} must be a number")
+        if not math.isfinite(x) or abs(x) > 1e12 or (f in NON_NEGATIVE and x < 0) or (f == "contract_value" and x <= 0):
+            raise ValueError(f"Row {n}: invalid {f}")
+        row[f] = x
+    try:
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", row["date"]):
+            raise ValueError
+        datetime.strptime(row["date"], "%Y-%m-%d")
+    except ValueError:
+        raise ValueError(f"Row {n}: date must be YYYY-MM-DD")
+    row["direction"] = row["direction"].capitalize()
+    if not row["symbol"] or row["direction"] not in ("Long", "Short"):
+        raise ValueError(f"Row {n}: needs a symbol and Long/Short direction")
+    row["symbol"] = row["symbol"].upper()
+
+    sign = -1 if row["direction"] == "Short" else 1
+    cv = row.pop("contract_value") or 1
+    e, s_, x_, q = row["entry"], row["stop"], row["exit"], row["qty"]
+    if row["pnl"] is None and None not in (e, x_, q):
+        row["pnl"] = round((x_ - e) * q * cv * sign, 8)
+    if row["risk"] is None and None not in (e, s_, q):
+        row["risk"] = round(abs(e - s_) * q * cv, 8)
+    if row["r_multiple"] is None and None not in (e, s_, x_) and e != s_:
+        row["r_multiple"] = round((x_ - e) / abs(e - s_) * sign, 4)
+    net = None if row["pnl"] is None else row["pnl"] - (row["fee"] or 0)
+    row["outcome"] = None if net is None else "Win" if net > 0 else "Loss" if net < 0 else "BE"
+    # identical CSV records are skipped on re-import
+    row["ext_id"] = "csv:" + hashlib.sha256(json.dumps(row, sort_keys=True).encode()).hexdigest()[:40]
+    return row
+
+
+@router.post("/import")
+def import_trades(body: ImportIn, user=Depends(limit("import", 10))):
+    if not 1 <= len(body.rows) <= MAX_IMPORT_ROWS:
+        raise HTTPException(400, f"Import between 1 and {MAX_IMPORT_ROWS:,} trades at a time")
+    errors, rows = [], []
+    for n, raw in enumerate(body.rows, start=2):  # row 1 is the CSV header
+        try:
+            rows.append(_import_row(raw, n))
+        except ValueError as e:
+            errors.append(str(e))
+    if errors:  # all-or-nothing: fix the file, then import
+        return {"ok": False, "errors": errors[:50], "error_count": len(errors), "valid": len(rows)}
+
+    uid = user["user_id"]
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT ext_id FROM trades WHERE user_id=%s AND ext_id = ANY(%s)",
+                (uid, [r["ext_id"] for r in rows]),
+            )
+            have = {r["ext_id"] for r in cur.fetchall()}
+            seen, fresh = set(), []
+            for r in rows:
+                if r["ext_id"] not in have and r["ext_id"] not in seen:
+                    seen.add(r["ext_id"]); fresh.append(r)
+            duplicates = len(rows) - len(fresh)
+
+            over_limit = 0
+            if active_tier(conn, uid) != "pro":
+                days = sorted({r["date"] for r in fresh})
+                cur.execute(
+                    "SELECT date, COUNT(*) AS n FROM trades WHERE user_id=%s AND date = ANY(%s) GROUP BY date",
+                    (uid, days),
+                )
+                used = Counter({r["date"]: r["n"] for r in cur.fetchall()})
+                kept = []
+                for r in fresh:
+                    if used[r["date"]] < FREE_DAILY_LIMIT:
+                        used[r["date"]] += 1; kept.append(r)
+                over_limit = len(fresh) - len(kept)
+                fresh = kept
+
+            summary = {"ok": True, "to_import": len(fresh), "duplicates": duplicates, "over_free_limit": over_limit}
+            if body.dry_run or not fresh:
+                return {**summary, "imported": 0}
+            cols = list(fresh[0]) + ["user_id", "created_at"]
+            now = time.strftime("%Y-%m-%d %H:%M:%S")
+            psycopg2.extras.execute_values(
+                cur,
+                f"INSERT INTO trades ({','.join(cols)}) VALUES %s "
+                "ON CONFLICT (user_id, ext_id) WHERE ext_id IS NOT NULL DO NOTHING",
+                [[r[c] for c in cols[:-2]] + [uid, now] for r in fresh],
+            )
+            return {**summary, "imported": cur.rowcount}
 
 
 @router.put("/{trade_id}")
