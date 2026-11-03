@@ -46,6 +46,17 @@ uvicorn app.main:app --reload --port 8787
 
 See `backend/.env.example` for the full list.
 
-## Local journal
+## Journal interface and deployment
 
-The local-only Python + SQLite journal lives at the repo root. See `LOCAL-JOURNAL.md`.
+The repo-root HTML, JavaScript and CSS are the shared journal interface. The
+local launcher serves them with Python + SQLite. The web build copies the same
+files into `frontend/app/` and `frontend/public/`, then connects them to the
+signed-in user's cloud API at `/j/api/*`. Vercel opens the journal at `/app`
+when visiting `/`. Local SQLite records are not uploaded by a deployment.
+
+After editing the root interface, run `npm run sync:journal` in `frontend/` and
+commit the generated copies. CI checks they match; `npm run build` also syncs
+them automatically. Push `main` to `bhaskarjgoswami/TradeDesk` to update the
+connected Vercel frontend and Render backend.
+
+See `LOCAL-JOURNAL.md` for the local Python + SQLite launcher and backups.
