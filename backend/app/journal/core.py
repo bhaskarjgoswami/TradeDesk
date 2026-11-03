@@ -214,10 +214,11 @@ def save_plan_settings(body):
     return dict(settings=clean, revision=current + 1, customized=True)
 
 
-DEFAULT_ROUTINE = dict(enabled=True, showAll=True, autoHide=True, popup=False, resetTime='00:00', steps=[
-    dict(id='news', title='Review news on the economic calendar', action='none', icon='calendar'),
-    dict(id='plan', title='Review your trade plan', action='preferences', icon='target'),
-    dict(id='meditate', title='Meditate (15 mins)', action='focus', icon='calm')])
+# Match the desktop journal's configured popup, including its meditation template.
+# Saved per-user routines still take precedence over these first-run defaults.
+DEFAULT_ROUTINE = dict(enabled=True, showAll=True, autoHide=True, popup=True, resetTime='00:00', steps=[
+    dict(id='plan', title='Review your trade plan', action='preferences', icon='target', meditation=''),
+    dict(id='meditate', title='Meditate (15 mins)', action='focus', icon='calm', meditation='visualize-plan')])
 
 
 def init_routine():

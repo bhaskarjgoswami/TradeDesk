@@ -73,6 +73,26 @@
       "source": "/",
       "destination": "/app",
       "permanent": false
+    },
+    {
+      "source": "/journal",
+      "destination": "/app",
+      "permanent": false
+    },
+    {
+      "source": "/trades",
+      "destination": "/app",
+      "permanent": false
+    },
+    {
+      "source": "/playbook",
+      "destination": "/app",
+      "permanent": false
+    },
+    {
+      "source": "/performance",
+      "destination": "/app",
+      "permanent": false
     }
   ]
 }

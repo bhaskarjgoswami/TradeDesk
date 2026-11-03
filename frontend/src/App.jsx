@@ -3,7 +3,6 @@ import { Routes, Route, NavLink, Navigate, useNavigate, useLocation } from "reac
 import { useAuth } from "./lib/AuthContext";
 import { api } from "./lib/api";
 import { Icon } from "./lib/ui";
-import { RoutinePopup } from "./components/Routine";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 // Pages load on demand: the landing page and login don't pay for the app,
@@ -168,7 +167,6 @@ function Shell() {
 
         <div className="content-card">
           <ExpiryBanner />
-          <RoutinePopup />
           <div className="pagefold" />
           <ErrorBoundary key={loc.pathname}>
           <Suspense fallback={<PageLoading />}>

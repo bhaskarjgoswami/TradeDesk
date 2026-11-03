@@ -3,7 +3,6 @@ import { api } from "../lib/api";
 import { useAuth } from "../lib/AuthContext";
 import PlanCards from "../lib/PlanCards";
 import { useFeedback } from "../lib/feedback";
-import RoutineSettings from "../components/RoutineSettings";
 
 function isDark() { return document.documentElement.getAttribute("data-theme") === "dark"; }
 
@@ -108,7 +107,7 @@ export default function Settings() {
             <div className="muted" style={{ fontSize: 12.5 }}>Display label only. Amounts are not converted.</div>
           </div>
 
-          <RoutineSettings />
+          <div className="set-sec"><div className="set-label">Pre-market routine</div><p>Manage your routine in the journal.</p><a className="btn ghost" href="/app">Open journal</a></div>
 
           <div className="set-sec">
             <div className="set-label">Exchange</div>
