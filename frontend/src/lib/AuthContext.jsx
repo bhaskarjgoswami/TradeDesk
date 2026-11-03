@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "./supabase";
 import { api } from "./api";
 import { setCurrency } from "./calc";
 import { CHECKLIST_DEFAULT, legacyChecklist } from "./ui";
+import { normalizeRoutine } from "./routine";
 
 // Per-user preferences live in Supabase Auth user_metadata so they follow the
 // user across devices without a DB table.
@@ -11,6 +12,8 @@ function prefsFrom(user) {
   return {
     currency: m.currency || "USD",
     checklist: Array.isArray(m.checklist) ? m.checklist : legacyChecklist() || CHECKLIST_DEFAULT.slice(),
+    routine: normalizeRoutine(m.routine),
+    routine_progress: m.routine_progress || null, // { day, done: [step titles] }
   };
 }
 
@@ -47,7 +50,8 @@ export function AuthProvider({ children }) {
     }
   }, [session]);
 
-  const prefs = prefsFrom(session?.user);
+  // Memoised: consumers use prefs.* as effect dependencies.
+  const prefs = useMemo(() => prefsFrom(session?.user), [session?.user]);
   setCurrency(prefs.currency);
 
   async function savePrefs(patch) {

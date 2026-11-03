@@ -3,6 +3,7 @@ import { api } from "../lib/api";
 import { useAuth } from "../lib/AuthContext";
 import PlanCards from "../lib/PlanCards";
 import { useFeedback } from "../lib/feedback";
+import RoutineSettings from "../components/RoutineSettings";
 
 function isDark() { return document.documentElement.getAttribute("data-theme") === "dark"; }
 
@@ -106,6 +107,8 @@ export default function Settings() {
             </div>
             <div className="muted" style={{ fontSize: 12.5 }}>Display label only. Amounts are not converted.</div>
           </div>
+
+          <RoutineSettings />
 
           <div className="set-sec">
             <div className="set-label">Exchange</div>

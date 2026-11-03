@@ -9,6 +9,7 @@ import AllTrades from "./pages/AllTrades";
 import Performance from "./pages/Performance";
 import Settings from "./pages/Settings";
 import Playbook from "./pages/Playbook";
+import { RoutinePopup } from "./components/Routine";
 import Landing from "./pages/Landing";
 import Legal, { LEGAL_PAGES } from "./pages/Legal";
 
@@ -160,6 +161,7 @@ function Shell() {
 
         <div className="content-card">
           <ExpiryBanner />
+          <RoutinePopup />
           <div className="pagefold" />
           <Routes>
             <Route path="/journal" element={<DailyJournal />} />

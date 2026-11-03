@@ -7,6 +7,7 @@ import { useAuth } from "../lib/AuthContext";
 import TradeForm from "../components/TradeForm";
 import UpgradeModal from "../lib/UpgradeModal";
 import { useFeedback } from "../lib/feedback";
+import { RoutinePanel } from "../components/Routine";
 
 const FREE_DAILY_LIMIT = 2;
 
@@ -130,6 +131,7 @@ export default function DailyJournal() {
           </div>
         </div>
         <hr className="div" />
+        <RoutinePanel />
 
         {!detail ? (
           <div className="dv-grid"><div className="muted">Loading…</div></div>
