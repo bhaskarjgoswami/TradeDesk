@@ -77,9 +77,10 @@ function decorate() {
 
   const h1 = card.querySelector("h1"), sub = card.querySelector(".sub"), btn = card.querySelector(".login-btn");
   const btnIcon = btn?.querySelector("svg")?.outerHTML || "";
-  const toggle = document.createElement("div");
+  const toggle = card.querySelector("#authModePrompt") || document.createElement("div");
+  toggle.id = "authModePrompt";
   toggle.className = "td-mode";
-  card.querySelector("#loginForm")?.after(toggle);
+  if (!toggle.isConnected) card.querySelector("#loginForm")?.after(toggle);
   const render = () => {
     const up = mode === "signup";
     const nameField = document.getElementById("loginNameField");
