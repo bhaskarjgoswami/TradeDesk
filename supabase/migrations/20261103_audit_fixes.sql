@@ -33,3 +33,6 @@ on conflict (id) do nothing;
 alter table public.trades add column if not exists ext_id text;
 create unique index if not exists trades_user_ext_id
   on public.trades(user_id, ext_id) where ext_id is not null;
+
+-- 5. Post-trade review (followed plan, quality, emotions, mistakes)
+alter table public.trades add column if not exists review jsonb;

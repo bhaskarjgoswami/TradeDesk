@@ -168,3 +168,25 @@ def test_max_drawdown_and_expectancy():
     assert _max_drawdown([10, -4, -8, 5, 20, -3]) == -12  # peak 10 -> trough -2
     assert _max_drawdown([-5, -5]) == -10                  # below the zero start
     assert _max_drawdown([]) == 0
+
+
+# ── trade review ─────────────────────────────────────────
+def test_review_validation():
+    from pydantic import ValidationError
+    from app.models import TradeIn
+    t = TradeIn(review={"followed_plan": False, "quality": "B", "emotion_in": "Anxious",
+                        "mistakes": ["Moved stop", "Moved stop"], "junk": 1})
+    assert t.review.mistakes == ["Moved stop"] and t.review.quality == "B"
+    for bad in ({"quality": "Z"}, {"emotion_in": "Hungry"}, {"mistakes": ["Bad luck"]}):
+        with pytest.raises(ValidationError):
+            TradeIn(review=bad)
+
+
+def test_review_stored_as_json():
+    from psycopg2.extras import Json
+    from app.models import TradeIn
+    from app.routers.trades import _vals, TRADE_FIELDS
+    v = _vals(TradeIn(symbol="X", review={"followed_plan": True}))
+    r = v[TRADE_FIELDS.index("review")]
+    assert isinstance(r, Json) and r.adapted["followed_plan"] is True
+    assert _vals(TradeIn())[TRADE_FIELDS.index("review")] is None

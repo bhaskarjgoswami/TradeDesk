@@ -58,6 +58,29 @@ function GroupTable({ title, rows }) {
   );
 }
 
+// What each mistake cost: trades tagged with it and their combined net P&L.
+function MistakeTable({ closed }) {
+  const m = {};
+  for (const t of closed) for (const k of t.review?.mistakes || []) {
+    m[k] = m[k] || { n: 0, net: 0 };
+    m[k].n++; m[k].net += net(t);
+  }
+  const rows = Object.entries(m).sort((a, b) => a[1].net - b[1].net);
+  return (
+    <div className="panel">
+      <h3>Cost of mistakes</h3>
+      {rows.length === 0 ? <div className="muted">Tag mistakes in a trade's review to see what they cost you.</div> : (
+        <table className="grp">
+          <thead><tr><th></th><th className="num">Trades</th><th className="num">Net P&amp;L</th></tr></thead>
+          <tbody>{rows.map(([k, g]) => (
+            <tr key={k}><td><b>{k}</b></td><td className="num">{g.n}</td><td className={"num " + sign(g.net)}>{fmt.money(g.net)}</td></tr>
+          ))}</tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
 export default function Performance() {
   const [s, setS] = useState(null);
   const [trades, setTrades] = useState([]);
@@ -78,6 +101,8 @@ export default function Performance() {
   let cum = 0;
   const curve = closed.map((t, i) => ({ i: i + 1, equity: Math.round((cum += net(t)) * 100) / 100, date: t.date }));
   const pf = s.profit_factor === 999 ? "∞" : s.profit_factor;
+  const answered = closed.filter((t) => typeof t.review?.followed_plan === "boolean");
+  const adherence = answered.length ? Math.round((100 * answered.filter((t) => t.review.followed_plan).length) / answered.length) : null;
 
   return (
     <main className="main">
@@ -92,6 +117,7 @@ export default function Performance() {
           <Card label="Avg R" value={s.avg_r + "R"} cls={sign(s.avg_r)} />
           <Card label="Avg win / loss" value={fmt.money(s.avg_win) + " / " + fmt.money(s.avg_loss)} />
           <Card label="Best / worst" value={fmt.money(s.best) + " / " + fmt.money(s.worst)} />
+          <Card label="Plan adherence" value={adherence == null ? "—" : adherence + "%"} sub={`${answered.length} reviewed trade${answered.length === 1 ? "" : "s"}`} />
         </div>
 
         <div className="panel equity-panel">
@@ -118,6 +144,10 @@ export default function Performance() {
           <GroupTable title="By symbol" rows={groupBy(closed, (t) => t.symbol)} />
           <GroupTable title="By direction" rows={groupBy(closed, (t) => t.direction)} />
           <GroupTable title="By weekday" rows={groupBy(closed, (t) => t.date && WEEKDAYS[new Date(t.date + "T12:00:00").getDay()])} />
+          <GroupTable title="By plan adherence" rows={groupBy(closed, (t) => t.review?.followed_plan === true ? "Followed plan" : t.review?.followed_plan === false ? "Broke plan" : "Not reviewed")} />
+          <GroupTable title="By setup quality" rows={groupBy(closed, (t) => t.review?.quality)} />
+          <GroupTable title="By entry emotion" rows={groupBy(closed, (t) => t.review?.emotion_in)} />
+          <MistakeTable closed={closed} />
         </div>
       </div>
     </main>

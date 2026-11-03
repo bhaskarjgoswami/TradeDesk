@@ -42,6 +42,7 @@ export const api = {
   updateTrade: (id, t) => request("PUT", `/api/trades/${id}`, t),
   deleteTrade: (id) => request("DELETE", `/api/trades/${id}`),
   uploadImage: (dataUrl) => request("POST", "/api/trades/upload", { data: dataUrl }),
+  reviewOptions: () => request("GET", "/api/trades/review-options"),
   importTrades: (rows, dryRun) => request("POST", "/api/trades/import", { rows, dry_run: dryRun }),
   imageUrls: (paths) => request("POST", "/api/trades/image-urls", { paths }),
 

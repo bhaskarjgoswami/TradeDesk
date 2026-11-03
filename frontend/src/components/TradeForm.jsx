@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { computeTrade, fmt } from "../lib/calc";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/AuthContext";
+import { loadReviewOptions, QUALITIES } from "../lib/review";
 
 export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }) {
   const [t, setT] = useState(initial || { date: new Date().toLocaleDateString("en-CA"), direction: "Long" });
@@ -31,6 +32,14 @@ export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }
   }
 
   const set = (k) => (e) => setT({ ...t, [k]: e.target.value });
+  const [opts, setOpts] = useState({ mistakes: [], emotions: [] });
+  useEffect(() => { loadReviewOptions().then(setOpts); }, []);
+  const rv = t.review || {};
+  const setRv = (patch) => setT((cur) => ({ ...cur, review: { ...(cur.review || {}), ...patch } }));
+  const toggleMistake = (m) => {
+    const list = rv.mistakes || [];
+    setRv({ mistakes: list.includes(m) ? list.filter((x) => x !== m) : [...list, m] });
+  };
   const preview = computeTrade(t);
   const images = (() => { try { return JSON.parse(t.images || "[]"); } catch { return []; } })();
   // Screenshots live in a private bucket — fetch short-lived signed URLs to display them.
@@ -152,6 +161,53 @@ export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }
 
         <div className="fld full"><label>Logic / why I took it</label><textarea style={{ minHeight: 96 }} value={t.logic || ""} onChange={set("logic")} placeholder="What was the thesis? What confirmed it?" /></div>
         <div className="fld full"><label>Notes / lessons</label><textarea style={{ minHeight: 96 }} value={t.notes || ""} onChange={set("notes")} placeholder="What went right/wrong, emotions, what to repeat or avoid…" /></div>
+
+        <div className="fld full review-box">
+          <label>Review</label>
+          <div className="rv-grid">
+            <div>
+              <span className="rv-lbl">Followed my plan?</span>
+              <div className="seg">
+                {[[true, "Yes"], [false, "No"]].map(([v, l]) => (
+                  <button key={l} type="button" className={rv.followed_plan === v ? "on" : ""}
+                          onClick={() => setRv({ followed_plan: rv.followed_plan === v ? null : v })}>{l}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <span className="rv-lbl">Setup quality</span>
+              <div className="seg">
+                {QUALITIES.map((q) => (
+                  <button key={q} type="button" className={rv.quality === q ? "on" : ""}
+                          onClick={() => setRv({ quality: rv.quality === q ? null : q })}>{q}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <span className="rv-lbl">Emotion at entry</span>
+              <select value={rv.emotion_in || ""} onChange={(e) => setRv({ emotion_in: e.target.value || null })}>
+                <option value="">—</option>
+                {opts.emotions.map((x) => <option key={x}>{x}</option>)}
+              </select>
+            </div>
+            <div>
+              <span className="rv-lbl">Emotion at exit</span>
+              <select value={rv.emotion_out || ""} onChange={(e) => setRv({ emotion_out: e.target.value || null })}>
+                <option value="">—</option>
+                {opts.emotions.map((x) => <option key={x}>{x}</option>)}
+              </select>
+            </div>
+          </div>
+          <span className="rv-lbl">Mistakes</span>
+          <div className="rv-chips">
+            {opts.mistakes.map((m) => {
+              const on = (rv.mistakes || []).includes(m);
+              return (
+                <button key={m} type="button" className={"rv-chip" + (on ? " on" : "")} aria-pressed={on} onClick={() => toggleMistake(m)}>{m}</button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="fld"><label>Discipline rating</label>
           <div className="ratepick" role="radiogroup" aria-label="Discipline rating">

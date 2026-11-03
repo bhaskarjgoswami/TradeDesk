@@ -75,6 +75,7 @@ create table if not exists public.trades (
 );
 
 alter table public.trades add column if not exists ext_id text;
+alter table public.trades add column if not exists review jsonb;  -- post-trade review
 create index if not exists trades_user_date on trades(user_id, date);
 create unique index if not exists trades_user_ext_id on trades(user_id, ext_id) where ext_id is not null;
 

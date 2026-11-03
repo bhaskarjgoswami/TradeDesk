@@ -4,7 +4,7 @@ from ..auth import get_current_user
 from ..database import get_conn
 from ..billing import active_tier
 from ..ratelimit import limit
-from ..models import TradeIn, ImageUploadIn, ImageUrlsIn, ImportIn
+from ..models import TradeIn, ImageUploadIn, ImageUrlsIn, ImportIn, MISTAKES, EMOTIONS
 from ..config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 import time, base64, secrets, hashlib, json, math, re
 from collections import Counter
@@ -17,8 +17,19 @@ router = APIRouter(prefix="/api/trades", tags=["trades"])
 TRADE_FIELDS = [
     "date", "symbol", "direction", "setup", "tf_bias", "logic",
     "entry", "stop", "exit", "qty", "risk", "pnl", "r_multiple",
-    "outcome", "rating", "tags", "notes", "images", "checklist", "fee", "ext_id",
+    "outcome", "rating", "tags", "notes", "images", "checklist", "fee", "ext_id", "review",
 ]
+
+
+def _vals(body: TradeIn) -> list:
+    """Column values in TRADE_FIELDS order; review is stored as JSONB."""
+    out = []
+    for f in TRADE_FIELDS:
+        v = getattr(body, f)
+        if f == "review":
+            v = psycopg2.extras.Json(v.model_dump()) if v is not None else None
+        out.append(v)
+    return out
 
 # Free tier: max 2 trades per day. Everything else is unlocked.
 FREE_DAILY_LIMIT = 2
@@ -31,6 +42,11 @@ def _day_trade_count(conn, user_id: str, date: str) -> int:
             (user_id, date),
         )
         return cur.fetchone()["n"]
+
+
+@router.get("/review-options")
+def review_options(user=Depends(get_current_user)):
+    return {"mistakes": MISTAKES, "emotions": EMOTIONS}
 
 
 @router.get("")
@@ -87,7 +103,7 @@ def create_trade(body: TradeIn, user=Depends(get_current_user)):
             raise HTTPException(402, "free-daily-limit")
 
         cols = TRADE_FIELDS + ["user_id", "created_at"]
-        vals = [getattr(body, f) for f in TRADE_FIELDS] + [user["user_id"], time.strftime("%Y-%m-%d %H:%M:%S")]
+        vals = _vals(body) + [user["user_id"], time.strftime("%Y-%m-%d %H:%M:%S")]
         ph = ",".join(["%s"] * len(cols))
         with conn.cursor() as cur:
             cur.execute(f"INSERT INTO trades ({','.join(cols)}) VALUES ({ph}) RETURNING *", vals)
@@ -210,7 +226,7 @@ def import_trades(body: ImportIn, user=Depends(limit("import", 10))):
 @router.put("/{trade_id}")
 def update_trade(trade_id: int, body: TradeIn, user=Depends(get_current_user)):
     sets = ",".join(f"{f}=%s" for f in TRADE_FIELDS)
-    vals = [getattr(body, f) for f in TRADE_FIELDS] + [user["user_id"], trade_id]
+    vals = _vals(body) + [user["user_id"], trade_id]
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT date FROM trades WHERE user_id=%s AND id=%s", (user["user_id"], trade_id))

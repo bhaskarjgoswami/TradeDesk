@@ -1,5 +1,35 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, field_validator
+from typing import Optional, Literal
+
+MISTAKES = [
+    "FOMO entry", "No setup", "Chased price", "Oversized", "Moved stop",
+    "No stop", "Early exit", "Held a loser", "Revenge trade", "Overtraded",
+]
+EMOTIONS = ["Calm", "Confident", "Anxious", "Fearful", "Greedy", "Impatient", "Frustrated", "Bored"]
+
+
+class Review(BaseModel):
+    """Post-trade review. Unknown keys are dropped by pydantic."""
+    followed_plan: Optional[bool] = None
+    quality: Optional[Literal["A+", "A", "B", "C", "F"]] = None
+    emotion_in: Optional[str] = None
+    emotion_out: Optional[str] = None
+    mistakes: list[str] = []
+
+    @field_validator("emotion_in", "emotion_out")
+    @classmethod
+    def _emotion(cls, v):
+        if v not in (None, "") and v not in EMOTIONS:
+            raise ValueError("unknown emotion")
+        return v or None
+
+    @field_validator("mistakes")
+    @classmethod
+    def _mistakes(cls, v):
+        bad = [m for m in v if m not in MISTAKES]
+        if bad:
+            raise ValueError(f"unknown mistake: {bad[0]}")
+        return list(dict.fromkeys(v))
 
 
 class TradeIn(BaseModel):
@@ -24,6 +54,7 @@ class TradeIn(BaseModel):
     checklist: Optional[str] = None
     fee: Optional[float] = None
     ext_id: Optional[str] = None  # exchange round-trip id, for import dedupe
+    review: Optional[Review] = None
 
 
 class DayLogIn(BaseModel):
