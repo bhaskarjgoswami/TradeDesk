@@ -29,17 +29,17 @@ async function refreshSidebarMembership(session, force = false) {
   if (!card) return;
   card.hidden = !session;
   if (!session) { sidebarMemberUser = null; sidebarMemberRevision++; return; }
-  const email = document.getElementById("sidebarMemberEmail");
-  if (email) email.textContent = session.user.email || "";
   if (sidebarMemberUser === session.user.id && !force) return;
   sidebarMemberUser = session.user.id;
   const revision = ++sidebarMemberRevision;
   const plan = document.getElementById("sidebarMemberPlan");
   const detail = document.getElementById("sidebarMemberDetail");
   const status = document.getElementById("sidebarMemberStatus");
+  const upgrade = document.getElementById("sidebarMemberUpgrade");
   plan.textContent = "Loading plan…";
   detail.textContent = "Membership details";
   status.textContent = "";
+  upgrade.hidden = true;
   try {
     const membership = await api.subStatus();
     if (revision !== sidebarMemberRevision) return;
@@ -47,14 +47,16 @@ async function refreshSidebarMembership(session, force = false) {
     plan.textContent = pro ? "TradeDesk Pro" : "TradeDesk Free";
     detail.textContent = pro ? "Unlimited daily trades" : "Up to 2 trades per day";
     status.textContent = "Current plan";
+    upgrade.hidden = pro;
     card.title = `${plan.textContent} · ${detail.textContent}`;
-    card.setAttribute("aria-label", `${plan.textContent}: view plan and billing`);
+    card.setAttribute("aria-label", pro ? "TradeDesk Pro: view plan and billing" : "Upgrade your TradeDesk Free account");
   } catch {
     if (revision !== sidebarMemberRevision) return;
     sidebarMemberUser = null;
     plan.textContent = "Plan & billing";
     detail.textContent = "View membership details";
     status.textContent = "View plan";
+    upgrade.hidden = true;
     card.title = "View plan and billing";
     card.setAttribute("aria-label", "View plan and billing");
   }
