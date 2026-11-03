@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
+import { useFeedback } from "../lib/feedback";
 
 const EMPTY = { name: "", description: "", checklist: [], exit_rules: "", management: "", notes: "", active: true };
 
@@ -12,6 +13,7 @@ export default function Playbook() {
   const [item, setItem] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const { ask, toast } = useFeedback();
 
   async function load(selectId) {
     const rows = await api.listPlaybooks();
@@ -45,14 +47,19 @@ export default function Playbook() {
       const body = { ...EMPTY, ...draft };
       const saved = sel === "new" ? await api.createPlaybook(body) : await api.updatePlaybook(sel, body);
       await load(saved.id);
-      setMsg("Saved.");
+      toast("Playbook saved");
     } catch (e) { setMsg(e.message); }
     finally { setBusy(false); }
   }
   async function remove() {
     const n = draft.trade_count || 0;
-    if (!confirm(`Delete "${draft.name}"?` + (n ? ` ${n} trade${n > 1 ? "s" : ""} will keep their data but lose this playbook link.` : ""))) return;
-    try { await api.deletePlaybook(sel); await load(); setMsg(""); }
+    const ok = await ask({
+      title: `Delete "${draft.name}"?`,
+      body: n ? `${n} trade${n > 1 ? "s" : ""} will keep their data but lose this playbook link. Archive it instead to keep the history.` : "This playbook will be removed.",
+      confirmLabel: "Delete", danger: true,
+    });
+    if (!ok) return;
+    try { await api.deletePlaybook(sel); await load(); setMsg(""); toast("Playbook deleted"); }
     catch (e) { setMsg(e.message); }
   }
 

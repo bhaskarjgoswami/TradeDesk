@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./lib/AuthContext";
+import { FeedbackProvider } from "./lib/feedback";
 import App from "./App";
 import "./styles.css";
 
@@ -13,7 +14,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <FeedbackProvider>
+          <App />
+        </FeedbackProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

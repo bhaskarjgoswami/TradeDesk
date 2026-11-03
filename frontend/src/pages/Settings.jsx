@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/AuthContext";
 import PlanCards from "../lib/PlanCards";
+import { useFeedback } from "../lib/feedback";
 
 function isDark() { return document.documentElement.getAttribute("data-theme") === "dark"; }
 
@@ -22,6 +23,7 @@ const EXCHANGES = [
 export default function Settings() {
   const { user, isPro, expiresAt, signOut, prefs, savePrefs } = useAuth();
   const [dataMsg, setDataMsg] = useState("");
+  const { ask, toast } = useFeedback();
   const [ex, setEx] = useState({ has_creds: false, key_masked: "" });
   const [exId, setExId] = useState("delta");
   const [key, setKey] = useState("");
@@ -47,7 +49,7 @@ export default function Settings() {
     setExMsg("Saving…");
     try {
       await api.saveExchange({ exchange: exId, key, secret, passphrase: pass });
-      setExMsg("✓ Saved."); setKey(""); setSecret(""); setPass(""); setEx(await api.getExchange(exId));
+      setExMsg(""); toast("Exchange keys saved"); setKey(""); setSecret(""); setPass(""); setEx(await api.getExchange(exId));
     } catch (e) { setExMsg(e.message); }
   }
 
@@ -63,8 +65,12 @@ export default function Settings() {
     } catch (e) { setDataMsg(e.message); }
   }
   async function deleteAccount() {
-    const typed = prompt(`This permanently deletes your account, trades, journal and screenshots. It cannot be undone.\n\nType DELETE to confirm.`);
-    if (typed !== "DELETE") return;
+    const ok = await ask({
+      title: "Delete your account?",
+      body: "This permanently deletes your account, trades, journal, playbooks and screenshots. It cannot be undone. Export your data first if you want a copy.",
+      typeToConfirm: "DELETE", confirmLabel: "Delete account", danger: true,
+    });
+    if (!ok) return;
     setDataMsg("Deleting…");
     try {
       await api.deleteAccount();

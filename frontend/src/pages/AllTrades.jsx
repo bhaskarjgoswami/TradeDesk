@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { fmt } from "../lib/calc";
 import { Icon, TODAY } from "../lib/ui";
 import ImportCsv from "../components/ImportCsv";
+import { useFeedback } from "../lib/feedback";
 
 function pnlCls(n) { return n > 0 ? "pos" : n < 0 ? "neg" : ""; }
 const MON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -17,6 +18,7 @@ export default function AllTrades() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("list"); // list | calendar
   const [importOpen, setImportOpen] = useState(false);
+  const { ask, toast } = useFeedback();
   const [notice, setNotice] = useState("");
   const now = new Date();
   const [cal, setCal] = useState({ y: now.getFullYear(), m: now.getMonth() });
@@ -130,7 +132,10 @@ export default function AllTrades() {
                     <td>{t.outcome ? <span className={"pill " + t.outcome.toLowerCase()}>{t.outcome}</span> : "—"}</td>
                     <td style={{ whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
                       <button className="btn danger" style={{ padding: "5px 10px" }}
-                              onClick={async () => { if (confirm("Delete this trade?")) { await api.deleteTrade(t.id); load(); } }}>Del</button>
+                              onClick={async () => {
+                                if (!(await ask({ title: "Delete this trade?", body: `${t.symbol || "Trade"} on ${t.date || "—"} will be removed permanently.`, confirmLabel: "Delete", danger: true }))) return;
+                                await api.deleteTrade(t.id); toast("Trade deleted"); load();
+                              }}>Del</button>
                     </td>
                   </tr>
                 ))}

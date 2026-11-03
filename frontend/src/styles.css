@@ -476,3 +476,13 @@ table.grp .num{text-align:right;font-variant-numeric:tabular-nums}
 .pb-item .icobtn:disabled{opacity:.3;cursor:default}
 .pb-add{display:flex;gap:8px;margin-top:4px}
 .pb-add input{flex:1}
+
+/* ---------- toasts + dialogs ---------- */
+.toasts{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--txt);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:13.5px;font-weight:550;box-shadow:0 10px 26px rgba(0,0,0,.18);animation:toast-in .18s ease-out}
+.toast.error{background:var(--red);color:#fff}
+@keyframes toast-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.toast{animation:none}}
+.dlg{max-width:420px;text-align:left}
+.dlg-input{width:100%;margin:6px 0 4px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--txt);font:inherit}
+.dlg-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}

@@ -6,6 +6,7 @@ import { fmtDate, fmtDateLong, TODAY } from "../lib/ui";
 import { useAuth } from "../lib/AuthContext";
 import TradeForm from "../components/TradeForm";
 import UpgradeModal from "../lib/UpgradeModal";
+import { useFeedback } from "../lib/feedback";
 
 const FREE_DAILY_LIMIT = 2;
 
@@ -15,6 +16,7 @@ export default function DailyJournal() {
   const [params, setParams] = useSearchParams();
   const nav = useNavigate();
   const { isPro } = useAuth();
+  const { ask, toast } = useFeedback();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [days, setDays] = useState([]);
   const [active, setActive] = useState(null);
@@ -88,8 +90,9 @@ export default function DailyJournal() {
     await selectDay(active); loadDays();
   }
   async function delTrade(id) {
-    if (!confirm("Delete this trade permanently?")) return;
+    if (!(await ask({ title: "Delete this trade?", body: "It will be removed permanently.", confirmLabel: "Delete", danger: true }))) return;
     await api.deleteTrade(id);
+    toast("Trade deleted");
     setFormMode(null);
     await selectDay(active); loadDays();
   }

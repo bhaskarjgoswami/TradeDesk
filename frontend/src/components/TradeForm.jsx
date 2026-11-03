@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { computeTrade, fmt } from "../lib/calc";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/AuthContext";
+import { useFeedback } from "../lib/feedback";
 import { loadReviewOptions, QUALITIES } from "../lib/review";
 
 export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }) {
   const [t, setT] = useState(initial || { date: new Date().toLocaleDateString("en-CA"), direction: "Long" });
   const { prefs, savePrefs } = useAuth();
+  const { toast, ask } = useFeedback();
   const [playbooks, setPlaybooks] = useState([]);
   useEffect(() => { api.listPlaybooks().then(setPlaybooks).catch(() => {}); }, []);
   const playbook = playbooks.find((p) => p.id === Number(t.playbook_id)) || null;
@@ -22,15 +24,15 @@ export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }
     next.has(item) ? next.delete(item) : next.add(item);
     setT({ ...t, checklist: next.size ? JSON.stringify([...next]) : null });
   }
-  function addChkItem() {
-    const v = prompt("New checklist item:");
-    if (v && v.trim() && !template.includes(v.trim())) {
-      const nt = [...template, v.trim()];
+  async function addChkItem() {
+    const v = await ask({ title: "New checklist item", input: { placeholder: "e.g. Liquidity taken before entry" }, confirmLabel: "Add" });
+    if (v && !template.includes(v)) {
+      const nt = [...template, v];
       setTemplate(nt);
     }
   }
-  function removeChkItem(item) {
-    if (!confirm(`Remove "${item}" from the checklist?`)) return;
+  async function removeChkItem(item) {
+    if (!(await ask({ title: "Remove checklist item?", body: `"${item}" will be removed from your default checklist.`, confirmLabel: "Remove", danger: true }))) return;
     const nt = template.filter((x) => x !== item);
     setTemplate(nt);
   }
@@ -87,6 +89,7 @@ export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }
     try {
       const body = computeTrade(t);
       const saved = initial?.id ? await api.updateTrade(initial.id, body) : await api.createTrade(body);
+      toast(initial?.id ? "Trade updated" : "Trade saved");
       onSaved(saved);
     } catch (e2) {
       if (/free-daily-limit/i.test(e2.message || "")) { onLimit?.(); return; }
