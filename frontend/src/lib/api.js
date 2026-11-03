@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
+import { config } from "./config";
 
-const BASE = import.meta.env.VITE_API_URL || "http://localhost:8787";
+const BASE = config.apiUrl;
 
 async function authHeader() {
   const { data } = await supabase.auth.getSession();

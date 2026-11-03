@@ -1,9 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 
-const url = import.meta.env.VITE_SUPABASE_URL;
-const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
+import { config } from "./config";
 
-export const supabase = createClient(url, anon, {
+export const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
