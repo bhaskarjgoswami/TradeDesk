@@ -59,6 +59,9 @@ export function RoutinePanel() {
 // Optional popup once per session when the app opens with steps unchecked.
 export function RoutinePopup() {
   const { routine, done, toggle, complete } = useRoutineProgress();
+  // Decided once when the app opens: turning the popup on in Settings later
+  // shouldn't throw it over the page you're on.
+  const [armed] = useState(() => routine.enabled && routine.popup);
   const [show, setShow] = useState(() => {
     try { return sessionStorage.getItem("td_routine_seen") !== routineDay(routine.resetTime); } catch { return true; }
   });
@@ -72,7 +75,7 @@ export function RoutinePopup() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }); // eslint-disable-line
-  if (!show || !routine.enabled || !routine.popup || routine.steps.length === 0 || complete) return null;
+  if (!armed || !show || !routine.enabled || !routine.popup || routine.steps.length === 0 || complete) return null;
   return (
     <div className="um-overlay" onClick={close}>
       <div className="um-card rt-pop" role="dialog" aria-modal="true" aria-label="Pre-market routine" onClick={(e) => e.stopPropagation()}>
