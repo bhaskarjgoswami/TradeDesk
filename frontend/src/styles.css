@@ -496,3 +496,4 @@ table.grp .num{text-align:right;font-variant-numeric:tabular-nums}
 .cal-head.cal-8,.cal-grid.cal-8{grid-template-columns:repeat(7,1fr) minmax(70px,.9fr)}
 .cell.wk{background:var(--panel2);border-style:dashed}
 @media(max-width:640px){.cal-head.cal-8,.cal-grid.cal-8{grid-template-columns:repeat(7,1fr)}.cell.wk,.cal-head.cal-8>div:last-child{display:none}}
+.cell.has .d{color:var(--txt);opacity:.6}
