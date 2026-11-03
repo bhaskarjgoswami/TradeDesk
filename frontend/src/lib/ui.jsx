@@ -45,22 +45,20 @@ export const Icon = {
   ),
 };
 
-// ---- pre-trade checklist template (persisted in localStorage, like the original) ----
-const CHECKLIST_DEFAULT = [
+// ---- pre-trade checklist template (synced via user prefs; see AuthContext) ----
+export const CHECKLIST_DEFAULT = [
   "High time frame bias",
   "Liquidity take",
   "Low Time frame bias sync with HTF",
   "LTF CHoCH",
   "Candle high/low cross confirmation",
 ];
-export function loadChecklist() {
+// Pre-sync versions kept the checklist in this browser only; used once to seed prefs.
+export function legacyChecklist() {
   try {
     const s = JSON.parse(localStorage.getItem("tj_checklist"));
-    return Array.isArray(s) && s.length ? s : CHECKLIST_DEFAULT.slice();
-  } catch { return CHECKLIST_DEFAULT.slice(); }
-}
-export function saveChecklist(list) {
-  localStorage.setItem("tj_checklist", JSON.stringify(list));
+    return Array.isArray(s) && s.length ? s : null;
+  } catch { return null; }
 }
 
 export const TODAY = () => new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD local

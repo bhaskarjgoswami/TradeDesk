@@ -20,7 +20,8 @@ const EXCHANGES = [
 ];
 
 export default function Settings() {
-  const { user, isPro, expiresAt, signOut } = useAuth();
+  const { user, isPro, expiresAt, signOut, prefs, savePrefs } = useAuth();
+  const [dataMsg, setDataMsg] = useState("");
   const [ex, setEx] = useState({ has_creds: false, key_masked: "" });
   const [exId, setExId] = useState("delta");
   const [key, setKey] = useState("");
@@ -50,6 +51,27 @@ export default function Settings() {
     } catch (e) { setExMsg(e.message); }
   }
 
+  async function exportData() {
+    setDataMsg("Preparing export…");
+    try {
+      const data = await api.exportAccount();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+      a.download = `tradedesk-export-${new Date().toLocaleDateString("en-CA")}.json`;
+      a.click();
+      setDataMsg("");
+    } catch (e) { setDataMsg(e.message); }
+  }
+  async function deleteAccount() {
+    const typed = prompt(`This permanently deletes your account, trades, journal and screenshots. It cannot be undone.\n\nType DELETE to confirm.`);
+    if (typed !== "DELETE") return;
+    setDataMsg("Deleting…");
+    try {
+      await api.deleteAccount();
+      await signOut();
+    } catch (e) { setDataMsg(e.message); }
+  }
+
   return (
     <main className="main">
       <div className="pane-pad" style={{ maxWidth: 760 }}>
@@ -63,6 +85,20 @@ export default function Settings() {
                 <button className={dark ? "on" : ""} onClick={() => setTheme(true)}>Dark</button>
               </div>
             </div>
+          </div>
+
+          <div className="set-sec">
+            <div className="set-label">Journal</div>
+            <div className="set-row"><span>Currency</span>
+              <div className="seg" style={{ width: 180 }}>
+                {["USD", "INR"].map((c) => (
+                  <button key={c} className={prefs.currency === c ? "on" : ""} onClick={() => savePrefs({ currency: c })}>
+                    {c === "USD" ? "$ USD" : "₹ INR"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="muted" style={{ fontSize: 12.5 }}>Display label only. Amounts are not converted.</div>
           </div>
 
           <div className="set-sec">
@@ -107,6 +143,13 @@ export default function Settings() {
           <div className="set-sec">
             <div className="set-label">Account</div>
             <div className="set-row"><span className="muted">{user?.email}</span><button className="btn ghost" onClick={signOut}>Log out</button></div>
+          </div>
+
+          <div className="set-sec">
+            <div className="set-label">Your data</div>
+            <div className="set-row"><span>Download everything (trades, journal, profile) as JSON</span><button className="btn ghost" onClick={exportData}>Export</button></div>
+            <div className="set-row"><span>Permanently delete your account and all data</span><button className="btn danger" onClick={deleteAccount}>Delete account</button></div>
+            {dataMsg && <div className="muted" style={{ fontSize: 12.5 }}>{dataMsg}</div>}
           </div>
         </div>
       </div>

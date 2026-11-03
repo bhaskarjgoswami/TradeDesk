@@ -58,6 +58,22 @@ function Ticker() {
   );
 }
 
+function ExpiryBanner() {
+  const { isPro, plan, expiresAt } = useAuth();
+  const nav = useNavigate();
+  if (!plan || !expiresAt) return null;
+  const days = Math.ceil((new Date(expiresAt) - Date.now()) / 86400000);
+  if (isPro && days > 7) return null;
+  const text = isPro
+    ? `Your Pro plan ends in ${days} day${days === 1 ? "" : "s"} (no auto-renew).`
+    : "Your Pro plan has ended. You're back on Free (2 trades/day).";
+  return (
+    <div className="expiry-banner" role="status">
+      {text} <button type="button" onClick={() => nav("/settings")}>Renew Pro</button>
+    </div>
+  );
+}
+
 function Shell() {
   const { user, signOut } = useAuth();
   const nav = useNavigate();
@@ -139,6 +155,7 @@ function Shell() {
         </aside>
 
         <div className="content-card">
+          <ExpiryBanner />
           <div className="pagefold" />
           <Routes>
             <Route path="/journal" element={<DailyJournal />} />

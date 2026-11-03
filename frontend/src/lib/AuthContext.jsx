@@ -1,6 +1,18 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import { api } from "./api";
+import { setCurrency } from "./calc";
+import { CHECKLIST_DEFAULT, legacyChecklist } from "./ui";
+
+// Per-user preferences live in Supabase Auth user_metadata so they follow the
+// user across devices without a DB table.
+function prefsFrom(user) {
+  const m = user?.user_metadata || {};
+  return {
+    currency: m.currency || "USD",
+    checklist: Array.isArray(m.checklist) ? m.checklist : legacyChecklist() || CHECKLIST_DEFAULT.slice(),
+  };
+}
 
 const AuthCtx = createContext(null);
 
@@ -35,9 +47,20 @@ export function AuthProvider({ children }) {
     }
   }, [session]);
 
+  const prefs = prefsFrom(session?.user);
+  setCurrency(prefs.currency);
+
+  async function savePrefs(patch) {
+    const { data, error } = await supabase.auth.updateUser({ data: { ...prefs, ...patch } });
+    if (error) throw error;
+    setSession((s) => (s ? { ...s, user: data.user } : s));
+  }
+
   const value = {
     session,
     user: session?.user || null,
+    prefs,
+    savePrefs,
     tier,
     isPro: tier === "pro",
     plan: sub.plan,

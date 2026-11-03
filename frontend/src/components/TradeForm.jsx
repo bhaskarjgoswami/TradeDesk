@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { computeTrade, fmt } from "../lib/calc";
 import { api } from "../lib/api";
-import { loadChecklist, saveChecklist } from "../lib/ui";
+import { useAuth } from "../lib/AuthContext";
 
 export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }) {
   const [t, setT] = useState(initial || { date: new Date().toLocaleDateString("en-CA"), direction: "Long" });
-  const [template, setTemplate] = useState(loadChecklist());
+  const { prefs, savePrefs } = useAuth();
+  const template = prefs.checklist;
+  const setTemplate = (nt) => savePrefs({ checklist: nt }).catch((e) => setErr(e.message));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -19,13 +21,13 @@ export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }
     const v = prompt("New checklist item:");
     if (v && v.trim() && !template.includes(v.trim())) {
       const nt = [...template, v.trim()];
-      setTemplate(nt); saveChecklist(nt);
+      setTemplate(nt);
     }
   }
   function removeChkItem(item) {
     if (!confirm(`Remove "${item}" from the checklist?`)) return;
     const nt = template.filter((x) => x !== item);
-    setTemplate(nt); saveChecklist(nt);
+    setTemplate(nt);
   }
 
   const set = (k) => (e) => setT({ ...t, [k]: e.target.value });
@@ -109,7 +111,9 @@ export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }
             const on = checked.has(item);
             return (
               <div className={"chk" + (on ? " on" : "")} key={item}>
-                <span className="box" onClick={() => toggleChk(item)}>{on ? "✓" : ""}</span>
+                <span className="box" role="checkbox" aria-checked={on} aria-label={item} tabIndex={0}
+                      onClick={() => toggleChk(item)}
+                      onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggleChk(item); } }}>{on ? "✓" : ""}</span>
                 <span className="lbl" onClick={() => toggleChk(item)}>{item}</span>
                 <button type="button" className="chk-del" onClick={() => removeChkItem(item)} title="Remove">×</button>
               </div>
@@ -150,9 +154,11 @@ export default function TradeForm({ initial, onClose, onSaved, onPull, onLimit }
         <div className="fld full"><label>Notes / lessons</label><textarea style={{ minHeight: 96 }} value={t.notes || ""} onChange={set("notes")} placeholder="What went right/wrong, emotions, what to repeat or avoid…" /></div>
 
         <div className="fld"><label>Discipline rating</label>
-          <div className="ratepick">
+          <div className="ratepick" role="radiogroup" aria-label="Discipline rating">
             {[1, 2, 3, 4, 5].map((v) => (
-              <span key={v} className={v <= rating ? "on" : ""} onClick={() => setT({ ...t, rating: rating === v ? "" : v })}>★</span>
+              <span key={v} className={v <= rating ? "on" : ""} role="radio" aria-checked={rating === v} aria-label={`${v} star${v > 1 ? "s" : ""}`} tabIndex={0}
+                    onClick={() => setT({ ...t, rating: rating === v ? "" : v })}
+                    onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setT({ ...t, rating: rating === v ? "" : v }); } }}>★</span>
             ))}
           </div>
         </div>

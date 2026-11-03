@@ -49,12 +49,17 @@ function round(n, d = 2) {
   return Math.round(n * f) / f;
 }
 
+// Journal currency is a display label only (no conversion). Set from user prefs.
+const CURRENCIES = { USD: { sym: "$", loc: "en-US" }, INR: { sym: "₹", loc: "en-IN" } };
+let cur = CURRENCIES.USD;
+export function setCurrency(code) { cur = CURRENCIES[code] || CURRENCIES.USD; }
+
 export const fmt = {
   money: (n) =>
     n == null || isNaN(n)
       ? "—"
       : (n < 0 ? "-" : "") +
-        "$" +
-        Math.abs(Number(n)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        cur.sym +
+        Math.abs(Number(n)).toLocaleString(cur.loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
   num: (n, d = 2) => (n == null || n === "" || isNaN(n) ? "—" : Number(n).toFixed(d)),
 };

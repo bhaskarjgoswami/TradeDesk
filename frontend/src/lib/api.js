@@ -60,6 +60,10 @@ export const api = {
   deltaToday: (date) =>
     request("GET", `/api/delta/today?tz=${new Date().getTimezoneOffset()}${date ? "&date=" + encodeURIComponent(date) : ""}`),
 
+  // account
+  exportAccount: () => request("GET", "/api/account/export"),
+  deleteAccount: () => request("DELETE", "/api/account"),
+
   // subscription (Razorpay)
   subStatus: () => request("GET", "/api/subscription/status"),
   checkout: (plan, currency) => request("POST", "/api/subscription/checkout", { plan, currency }),

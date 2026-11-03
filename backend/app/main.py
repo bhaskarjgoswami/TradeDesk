@@ -1,9 +1,16 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import FRONTEND_URL
-from .routers import trades, stats, daylogs, exchange, subscription
+from .routers import trades, stats, daylogs, exchange, subscription, account
 
-app = FastAPI(title="TradeDesk API", version="1.0.0")
+# Interactive API docs only outside production (Render sets RENDER=true).
+_docs = not os.environ.get("RENDER")
+app = FastAPI(
+    title="TradeDesk API", version="1.0.0",
+    docs_url="/docs" if _docs else None, redoc_url=None,
+    openapi_url="/openapi.json" if _docs else None,
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,6 +33,7 @@ app.include_router(stats.router)
 app.include_router(daylogs.router)
 app.include_router(exchange.router)
 app.include_router(subscription.router)
+app.include_router(account.router)
 
 
 @app.get("/health")
