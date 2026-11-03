@@ -525,3 +525,9 @@ table.grp .num{text-align:right;font-variant-numeric:tabular-nums}
 .rt-edit-row{display:grid;grid-template-columns:22px 1.3fr 1fr 30px;gap:8px;align-items:center}
 .rt-edit-row input{padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--txt);font:inherit;font-size:13px;min-width:0}
 @media(max-width:640px){.rt-edit-row{grid-template-columns:22px 1fr 30px}.rt-edit-row input:nth-of-type(2){grid-column:2}}
+
+.page-loading{flex:1;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:13px;min-height:200px}
+
+.crash{margin:auto;max-width:440px;text-align:center;padding:40px 24px}
+.crash h2{font-size:18px;margin:0 0 8px}
+.crash p{color:var(--mut);font-size:14px;line-height:1.55;margin:0 0 18px}

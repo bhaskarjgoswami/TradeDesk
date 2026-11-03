@@ -1,17 +1,24 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Routes, Route, NavLink, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./lib/AuthContext";
 import { api } from "./lib/api";
 import { Icon } from "./lib/ui";
-import Auth from "./pages/Auth";
-import DailyJournal from "./pages/DailyJournal";
-import AllTrades from "./pages/AllTrades";
-import Performance from "./pages/Performance";
-import Settings from "./pages/Settings";
-import Playbook from "./pages/Playbook";
 import { RoutinePopup } from "./components/Routine";
-import Landing from "./pages/Landing";
-import Legal, { LEGAL_PAGES } from "./pages/Legal";
+import ErrorBoundary from "./components/ErrorBoundary";
+
+// Pages load on demand: the landing page and login don't pay for the app,
+// and the charting library only loads with Performance.
+const Auth = lazy(() => import("./pages/Auth"));
+const DailyJournal = lazy(() => import("./pages/DailyJournal"));
+const AllTrades = lazy(() => import("./pages/AllTrades"));
+const Performance = lazy(() => import("./pages/Performance"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Playbook = lazy(() => import("./pages/Playbook"));
+const Landing = lazy(() => import("./pages/Landing"));
+const Legal = lazy(() => import("./pages/Legal"));
+const LEGAL_PAGES = ["terms", "privacy", "refunds", "contact"];
+
+const PageLoading = () => <div className="page-loading" role="status">Loading…</div>;
 
 const NAV = [
   { to: "/journal", label: "Daily Journal", icon: Icon.book, bg: "rgba(108,92,231,.15)", fg: "#6c5ce7" },
@@ -163,6 +170,8 @@ function Shell() {
           <ExpiryBanner />
           <RoutinePopup />
           <div className="pagefold" />
+          <ErrorBoundary key={loc.pathname}>
+          <Suspense fallback={<PageLoading />}>
           <Routes>
             <Route path="/journal" element={<DailyJournal />} />
             <Route path="/trades" element={<AllTrades />} />
@@ -172,6 +181,8 @@ function Shell() {
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/journal" replace />} />
           </Routes>
+          </Suspense>
+          </ErrorBoundary>
         </div>
       </div>
     </div>
@@ -183,17 +194,21 @@ export default function App() {
   const loc = useLocation();
   // Legal pages are public and render the same for signed-in users.
   const legal = LEGAL_PAGES.find((p) => loc.pathname === "/" + p);
-  if (legal) return <Legal page={legal} />;
+  if (legal) return <ErrorBoundary><Suspense fallback={<PageLoading />}><Legal page={legal} /></Suspense></ErrorBoundary>;
   if (loading) {
     return <div className="login"><div style={{ color: "#7e7e82" }}>Loading…</div></div>;
   }
   if (!session) {
     return (
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Auth />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+      <ErrorBoundary>
+      <Suspense fallback={<PageLoading />}>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Auth />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Suspense>
+      </ErrorBoundary>
     );
   }
   return <Shell />;

@@ -36,7 +36,7 @@ const PAGES = {
         <h3>What we store</h3>
         <ul>
           <li>Account: email address and an encrypted password (managed by Supabase Auth).</li>
-          <li>Journal data you enter or import: trades, notes, checklist, preferences and chart screenshots.</li>
+          <li>Journal data you enter or import: trades, reviews, notes, playbooks, checklists, routine, preferences and chart screenshots.</li>
           <li>Exchange API keys you save, encrypted by the application before storage.</li>
           <li>Plan status and payment reference IDs. Card and UPI details are handled by Razorpay and never reach us.</li>
         </ul>
@@ -45,7 +45,7 @@ const PAGES = {
         <h3>Where it lives</h3>
         <p>Data is stored with Supabase (database, authentication, private file storage). The application runs on Render and Vercel. Payments are processed by Razorpay. Screenshots are private and served through short-lived signed links.</p>
         <h3>Your rights</h3>
-        <p>In Settings → Your data you can download all your data or permanently delete your account, which removes your trades, journal, screenshots and profile. You can also email {mail}.</p>
+        <p>In Settings → Your data you can download all your data or permanently delete your account, which removes your trades, journal, playbooks, screenshots and profile. You can also email {mail}.</p>
         <h3>Retention</h3>
         <p>We keep your data while your account exists. Deleting your account removes it from our systems; backups age out within 30 days.</p>
         <p>Contact: {mail}</p>
@@ -75,7 +75,7 @@ const PAGES = {
   },
 };
 
-export const LEGAL_PAGES = Object.keys(PAGES);
+export const LEGAL_PAGES = Object.keys(PAGES); // keep in sync with App.jsx LEGAL_PAGES
 
 export default function Legal({ page }) {
   const p = PAGES[page];

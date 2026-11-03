@@ -23,6 +23,10 @@ async function request(method, path, body) {
     try { res = await send(); }
     catch { throw new Error("Can't reach the server right now. Please try again in a moment."); }
   }
+  if (res.status === 401) {
+    await supabase.auth.signOut().catch(() => {});
+    throw Object.assign(new Error("Your session expired. Please sign in again."), { status: 401 });
+  }
   if (!res.ok) {
     let detail = `HTTP ${res.status}`;
     try {
