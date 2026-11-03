@@ -8,6 +8,8 @@ import DailyJournal from "./pages/DailyJournal";
 import AllTrades from "./pages/AllTrades";
 import Performance from "./pages/Performance";
 import Settings from "./pages/Settings";
+import Landing from "./pages/Landing";
+import Legal, { LEGAL_PAGES } from "./pages/Legal";
 
 const NAV = [
   { to: "/journal", label: "Daily Journal", icon: Icon.book, bg: "rgba(108,92,231,.15)", fg: "#6c5ce7" },
@@ -173,12 +175,17 @@ function Shell() {
 
 export default function App() {
   const { session, loading } = useAuth();
+  const loc = useLocation();
+  // Legal pages are public and render the same for signed-in users.
+  const legal = LEGAL_PAGES.find((p) => loc.pathname === "/" + p);
+  if (legal) return <Legal page={legal} />;
   if (loading) {
     return <div className="login"><div style={{ color: "#7e7e82" }}>Loading…</div></div>;
   }
   if (!session) {
     return (
       <Routes>
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Auth />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

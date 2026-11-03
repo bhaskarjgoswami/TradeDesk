@@ -3,6 +3,7 @@ from typing import Optional
 from ..auth import get_current_user
 from ..database import get_conn
 from ..billing import active_tier
+from ..ratelimit import limit
 from ..models import TradeIn, ImageUploadIn, ImageUrlsIn
 from ..config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 import time, base64, secrets
@@ -128,7 +129,7 @@ BUCKET = "trade-images"
 
 
 @router.post("/upload")
-def upload_image(body: ImageUploadIn, user=Depends(get_current_user)):
+def upload_image(body: ImageUploadIn, user=Depends(limit("upload", 20))):
     """Store screenshot in Supabase Storage via REST upload."""
     header, sep, b64 = body.data.partition(",")
     if not sep or not header.startswith("data:image/"):
@@ -158,7 +159,7 @@ def upload_image(body: ImageUploadIn, user=Depends(get_current_user)):
 
 
 @router.post("/image-urls")
-def image_urls(body: ImageUrlsIn, user=Depends(get_current_user)):
+def image_urls(body: ImageUrlsIn, user=Depends(limit("image-urls", 60))):
     """Short-lived signed URLs for the caller's own screenshots (bucket is private)."""
     prefix = user["user_id"] + "/"
     paths = [p for p in body.paths[:50] if p.startswith(prefix) and ".." not in p]

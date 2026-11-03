@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 import httpx
 from ..auth import get_current_user
+from ..ratelimit import limit
 from ..database import get_conn
 from ..config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 from .trades import BUCKET
@@ -17,7 +18,7 @@ _PROFILE_COLS = "email, subscription_tier, subscription_plan, subscription_expir
 
 
 @router.get("/export")
-def export_account(user=Depends(get_current_user)):
+def export_account(user=Depends(limit("export", 5))):
     uid = user["user_id"]
     with get_conn() as conn:
         with conn.cursor() as cur:
@@ -35,7 +36,7 @@ def export_account(user=Depends(get_current_user)):
 
 
 @router.delete("")
-def delete_account(user=Depends(get_current_user)):
+def delete_account(user=Depends(limit("delete", 3))):
     """Delete screenshots, then the auth user (trades/day_logs/profile cascade)."""
     uid = user["user_id"]
     with httpx.Client(headers=_ADMIN, timeout=30) as c:

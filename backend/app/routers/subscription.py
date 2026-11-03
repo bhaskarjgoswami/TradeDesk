@@ -15,6 +15,7 @@ Works for India + international (enable International Payments in the dashboard)
 from fastapi import APIRouter, Depends, HTTPException, Request
 import httpx, hmac, hashlib
 from ..auth import get_current_user
+from ..ratelimit import limit
 from ..database import get_conn
 from ..billing import active_tier, extend, PLAN_DAYS
 from ..config import (
@@ -73,7 +74,7 @@ def status(user=Depends(get_current_user)):
 
 
 @router.post("/checkout")
-def create_checkout(body: dict, user=Depends(get_current_user)):
+def create_checkout(body: dict, user=Depends(limit("checkout", 10))):
     if not RAZORPAY_KEY_ID:
         raise HTTPException(503, "Payments not configured")
     plan = (body or {}).get("plan", "monthly")
@@ -107,7 +108,7 @@ def create_checkout(body: dict, user=Depends(get_current_user)):
 
 
 @router.post("/verify")
-def verify_payment(body: dict, user=Depends(get_current_user)):
+def verify_payment(body: dict, user=Depends(limit("verify", 10))):
     order_id = (body or {}).get("razorpay_order_id")
     payment_id = (body or {}).get("razorpay_payment_id")
     signature = (body or {}).get("razorpay_signature")

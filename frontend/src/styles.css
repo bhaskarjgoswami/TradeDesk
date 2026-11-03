@@ -399,3 +399,40 @@ tbody tr:hover td{background:var(--panel2)}
 
 /* keyboard focus for custom controls */
 .chk .box:focus-visible,.ratepick span:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- public site (landing + legal) ---------- */
+.pub{min-height:100vh;overflow-y:auto;height:100vh;background:var(--page,var(--bg));color:var(--txt)}
+.pub main{max-width:1040px;margin:0 auto;padding:0 20px}
+.pub-head{max-width:1040px;margin:0 auto;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pub-head nav{display:flex;align-items:center;gap:10px}
+.pub-head nav>a:not(.btn){color:var(--mut);font-size:14px;text-decoration:none;margin-right:6px}
+.pub-head .btn{text-decoration:none}
+.pub-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;color:var(--txt);text-decoration:none}
+.pub-mark{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center}
+.pub-mark svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+.pub-hero{text-align:center;padding:72px 0 56px}
+.pub-hero h1{font-size:clamp(32px,6vw,52px);line-height:1.08;letter-spacing:-1.2px;margin:0 0 18px}
+.pub-hero p{max-width:620px;margin:0 auto 28px;color:var(--mut);font-size:17px;line-height:1.55}
+.pub-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.pub-cta .btn{text-decoration:none;padding:11px 18px}
+.pub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;padding-bottom:64px}
+.pub-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+.pub-card h3{margin:12px 0 6px;font-size:16px}
+.pub-card p{margin:0;color:var(--mut);font-size:14px;line-height:1.55}
+.pub-card ul{margin:12px 0 0;padding-left:18px;color:var(--mut);font-size:14px;line-height:1.9}
+.pub-card.featured{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}
+.pub-ic{width:36px;height:36px;border-radius:10px;background:var(--accent-weak);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.pub-ic svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.pub-pricing{padding-bottom:72px;text-align:center}
+.pub-pricing h2{font-size:28px;letter-spacing:-.6px;margin:0 0 20px}
+.pub-plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;max-width:700px;margin:0 auto;text-align:left}
+.pub-price{font-size:22px;font-weight:700;margin-top:4px}
+.pub-legal{max-width:720px !important;padding-bottom:56px !important;line-height:1.65;font-size:15px}
+.pub-legal h1{font-size:30px;letter-spacing:-.6px;margin:28px 0 16px}
+.pub-legal h3{margin:26px 0 6px;font-size:16px}
+.pub-legal a{color:var(--accent)}
+.pub-foot{max-width:1040px;margin:0 auto;padding:22px 20px 32px;border-top:1px solid var(--line);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;color:var(--mut);font-size:13px}
+.pub-foot nav{display:flex;gap:16px}
+.pub-foot a{color:var(--mut);text-decoration:none}
+.pub-foot a:hover{color:var(--txt)}
+@media(max-width:560px){.pub-head nav>a:not(.btn){display:none}.pub-hero{padding:44px 0 36px}}

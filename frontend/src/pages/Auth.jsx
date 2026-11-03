@@ -1,12 +1,15 @@
 import { useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { SUPPORT_EMAIL } from "../lib/brand";
 
 const BrandMark = (
   <span className="mark"><svg viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z" /><path d="M6 3.5v17" /><path d="M9.5 8h6M9.5 12h4" /></svg></span>
 );
 
 export default function Auth() {
-  const [mode, setMode] = useState("login"); // login | signup
+  const [params] = useSearchParams();
+  const [mode, setMode] = useState(params.get("mode") === "signup" ? "signup" : "login"); // login | signup
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
@@ -75,7 +78,10 @@ export default function Auth() {
               <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </button>
           </form>
-          <div className="login-foot">Need help? Contact <a>support@tradejournal.app</a></div>
+          {mode === "signup" && (
+            <div className="login-foot">By creating an account you agree to the <Link to="/terms">Terms</Link> and <Link to="/privacy">Privacy Policy</Link>.</div>
+          )}
+          <div className="login-foot">Need help? Contact <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> · <Link to="/">Home</Link></div>
         </div>
 
         <div className="login-right">

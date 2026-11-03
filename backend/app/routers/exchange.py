@@ -7,6 +7,7 @@ from ..auth import get_current_user
 from ..database import get_conn
 from ..models import ExchangeIn
 from ..secretbox import encrypt, decrypt
+from ..ratelimit import limit
 import urllib.request, urllib.parse, urllib.error
 import json, time, hmac, hashlib
 from datetime import datetime, timedelta, timezone
@@ -52,7 +53,7 @@ def get_exchange(exchange: str = "delta", user=Depends(get_current_user)):
 
 
 @router.post("/exchange")
-def save_exchange(body: ExchangeIn, user=Depends(get_current_user)):
+def save_exchange(body: ExchangeIn, user=Depends(limit("exchange-save", 10))):
     ex = _norm_exchange(body.exchange)
     uid = user["user_id"]
     entry = {
@@ -80,7 +81,7 @@ def save_exchange(body: ExchangeIn, user=Depends(get_current_user)):
 # ── Public price ticker ──────────────────────────────────
 
 @router.get("/price")
-def price(symbol: str = "BTCUSD", user=Depends(get_current_user)):
+def price(symbol: str = "BTCUSD", user=Depends(limit("price", 30))):
     url = f"{DELTA_BASE}/v2/tickers/{urllib.parse.quote(symbol)}"
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "tradedesk"})
@@ -148,7 +149,7 @@ def _cv(sym):
 
 
 @router.get("/delta/today")
-def delta_today(date: str | None = None, tz: int = 0, user=Depends(get_current_user)):
+def delta_today(date: str | None = None, tz: int = 0, user=Depends(limit("delta", 6))):
     uid = user["user_id"]
     with get_conn() as conn:
         with conn.cursor() as cur:

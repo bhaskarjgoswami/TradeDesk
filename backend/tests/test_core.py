@@ -119,3 +119,12 @@ def test_upload_rejects_oversize():
 
 def test_image_urls_only_signs_own_paths():
     assert client.post("/api/trades/image-urls", json={"paths": ["other/x.png", "u1/../other/x.png"]}).json() == {}
+
+
+# ── rate limits ──────────────────────────────────────────
+def test_rate_limit_blocks_after_quota():
+    from app import ratelimit
+    ratelimit._hits.clear()
+    codes = [client.post("/api/trades/upload", json={"data": "bad"}).status_code for _ in range(21)]
+    assert codes[:20] == [400] * 20 and codes[20] == 429
+    ratelimit._hits.clear()

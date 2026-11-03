@@ -4,6 +4,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import FRONTEND_URL
 from .routers import trades, stats, daylogs, exchange, subscription, account
 
+if os.environ.get("SENTRY_DSN"):
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=os.environ["SENTRY_DSN"],
+        environment="production" if os.environ.get("RENDER") else "development",
+        traces_sample_rate=0.1,
+        send_default_pii=False,  # never ship emails, keys or request bodies
+    )
+
 # Interactive API docs only outside production (Render sets RENDER=true).
 _docs = not os.environ.get("RENDER")
 app = FastAPI(
