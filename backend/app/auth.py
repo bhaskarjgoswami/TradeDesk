@@ -1,9 +1,13 @@
 import json
 import urllib.request
+import time
+import threading
+import re
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import jwt, JWTError
+import jwt
+from jwt import InvalidTokenError as JWTError
 
 from .database import get_conn
 from .config import SUPABASE_JWT_SECRET, SUPABASE_URL, SUPABASE_ANON_KEY
@@ -12,39 +16,55 @@ bearer = HTTPBearer()
 
 _JWKS_URL = SUPABASE_URL.rstrip("/") + "/auth/v1/.well-known/jwks.json"
 _jwks_cache: dict[str, dict] = {}  # kid -> JWK
+_jwks_loaded_at = 0.0
+_jwks_attempt_at = 0.0
+_jwks_lock = threading.Lock()
+_ISSUER = SUPABASE_URL.rstrip("/") + "/auth/v1"
 
 
 def _fetch_jwks() -> dict[str, dict]:
-    """Fetch (and cache) Supabase's public signing keys, keyed by kid."""
-    req = urllib.request.Request(_JWKS_URL, headers={"apikey": SUPABASE_ANON_KEY})
-    with urllib.request.urlopen(req, timeout=10) as resp:
-        data = json.load(resp)
-    keys = {k["kid"]: k for k in data.get("keys", []) if "kid" in k}
-    _jwks_cache.clear()
-    _jwks_cache.update(keys)
-    return _jwks_cache
+    global _jwks_loaded_at, _jwks_attempt_at
+    with _jwks_lock:
+        now = time.monotonic()
+        if now - _jwks_attempt_at < 30:
+            return _jwks_cache
+        _jwks_attempt_at = now
+        req = urllib.request.Request(_JWKS_URL, headers={"apikey": SUPABASE_ANON_KEY})
+        try:
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                data = json.load(resp)
+        except Exception:
+            raise HTTPException(503, "Authentication temporarily unavailable")
+        _jwks_cache.clear()
+        _jwks_cache.update({k["kid"]: k for k in data.get("keys", []) if "kid" in k})
+        _jwks_loaded_at = now
+        return _jwks_cache
 
 
 def _decode_token(token: str) -> dict:
-    """Verify a Supabase access token.
-
-    New projects sign with asymmetric keys (ES256/RS256) exposed via JWKS;
-    older ones use the legacy HS256 shared secret. Support both.
-    """
+    if not isinstance(token, str) or len(token) > 16384:
+        raise JWTError("Invalid token")
     header = jwt.get_unverified_header(token)
-    alg = header.get("alg", "")
-    kid = header.get("kid")
-
-    if alg.startswith(("ES", "RS", "PS")):  # asymmetric -> verify via JWKS
-        jwk = _jwks_cache.get(kid) or _fetch_jwks().get(kid)
-        if jwk is None:
-            raise JWTError(f"no JWKS key for kid {kid}")
-        return jwt.decode(token, jwk, algorithms=[alg], options={"verify_aud": False})
-
-    # legacy symmetric secret
-    return jwt.decode(
-        token, SUPABASE_JWT_SECRET, algorithms=["HS256"], options={"verify_aud": False}
-    )
+    alg, kid = header.get("alg"), header.get("kid")
+    if alg in ("ES256", "RS256"):
+        if not isinstance(kid, str) or not 1 <= len(kid) <= 128:
+            raise JWTError("Invalid key id")
+        keys = _jwks_cache
+        if time.monotonic() - _jwks_loaded_at > 300 or kid not in keys:
+            keys = _fetch_jwks()
+        jwk = keys.get(kid)
+        if not jwk or jwk.get("alg", alg) != alg:
+            raise JWTError("Unknown signing key")
+        key = jwt.PyJWK.from_dict(jwk, algorithm=alg).key
+    elif alg == "HS256" and SUPABASE_JWT_SECRET:
+        key = SUPABASE_JWT_SECRET
+    else:
+        raise JWTError("Unsupported signing algorithm")
+    payload = jwt.decode(token, key, algorithms=[alg], issuer=_ISSUER,
+                         audience="authenticated", options={"require": ["exp", "iat", "sub", "iss", "aud"]}, leeway=30)
+    if payload.get("role") != "authenticated" or not re.fullmatch(r"[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}", payload["sub"]):
+        raise JWTError("Invalid access token identity")
+    return payload
 
 
 def get_current_user(creds: HTTPAuthorizationCredentials = Depends(bearer)) -> dict:

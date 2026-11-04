@@ -68,3 +68,28 @@ def journal_rule_error(request, exc):
     if exc.diag.message_primary == "account-unavailable":
         return JSONResponse(status_code=401, content={"detail": "Account is no longer available"})
     return JSONResponse(status_code=500, content={"detail": "Could not save journal changes"})
+
+
+@app.get("/ready")
+def ready():
+    from .database import get_conn
+    try:
+        with get_conn(readonly=True) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT to_regclass('public.user_profiles') IS NOT NULL AND to_regclass('public.billing_orders') IS NOT NULL AS ready")
+                row = cur.fetchone()
+                if not row or not row["ready"]:
+                    return JSONResponse(status_code=503, content={"status": "unavailable"})
+        return {"status": "ready"}
+    except Exception:
+        return JSONResponse(status_code=503, content={"status": "unavailable"})
+
+
+@app.middleware("http")
+async def security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+    return response

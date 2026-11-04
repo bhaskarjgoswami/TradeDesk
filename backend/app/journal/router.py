@@ -12,6 +12,7 @@ import time
 import urllib.error
 
 import httpx
+import psycopg2
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 
@@ -224,6 +225,8 @@ async def post_exchange(request: Request, user=Depends(limit("exchange-save", 10
 
 
 def _delta_error(e):
+    if isinstance(e, psycopg2.errors.RaiseException):
+        raise e
     if isinstance(e, RuntimeError) and str(e) == "no-credentials":
         return err("no-credentials", 400)
     if isinstance(e, urllib.error.HTTPError):
