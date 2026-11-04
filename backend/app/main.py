@@ -1,4 +1,5 @@
 import os
+import psycopg2
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from .journal.pgcompat import MissingJournalSchema
@@ -58,3 +59,12 @@ def health():
 @app.exception_handler(MissingJournalSchema)
 def missing_journal_schema(request, exc):
     return JSONResponse(status_code=503, content={"detail": "Journal temporarily unavailable. Please try again."})
+
+
+@app.exception_handler(psycopg2.errors.RaiseException)
+def journal_rule_error(request, exc):
+    if exc.diag.message_primary == "free-daily-limit":
+        return JSONResponse(status_code=402, content={"error": "free-daily-limit", "detail": "Free accounts allow up to 2 trades per day. Upgrade to Pro for unlimited trades."})
+    if exc.diag.message_primary == "account-unavailable":
+        return JSONResponse(status_code=401, content={"detail": "Account is no longer available"})
+    return JSONResponse(status_code=500, content={"detail": "Could not save journal changes"})

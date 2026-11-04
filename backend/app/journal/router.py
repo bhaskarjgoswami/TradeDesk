@@ -22,7 +22,7 @@ from ..database import get_conn
 from ..ratelimit import limit
 from ..secretbox import encrypt
 from . import core, workspace
-from .pgcompat import current_schema, current_user_id, db, ensure_schema, schema_for
+from .pgcompat import current_schema, current_user_id, db, ensure_schema, schema_for, install_trade_guards
 
 router = APIRouter(prefix="/j", tags=["journal"])
 FREE_DAILY_LIMIT = 2
@@ -34,6 +34,7 @@ def _init_tables():
     core.init_plan_settings()
     core.init_routine()
     workspace.init(db)
+    install_trade_guards(schema_for(current_user_id.get()))
 
 
 @contextlib.contextmanager
@@ -130,16 +131,20 @@ async def post_trade(request: Request, user=Depends(get_current_user)):
     data = await body(request)
     day = data.get("date") or time.strftime("%Y-%m-%d")
     with scoped(user):
-        if _over_free_limit(user["user_id"], day):
-            return err("free-daily-limit", 402)
-        return ok(core.create_trade(data), 201)
+        try:
+            return ok(core.create_trade(data), 201)
+        except ValueError as e:
+            return err(str(e), 400)
 
 
 @router.put("/api/trades/{trade_id}")
 async def put_trade(trade_id: int, request: Request, user=Depends(get_current_user)):
     data = await body(request)
     with scoped(user):
-        res = core.update_trade(trade_id, data)
+        try:
+            res = core.update_trade(trade_id, data)
+        except ValueError as e:
+            return err(str(e), 400)
         return ok(res) if res else err("not found", 404)
 
 

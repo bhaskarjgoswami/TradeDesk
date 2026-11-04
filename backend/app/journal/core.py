@@ -448,8 +448,49 @@ def list_trades(params):
     return [row_to_dict(r) for r in rows]
 
 
+def validate_trade(data):
+    """Validate shared journal payloads before any journal write occurs."""
+    import math
+    from datetime import date
+    if not isinstance(data, dict):
+        raise ValueError("Trade must be an object")
+    clean = {key: data.get(key) for key in FIELDS}
+    try:
+        day = clean.get("date")
+        if not isinstance(day, str) or len(day) != 10:
+            raise ValueError()
+        date.fromisoformat(day)
+    except (TypeError, ValueError):
+        raise ValueError("Use a valid YYYY-MM-DD trade date")
+    if clean.get("direction") not in ("Long", "Short"):
+        raise ValueError("Choose Long or Short")
+    if not isinstance(clean.get("symbol"), str) or not clean["symbol"].strip() or len(clean["symbol"]) > 100:
+        raise ValueError("Add a valid symbol (up to 100 characters)")
+    numeric = {"entry", "stop", "exit", "qty", "risk", "pnl", "r_multiple", "fee", "contract_value", "rating", "strategy_id", "target", "swap"}
+    signed = {"pnl", "r_multiple", "swap"}
+    for key, value in clean.items():
+        if value is None or value == "":
+            if key in numeric: clean[key] = None
+            continue
+        if key in numeric:
+            try:
+                if isinstance(value, bool): raise ValueError()
+                number = float(value)
+                if not math.isfinite(number) or abs(number) > 1e12 or (key not in signed and number < 0): raise ValueError()
+                if key == "contract_value" and number <= 0: raise ValueError()
+                if key == "rating" and (number != int(number) or not 0 <= number <= 5): raise ValueError()
+            except (TypeError, ValueError):
+                raise ValueError("Invalid " + key)
+            clean[key] = number
+        elif not isinstance(value, str) or len(value) > (2_000_000 if key == "images" else 100_000):
+            raise ValueError("Invalid " + key)
+    if clean.get("outcome") not in (None, "", "Win", "Loss", "BE", "Open"):
+        raise ValueError("Invalid outcome")
+    return clean
+
+
 def create_trade(data):
-    data = dict(data)
+    data = validate_trade(data)
     with db() as conn:
         apply_pending_checklist(conn, data)
         conn.commit()
@@ -469,6 +510,7 @@ def create_trade(data):
 
 
 def update_trade(trade_id, data):
+    data = validate_trade(data)
     sets = ",".join(f"{f}=?" for f in FIELDS)
     vals = [data.get(f) for f in FIELDS]
     vals.append(trade_id)

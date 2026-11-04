@@ -60,7 +60,7 @@ def database(monkeypatch):
         pgcompat.forget_schema(schema)
         def initialize():
             with pgcompat.db() as conn:
-                conn.execute("CREATE TABLE trades(id serial PRIMARY KEY, title text)")
+                conn.execute("CREATE TABLE trades(id serial PRIMARY KEY, title text, date text)")
         pgcompat.ensure_schema(schema, initialize)
     yield public_connect, schemas
     with public_connect() as conn:
@@ -131,3 +131,39 @@ def test_payment_ledger_replay_renewal_and_owner(database):
         assert extend(conn, UIDS[0], "monthly", "pay_C", "order_1") == second
         with pytest.raises(ValueError, match="mismatched"):
             extend(conn, UIDS[1], "monthly", "pay_A", "order_1")
+
+
+def test_quota_covers_insert_batch_date_move_and_pro(database):
+    public_connect, (schema, _) = database
+    pgcompat.install_trade_guards(schema)
+    with pgcompat.Connection(schema) as conn:
+        conn.execute("INSERT INTO trades(title,date) VALUES (?,?)", ("one", "2026-11-04"))
+        conn.execute("INSERT INTO trades(title,date) VALUES (?,?)", ("two", "2026-11-04"))
+        conn.execute("INSERT INTO trades(title,date) VALUES (?,?)", ("other", "2026-11-05"))
+    with pytest.raises(psycopg2.errors.RaiseException, match="free-daily-limit"):
+        with pgcompat.Connection(schema) as conn:
+            conn.execute("INSERT INTO trades(title,date) VALUES (?,?)", ("CSV or Delta", "2026-11-04"))
+    with pytest.raises(psycopg2.errors.RaiseException, match="free-daily-limit"):
+        with pgcompat.Connection(schema) as conn:
+            conn.execute("UPDATE trades SET date=? WHERE title=?", ("2026-11-04", "other"))
+    with public_connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE public.user_profiles SET subscription_tier='pro' WHERE id=%s", (UIDS[0],))
+    with pgcompat.Connection(schema) as conn:
+        conn.execute("INSERT INTO trades(title,date) VALUES (?,?)", ("paid", "2026-11-04"))
+        assert conn.execute("SELECT count(*) AS n FROM trades WHERE date=?", ("2026-11-04",)).fetchone()["n"] == 3
+
+
+def test_concurrent_free_inserts_cannot_exceed_daily_limit(database):
+    from concurrent.futures import ThreadPoolExecutor
+    _, (schema, _) = database
+    pgcompat.install_trade_guards(schema)
+    def insert(number):
+        try:
+            with pgcompat.Connection(schema) as conn:
+                conn.execute("INSERT INTO trades(title,date) VALUES (?,?)", (str(number), "2026-11-06"))
+            return True
+        except psycopg2.errors.RaiseException:
+            return False
+    with ThreadPoolExecutor(max_workers=3) as workers:
+        assert sum(workers.map(insert, range(3))) == 2

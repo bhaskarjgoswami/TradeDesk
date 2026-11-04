@@ -217,3 +217,30 @@ def ensure_schema(schema: str, init) -> None:
         finally:
             current_schema.reset(token)
         _provisioned.add(schema)
+
+
+def install_trade_guards(schema: str):
+    """Every write path shares a database quota guard and per-tenant lock."""
+    if not _SCHEMA.fullmatch(schema):
+        raise ValueError("invalid journal schema")
+    with Connection(schema) as conn:
+        conn._query(f'''CREATE OR REPLACE FUNCTION "{schema}".enforce_trade_quota()
+        RETURNS trigger LANGUAGE plpgsql AS $$
+        DECLARE paid boolean; used integer;
+        BEGIN
+            IF TG_OP = 'UPDATE' THEN
+                IF NEW.date IS NOT DISTINCT FROM OLD.date THEN RETURN NEW; END IF;
+            END IF;
+            PERFORM pg_advisory_xact_lock(hashtext(TG_TABLE_SCHEMA));
+            SELECT subscription_tier='pro' AND
+                (subscription_expires_at IS NULL OR subscription_expires_at > now())
+                INTO paid FROM public.user_profiles
+                WHERE id=substring(TG_TABLE_SCHEMA from 3)::uuid;
+            IF NOT FOUND THEN RAISE EXCEPTION 'account-unavailable'; END IF;
+            IF COALESCE(paid,false) THEN RETURN NEW; END IF;
+            SELECT count(*) INTO used FROM "{schema}".trades WHERE date=NEW.date AND id IS DISTINCT FROM NEW.id;
+            IF used >= 2 THEN RAISE EXCEPTION 'free-daily-limit'; END IF;
+            RETURN NEW;
+        END $$''')
+        conn._query(f'DROP TRIGGER IF EXISTS trade_quota ON "{schema}".trades')
+        conn._query(f'CREATE TRIGGER trade_quota BEFORE INSERT OR UPDATE OF date ON "{schema}".trades FOR EACH ROW EXECUTE FUNCTION "{schema}".enforce_trade_quota()')
