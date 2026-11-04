@@ -612,20 +612,14 @@ def day_stats(date):
 
 def list_daylogs():
     with db() as conn:
-        td = [r[0] for r in conn.execute(
-            "SELECT DISTINCT date FROM trades WHERE date IS NOT NULL AND date<>''").fetchall()]
-        logged = {r[0] for r in conn.execute("SELECT date FROM day_logs").fetchall()}
-    dates = sorted(set(td) | logged, reverse=True)
-    out = []
-    for d in dates:
-        s = day_stats(d)
-        out.append({
-            "date": d,
-            "net_pnl": s["net_pnl"],
-            "total_trades": s["total_trades"],
-            "has_log": d in logged,
-        })
-    return out
+        aggregates = {row["date"]:dict(row) for row in conn.execute(
+            "SELECT date, COUNT(*) AS total_trades, "
+            "COALESCE(SUM(CASE WHEN pnl IS NOT NULL THEN pnl-COALESCE(fee,0) ELSE 0 END),0) AS net_pnl "
+            "FROM trades WHERE date IS NOT NULL AND date<>'' GROUP BY date")}
+        logged = {row[0] for row in conn.execute("SELECT date FROM day_logs")}
+    return [{"date":day, "net_pnl":round(aggregates.get(day,{}).get("net_pnl",0),2),
+             "total_trades":aggregates.get(day,{}).get("total_trades",0), "has_log":day in logged}
+            for day in sorted(set(aggregates)|logged, reverse=True)]
 
 
 def get_daylog(date):

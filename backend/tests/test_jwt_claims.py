@@ -18,3 +18,10 @@ def test_invalid_access_claims_rejected(claims,patch,omit):
 def test_valid_access_claims_allowed(claims):
     token=jwt.encode(claims,auth.SUPABASE_JWT_SECRET,algorithm="HS256")
     assert auth._decode_token(token)["sub"]==claims["sub"]
+
+
+def test_media_credentials_cannot_authenticate_as_an_account():
+    uid="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    token=auth.media_token(uid)
+    assert auth.decode_media_token(token)==uid
+    with pytest.raises(jwt.InvalidTokenError): auth._decode_token(token)

@@ -88,3 +88,18 @@ def get_current_user(creds: HTTPAuthorizationCredentials = Depends(bearer)) -> d
     if not exists:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Account is no longer available")
     return {"user_id": uid, "email": payload.get("email", "")}
+
+
+def media_token(uid: str) -> str:
+    import hmac, hashlib
+    key = hmac.new(SUPABASE_JWT_SECRET.encode(), b"tradedesk-media-v1", hashlib.sha256).digest()
+    now = int(time.time())
+    return jwt.encode({"sub":uid,"iss":_ISSUER,"aud":"tradedesk-media","iat":now,"exp":now+300,"scope":"images"}, key, algorithm="HS256")
+
+
+def decode_media_token(token: str) -> str:
+    import hmac, hashlib
+    key = hmac.new(SUPABASE_JWT_SECRET.encode(), b"tradedesk-media-v1", hashlib.sha256).digest()
+    payload = jwt.decode(token, key, algorithms=["HS256"], issuer=_ISSUER, audience="tradedesk-media", options={"require":["exp","iat","sub","scope"]})
+    if payload.get("scope") != "images": raise JWTError("Invalid media scope")
+    return payload["sub"]

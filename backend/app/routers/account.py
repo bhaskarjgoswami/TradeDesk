@@ -28,7 +28,12 @@ def export_account(user=Depends(limit("export", 5))):
             trades = cur.fetchall()
             cur.execute("SELECT * FROM day_logs WHERE user_id=%s ORDER BY date", (uid,))
             day_logs = cur.fetchall()
-    body = {"profile": profile, "trades": trades, "day_logs": day_logs}
+    from ..journal.router import scoped
+    from ..journal.pgcompat import db
+    from ..journal.portable import snapshot
+    with scoped(user):
+        journal = snapshot(db)
+    body = {"version":1, "profile": profile, "journal":journal, "legacy": {"trades": trades, "day_logs": day_logs}}
     return JSONResponse(
         content=_jsonable(body),
         headers={"Content-Disposition": 'attachment; filename="tradedesk-export.json"'},

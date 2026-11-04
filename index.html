@@ -63,12 +63,12 @@
     .app.collapsed .sidefoot{border-top:none}
   }
   .tb-bell{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--mut);cursor:default;display:flex;align-items:center;justify-content:center;font-size:15px}
-  .tb-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#7b6cf0,#6c5ce7);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;cursor:pointer}
+  .tb-avatar{border:0;font-family:inherit;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#7b6cf0,#6c5ce7);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;cursor:pointer}
   .tb-acct{position:relative}
   .tb-menu{position:absolute;right:0;top:46px;background:var(--bg);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 34px rgba(16,24,40,.16);padding:6px;min-width:172px;display:none;z-index:90}
   [data-theme="dark"] .tb-menu{box-shadow:0 14px 34px rgba(0,0,0,.5)}
   .tb-menu.show{display:block}
-  .tb-menu-item{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:500;color:var(--txt)}
+  .tb-menu-item{width:100%;border:0;background:none;font:inherit;text-align:left;display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:500;color:var(--txt)}
   .tb-menu-item:hover{background:var(--panel2)}
   .tb-menu-item svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .tb-menu-item.danger{color:var(--red)}
@@ -533,6 +533,7 @@
   .routine-feedback{font-size:12px;color:var(--mut);margin-top:12px}
   @media(max-width:600px){.settings-panel{padding:18px 14px}.routine-step{grid-template-columns:24px 44px minmax(0,1fr) 28px}.routine-step .routine-action{grid-column:3}.routine-step .delete-step{grid-column:4;grid-row:1}.routine-step{position:relative}.routine-panel{right:12px;left:12px;width:auto;top:70px}.settings-tabs{padding:0 6px}}
   @media(max-width:640px){#routineMobileOpen{padding:7px 9px;font-size:11px;white-space:nowrap}}
+:focus-visible{outline:2px solid var(--accent,#605cf3);outline-offset:3px}
 </style>
 <link rel="stylesheet" href="/workspace.css">
 <link rel="stylesheet" href="/theme-mercury.css" id="designCss">
@@ -588,10 +589,10 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
     <div class="tb-brand"><div class="logo"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></div> Trade Journal</div>
     <div class="tb-right"><button type="button" class="btn ghost" id="routineOpen" aria-controls="routinePanel" aria-expanded="false">Pre-Market Routine</button><div class="tb-bell"><svg class="hi" viewBox="0 0 24 24"><path d="M6 9.5a6 6 0 0 1 12 0c0 4.5 1.8 5.5 1.8 5.5H4.2S6 14 6 9.5"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></div>
       <div class="tb-acct">
-        <div class="tb-avatar" id="tbAvatar" title="Account">B</div>
+        <button type="button" class="tb-avatar" id="tbAvatar" title="Account" aria-label="Account menu" aria-controls="avatarMenu" aria-expanded="false">B</button>
         <div class="tb-menu" id="avatarMenu">
-          <div class="tb-menu-item" id="menuSettings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V20a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H4a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H10a1.6 1.6 0 0 0 1-1.5V4a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V10a1.6 1.6 0 0 0 1.5 1H20a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg> Settings</div>
-          <div class="tb-menu-item danger" id="menuLogout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Log out</div>
+          <button type="button" class="tb-menu-item" id="menuSettings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V20a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H4a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H10a1.6 1.6 0 0 0 1-1.5V4a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V10a1.6 1.6 0 0 0 1.5 1H20a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg> Settings</button>
+          <button type="button" class="tb-menu-item danger" id="menuLogout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Log out</button>
         </div>
       </div></div>
   </div>
@@ -876,22 +877,24 @@ function closeDrawer(){$('#sidebar').classList.remove('open');$('#backdrop').cla
 let userEmail='';
 function setAvatar(email){userEmail=email||userEmail;const c=(userEmail||'T').trim()[0];$('#tbAvatar').textContent=(c||'T').toUpperCase();
   const membership=$('#sidebarMembership');if(membership){membership.hidden=Boolean(window.__td)&&!userEmail;if(!window.__td){$('#sidebarMemberPlan').textContent='TradeDesk';$('#sidebarMemberDetail').textContent='Unlock unlimited daily trades';$('#sidebarMemberUpgrade').hidden=false;membership.title='Upgrade your TradeDesk account';}}}
+function sessionExpired(){booted=false;showLogin();$('#loginErr').textContent='Your session expired. Sign in again to continue. Your unsaved form is still here.';}
 function showLogin(){$('#loginScreen').classList.remove('hidden');$('#loginEmail').focus();}
 function hideLogin(){$('#loginScreen').classList.add('hidden');}
 $('#eyeBtn').onclick=()=>{const i=$('#loginPass'),show=i.type==='password';i.type=show?'text':'password';$('#eyeBtn').setAttribute('aria-label',show?'Hide password':'Show password');$('#eyeBtn').setAttribute('aria-pressed',String(show));};
 $('#loginForm').addEventListener('submit',async e=>{
-  e.preventDefault();$('#loginErr').textContent='';
+  e.preventDefault();$('#loginErr').textContent='';$('#loginErr').style.color='';
   const email=$('#loginEmail').value.trim();
   const secret=$('#loginPass').value;
   if(!email||!secret){$('#loginErr').textContent='Enter your email and password.';return;}
   try{
     const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:secret,name:$('#loginName').value.trim()})});
-    if(r.ok){setAvatar(email);hideLogin();boot();}
+    if(r.ok){const data=await r.json().catch(()=>({}));if(data.confirmation_required){$('#loginErr').textContent=data.message;$('#loginErr').style.color='var(--accent)';return;}if(userEmail&&userEmail.toLowerCase()!==email.toLowerCase()){location.reload();return;}setAvatar(email);hideLogin();boot();}
     else{const d=await r.json().catch(()=>({}));$('#loginErr').textContent=d.error||'Login failed';}
   }catch{$('#loginErr').textContent='Could not reach the server.';}
 });
 function doLogout(){booted=false;routineState=null;routineDraft=null;settingsDraft=null;$('#routinePanel').hidden=true;fetch('/api/logout',{method:'POST'}).catch(()=>{}).finally(()=>{showLogin();});}
-$('#tbAvatar').onclick=e=>{e.stopPropagation();$('#avatarMenu').classList.toggle('show');};
+$('#tbAvatar').onclick=e=>{e.stopPropagation();const open=$('#avatarMenu').classList.toggle('show');$('#tbAvatar').setAttribute('aria-expanded',String(open));if(open)$('#menuSettings').focus();};
+$('#avatarMenu').addEventListener('keydown',e=>{const items=[$('#menuSettings'),$('#menuLogout')];if(e.key==='Escape'){$('#avatarMenu').classList.remove('show');$('#tbAvatar').setAttribute('aria-expanded','false');$('#tbAvatar').focus();}if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();items[(items.indexOf(document.activeElement)+(e.key==='ArrowDown'?1:-1)+items.length)%items.length].focus();}});
 document.addEventListener('click',e=>{if(!e.target.closest('.tb-acct'))$('#avatarMenu').classList.remove('show');});
 $('#menuSettings').onclick=()=>{$('#avatarMenu').classList.remove('show');openSettings();};
 $('#menuLogout').onclick=()=>{$('#avatarMenu').classList.remove('show');if(confirm('Log out of Trade Journal?'))doLogout();};
@@ -1546,6 +1549,10 @@ function renderRoutinePanel(){const el=$('#routinePanel');if(!routineState){el.h
 $('#routineMobileOpen').onclick=()=>$('#routineOpen').click();
 $('#routineBackdrop').onclick=()=>$('#routineClose')?.click();
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#routineBackdrop').hidden&&!document.querySelector('#tfLightbox[open]')){e.stopPropagation();$('#routineClose')?.click();}},true);  // before the trade form's Escape handler
+let routineReturnFocus=null,routineFocusOpen=false;
+const routineFocusObserver=new MutationObserver(()=>{const panel=$('#routinePanel'),open=!panel.hidden&&panel.getAttribute('aria-modal')==='true';if(open&&!routineFocusOpen){routineReturnFocus=document.activeElement;$('#app').inert=true;$('.mobilebar').inert=true;panel.querySelector('button,input,a[href]')?.focus();}if(!open&&routineFocusOpen){$('#app').inert=false;$('.mobilebar').inert=false;routineReturnFocus?.focus();}routineFocusOpen=open;});
+routineFocusObserver.observe($('#routinePanel'),{attributes:true,attributeFilter:['hidden','aria-modal']});
+$('#routinePanel').addEventListener('keydown',e=>{if(e.key!=='Tab'||!routineFocusOpen||document.querySelector('dialog[open]'))return;const controls=[...$('#routinePanel').querySelectorAll('button,input,a[href],select,textarea,summary,[tabindex="0"]')].filter(el=>!el.disabled&&el.getClientRects().length);if(!controls.length)return;const first=controls[0],last=controls.at(-1);if(e.shiftKey&&(document.activeElement===first||!$('#routinePanel').contains(document.activeElement))){e.preventDefault();last.focus();}else if(!e.shiftKey&&(document.activeElement===last||!$('#routinePanel').contains(document.activeElement))){e.preventDefault();first.focus();}});
 $('#routineOpen').onclick=async()=>{const wasHidden=$('#routinePanel').hidden;if(!await loadRoutine()){toast('Could not load routine. Try again.');return;}routineForced=wasHidden;if(!routineForced)routineHiddenPeriod=routineState.period;renderRoutinePanel();if(wasHidden)routineQuietSync();};
 // ---------- boot ----------
 let booted=false;

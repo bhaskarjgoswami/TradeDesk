@@ -12,6 +12,7 @@ Plans:
   annual  — 365 days Pro
 Works for India + international (enable International Payments in the dashboard).
 """
+from starlette.concurrency import run_in_threadpool
 from fastapi import APIRouter, Depends, HTTPException, Request
 import httpx, hmac, hashlib
 from ..auth import get_current_user
@@ -180,6 +181,6 @@ async def razorpay_webhook(request: Request):
         payment = event["payload"]["payment"]["entity"]
         if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
             raise HTTPException(503, "Payments not configured")
-        _apply_paid_order(order["id"], payment["id"])
+        await run_in_threadpool(_apply_paid_order, order["id"], payment["id"])
 
     return {"ok": True}

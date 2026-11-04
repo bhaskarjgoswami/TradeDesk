@@ -167,3 +167,39 @@ def test_concurrent_free_inserts_cannot_exceed_daily_limit(database):
             return False
     with ThreadPoolExecutor(max_workers=3) as workers:
         assert sum(workers.map(insert, range(3))) == 2
+
+
+def test_portable_backup_restores_records_and_private_screenshots(database, monkeypatch):
+    import base64,io,json,zipfile,httpx
+    from app.journal import router,core,portable
+    public_connect,(schema,_) = database
+    with public_connect() as conn:
+        with conn.cursor() as cur: cur.execute(f'DROP SCHEMA "{schema}" CASCADE')
+    pgcompat.forget_schema(schema)
+    uploaded=[]
+    class Storage:
+        def __init__(self,**kwargs): pass
+        def __enter__(self): return self
+        def __exit__(self,*args): pass
+        def get(self,url): return httpx.Response(200,content=b"screenshot-bytes")
+        def post(self,url,**kwargs):
+            uploaded.append((url,kwargs["content"]))
+            return httpx.Response(200)
+        def delete(self,url): return httpx.Response(200)
+    monkeypatch.setattr(portable.httpx,"Client",Storage)
+    with router.scoped({"user_id":UIDS[0]}):
+        core.create_trade({"date":"2026-11-04","symbol":"BTCUSD","direction":"Long","images":json.dumps(["/images/setup.png"])})
+        archive=portable.backup(pgcompat.db,UIDS[0])
+        with zipfile.ZipFile(io.BytesIO(archive)) as z:
+            assert z.read("images/setup.png")==b"screenshot-bytes"
+            assert json.loads(z.read("journal.json"))["trades"][0]["symbol"]=="BTCUSD"
+        with pytest.raises(ValueError,match="empty journal"):
+            portable.restore(pgcompat.db,UIDS[0],base64.b64encode(archive).decode())
+        with pgcompat.db() as conn: conn.execute("DELETE FROM trades")
+        result=portable.restore(pgcompat.db,UIDS[0],base64.b64encode(archive).decode())
+        assert result["restored"]["trades"] == 1
+        assert uploaded[0][0].split("/")[-2]==UIDS[0]
+        assert uploaded[0][1]==b"screenshot-bytes"
+        with pgcompat.db() as conn: restored=conn.execute("SELECT images FROM trades").fetchone()["images"]
+        assert "/images/setup.png" not in restored
+        core.create_trade({"date":"2026-11-05","symbol":"ETHUSD","direction":"Short"})

@@ -16,13 +16,13 @@ import psycopg2
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 
-from ..auth import get_current_user, _decode_token
+from ..auth import get_current_user, media_token, decode_media_token
 from ..billing import active_tier
 from ..config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 from ..database import get_conn
 from ..ratelimit import limit
 from ..secretbox import encrypt
-from . import core, workspace
+from . import core, workspace, portable
 from .pgcompat import current_schema, current_user_id, db, ensure_schema, schema_for, install_trade_guards
 
 router = APIRouter(prefix="/j", tags=["journal"])
@@ -60,12 +60,8 @@ def err(msg, status):
     return JSONResponse({"error": msg}, status_code=status)
 
 
-async def body(request: Request) -> dict:
-    try:
-        data = await request.json()
-    except Exception:
-        return {}
-    return data if isinstance(data, dict) else {}
+def body(request: Request) -> dict:
+    return getattr(request.state, "journal_body", {})
 
 
 def qs(request: Request) -> dict:
@@ -90,8 +86,8 @@ def get_routine(user=Depends(get_current_user)):
 
 @router.put("/api/routine")
 @router.put("/api/routine/progress")
-async def put_routine(request: Request, user=Depends(get_current_user)):
-    data = await body(request)
+def put_routine(request: Request, user=Depends(get_current_user)):
+    data = body(request)
     action = core.save_routine if request.url.path.endswith("/routine") else core.save_routine_progress
     with scoped(user):
         try:
@@ -109,8 +105,8 @@ def get_plan(user=Depends(get_current_user)):
 
 
 @router.put("/api/plan-settings")
-async def put_plan(request: Request, user=Depends(get_current_user)):
-    data = await body(request)
+def put_plan(request: Request, user=Depends(get_current_user)):
+    data = body(request)
     with scoped(user):
         try:
             return ok(core.save_plan_settings(data))
@@ -128,8 +124,8 @@ def get_trades(request: Request, user=Depends(get_current_user)):
 
 
 @router.post("/api/trades")
-async def post_trade(request: Request, user=Depends(get_current_user)):
-    data = await body(request)
+def post_trade(request: Request, user=Depends(get_current_user)):
+    data = body(request)
     day = data.get("date") or time.strftime("%Y-%m-%d")
     with scoped(user):
         try:
@@ -139,8 +135,8 @@ async def post_trade(request: Request, user=Depends(get_current_user)):
 
 
 @router.put("/api/trades/{trade_id}")
-async def put_trade(trade_id: int, request: Request, user=Depends(get_current_user)):
-    data = await body(request)
+def put_trade(trade_id: int, request: Request, user=Depends(get_current_user)):
+    data = body(request)
     with scoped(user):
         try:
             res = core.update_trade(trade_id, data)
@@ -176,8 +172,8 @@ def get_daylog(date: str = "", user=Depends(get_current_user)):
 
 
 @router.put("/api/daylog")
-async def put_daylog(request: Request, user=Depends(get_current_user)):
-    data = await body(request)
+def put_daylog(request: Request, user=Depends(get_current_user)):
+    data = body(request)
     if not data.get("date"):
         return err("date required", 400)
     with scoped(user):
@@ -210,8 +206,8 @@ def get_exchange(user=Depends(get_current_user)):
 
 
 @router.post("/api/exchange")
-async def post_exchange(request: Request, user=Depends(limit("exchange-save", 10))):
-    data = await body(request)
+def post_exchange(request: Request, user=Depends(limit("exchange-save", 10))):
+    data = body(request)
     key, secret = (data.get("key") or "").strip(), (data.get("secret") or "").strip()
     entry = {"key": encrypt(key), "secret": encrypt(secret), "passphrase": ""}
     with get_conn() as conn:
@@ -265,8 +261,8 @@ def delta_sync(user=Depends(limit("delta", 6))):
 
 # ── chart images ─────────────────────────────────────────
 @router.post("/api/upload")
-async def upload(request: Request, user=Depends(limit("upload", 20))):
-    data = await body(request)
+def upload(request: Request, user=Depends(limit("upload", 20))):
+    data = body(request)
     with scoped(user):
         try:
             return ok({"path": core.save_image(data.get("data", ""))})
@@ -274,15 +270,21 @@ async def upload(request: Request, user=Depends(limit("upload", 20))):
             return err(str(e), 400)
 
 
+@router.post("/api/media-session")
+def image_session(user=Depends(get_current_user)):
+    return {"token":media_token(user["user_id"]),"expires_in":300}
+
+
 @router.get("/images/{name}")
-def image(name: str, request: Request, t: str = ""):
-    """The journal UI renders <img src="/images/<name>">, which can't send headers.
-    Vercel proxies /images/* here, and the web shim keeps a short-lived td_img
-    cookie (path /images) holding the user's access token. Redirects to a
-    short-lived signed URL for the caller's own file."""
-    token = t or request.cookies.get("td_img", "")
+def image(name: str, request: Request):
+    # This credential can only read screenshots; it cannot call account APIs.
+    token = request.cookies.get("td_img", "")
     try:
-        uid = _decode_token(token).get("sub")
+        uid = decode_media_token(token)
+        with get_conn(readonly=True) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1 FROM public.user_profiles WHERE id=%s",(uid,))
+                if not cur.fetchone(): uid = None
     except Exception:
         uid = None
     if not uid or "/" in name or ".." in name:
@@ -297,14 +299,16 @@ def image(name: str, request: Request, t: str = ""):
 
 # ── workspace (notes, plans, events, settings, import, backup) ──
 @router.api_route("/api/workspace/{rest:path}", methods=["GET", "POST", "PUT", "DELETE"])
-async def workspace_api(rest: str, request: Request, user=Depends(get_current_user)):
+def workspace_api(rest: str, request: Request, user=Depends(get_current_user)):
     path = "/api/workspace/" + rest
-    data = await body(request) if request.method in ("POST", "PUT", "DELETE") else None
+    data = body(request) if request.method in ("POST", "PUT", "DELETE") else None
     with scoped(user):
         try:
             if path == "/api/workspace/backup" and request.method == "GET":
-                return Response(workspace.backup(db), media_type="application/zip",
+                return Response(portable.backup(db, user["user_id"]), media_type="application/zip",
                                 headers={"Content-Disposition": 'attachment; filename="tradedesk-backup.zip"'})
+            if rest == "restore" and request.method == "POST":
+                return ok(portable.restore(db, user["user_id"], data.get("archive")))
             result, status = workspace.handle(db, request.method, path, qs(request), data)
             return ok(result, status)
         except workspace.Conflict as e:

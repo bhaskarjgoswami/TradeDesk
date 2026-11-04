@@ -15,12 +15,25 @@ let mode = new URLSearchParams(location.search).has("signup") ? "signup" : "logi
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json" } });
 
-function setImageCookie(session) {
+let imageSessionVersion = 0;
+async function setImageCookie(session) {
+  const version = ++imageSessionVersion;
   const secure = location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = session
-    ? `td_img=${session.access_token}; Path=/images; Max-Age=3600; SameSite=Lax${secure}`
-    : `td_img=; Path=/images; Max-Age=0; SameSite=Lax${secure}`;
+  if (!session) {
+    document.cookie = `td_img=; Path=/images; Max-Age=0; SameSite=Lax${secure}`;
+    return;
+  }
+  try {
+    const response = await fetch(API + "/api/media-session", {method:"POST",headers:{Authorization:`Bearer ${session.access_token}`}});
+    if (!response.ok) throw new Error("Image session unavailable");
+    const data = await response.json();
+    if (version !== imageSessionVersion) return;
+    document.cookie = `td_img=${data.token}; Path=/images; Max-Age=300; SameSite=Lax${secure}`;
+    // Retry images that loaded before the scoped credential was ready.
+    document.querySelectorAll('img[src^="/images/"]').forEach(img => { if (!img.complete || !img.naturalWidth) img.src = img.getAttribute("src"); });
+  } catch { /* A later renewal retries without exposing the access token. */ }
 }
+setInterval(() => { if (!document.hidden) supabase.auth.getSession().then(({data})=>setImageCookie(data.session)); }, 240000);
 
 let sidebarMemberUser = null;
 let sidebarMemberRevision = 0;
@@ -76,7 +89,7 @@ async function handle(url, init, nativeFetch) {
     if (mode === "signup") {
       const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: String(name || "").trim().slice(0, 100) } } });
       if (error) return json({ error: error.message }, 400);
-      if (!data.session) return json({ error: "Account created. Check your email to confirm it, then sign in." }, 400);
+      if (!data.session) return json({ ok:true, confirmation_required:true, message: "Account created. Check your email to confirm it, then sign in." });
       return json({ ok: true });
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -98,6 +111,10 @@ async function handle(url, init, nativeFetch) {
     if (method !== "GET") throw e; // never retry writes
     await new Promise((r) => setTimeout(r, 800)); // API redeploying: retry reads once
     res = await nativeFetch(API + url, { ...init, headers });
+  }
+  if (res.status === 401) {
+    window.sessionExpired?.();
+    return json({error:"Your session expired. Sign in again to continue; your unsaved form has been kept."},401);
   }
   return res;
 }
@@ -167,13 +184,8 @@ supabase.auth.onAuthStateChange((event, session) => {
   setImageCookie(session);
   refreshSidebarMembership(session);
   if (event === "PASSWORD_RECOVERY") {
-    // Arrived from the reset email: choose a new password before continuing.
-    setTimeout(async () => {
-      const pw = window.prompt("Choose a new password (at least 8 characters):");
-      if (!pw || pw.length < 8) return;
-      const { error } = await supabase.auth.updateUser({ password: pw });
-      window.alert(error ? "Couldn't update the password: " + error.message : "Password updated.");
-    }, 300);
+    queueMicrotask(showPasswordRecovery);
+
   }
 });
 
@@ -181,3 +193,29 @@ window.addEventListener("pageshow", (event) => {
   if (event.persisted) supabase.auth.getSession().then(({ data }) => refreshSidebarMembership(data.session, true));
 });
 window.__td.resolve({ handle });
+
+
+function showPasswordRecovery() {
+  if (document.getElementById("passwordRecovery")) return;
+  const dialog=document.createElement("dialog");
+  dialog.id="passwordRecovery";
+  dialog.setAttribute("aria-labelledby","recoveryTitle");
+  dialog.style.cssText="border:1px solid #e3e1f1;border-radius:24px;padding:32px;width:min(420px,calc(100vw - 32px));color:#29283e;background:white;font-family:var(--font-ui,Inter,sans-serif)";
+  dialog.innerHTML=`<form><h2 id="recoveryTitle" style="margin:0 0 12px">Set a new password</h2><p>Choose at least 8 characters for your TradeDesk account.</p><label for="recoveryPassword">New password</label><input id="recoveryPassword" type="password" autocomplete="new-password" required minlength="8" style="box-sizing:border-box;width:100%;height:42px;border-radius:32px;border:1px solid #e3e1f1;padding:0 16px;margin:8px 0 16px;font:inherit"><label for="recoveryConfirm">Confirm password</label><input id="recoveryConfirm" type="password" autocomplete="new-password" required minlength="8" style="box-sizing:border-box;width:100%;height:42px;border-radius:32px;border:1px solid #e3e1f1;padding:0 16px;margin:8px 0 16px;font:inherit"><p role="status" aria-live="polite" id="recoveryStatus"></p><button type="submit" style="height:42px;width:100%;border-radius:40px;background:#605cf3;color:white;border:0;font:inherit">Update password</button></form>`;
+  document.body.append(dialog);dialog.showModal();
+  dialog.querySelector("form").onsubmit=async event=>{
+    event.preventDefault();
+    const password=dialog.querySelector("#recoveryPassword").value;
+    const status=dialog.querySelector("#recoveryStatus"),button=dialog.querySelector("button");
+    if(password!==dialog.querySelector("#recoveryConfirm").value){status.textContent="Passwords do not match.";return;}
+    button.disabled=true;
+    const {error}=await supabase.auth.updateUser({password});
+    button.disabled=false;
+    if(error){status.textContent=error.message;return;}
+    dialog.close();dialog.remove();
+    const notice=document.getElementById("loginErr");if(notice)notice.textContent="Password updated. You can continue to your journal.";
+  };
+  dialog.addEventListener("close",()=>dialog.remove());
+}
+
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)supabase.auth.getSession().then(({data})=>setImageCookie(data.session));});

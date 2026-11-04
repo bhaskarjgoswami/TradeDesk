@@ -93,3 +93,23 @@ async def security_headers(request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
     return response
+
+
+@app.middleware("http")
+async def parse_journal_body(request, call_next):
+    if request.url.path.startswith("/j/api/") and request.method in ("POST","PUT","DELETE"):
+        import json
+        maximum = 72 * 1024 * 1024 if request.url.path.endswith("/workspace/restore") else 8 * 1024 * 1024
+        chunks,total = [],0
+        async for chunk in request.stream():
+            total += len(chunk)
+            if total > maximum:
+                return JSONResponse(status_code=413,content={"detail":"Request is too large"})
+            chunks.append(chunk)
+        try:
+            value = json.loads(b"".join(chunks) or b"{}")
+            if not isinstance(value,dict): raise ValueError()
+        except (ValueError,UnicodeError):
+            return JSONResponse(status_code=400,content={"detail":"Send a valid JSON object"})
+        request.state.journal_body = value
+    return await call_next(request)
