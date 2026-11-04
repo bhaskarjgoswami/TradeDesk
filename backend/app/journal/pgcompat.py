@@ -32,6 +32,13 @@ current_schema: contextvars.ContextVar[str | None] = contextvars.ContextVar("jou
 current_user_id: contextvars.ContextVar[str | None] = contextvars.ContextVar("journal_user", default=None)
 
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+_SCHEMA = re.compile(r"^j_[0-9a-f]{32}$")
+
+
+class MissingJournalSchema(RuntimeError):
+    """A tenant namespace disappeared; never fall back to another schema."""
+
+
 _PRAGMA = re.compile(r"^\s*PRAGMA\s+table_info\((\w+)\)\s*;?\s*$", re.I)
 _INSERT_WITH_ID = re.compile(r"^\s*INSERT\s+INTO\s+(trades|workspace_items)\b", re.I)
 
@@ -86,19 +93,33 @@ class Connection:
     """sqlite3.Connection look-alike over a pooled psycopg2 connection."""
 
     def __init__(self, schema: str):
+        if not _SCHEMA.fullmatch(schema):
+            raise ValueError("invalid journal schema")
         self._pool = _get_pool()
         self._conn = self._pool.getconn()
-        self._conn.autocommit = False
         self._closed = False
         self._schema = schema
-        self._set_path()
+        try:
+            self._conn.autocommit = False
+            self._set_path()
+        except Exception:
+            try:
+                self._conn.rollback()
+            finally:
+                self.close()
+            raise
 
     def _set_path(self):
         # SET LOCAL lasts one transaction (correct behind Supabase's transaction-mode
         # pooler, where a session-level SET could leak to another user). The journal
         # code commits mid-block and keeps going, so re-apply after every commit.
         with self._conn.cursor() as cur:
-            cur.execute("SET LOCAL search_path TO %s, public" % psycopg2.extensions.quote_ident(self._schema, cur))
+            cur.execute("SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname=%s)", (self._schema,))
+            if not cur.fetchone()[0]:
+                raise MissingJournalSchema("Journal namespace is unavailable")
+            # The name is strictly validated in __init__. pg_catalog remains
+            # implicitly available; shared application tables are never searched.
+            cur.execute(f'SET LOCAL search_path TO "{self._schema}"')
 
     # sqlite3 uses the connection itself as a transaction context
     def __enter__(self):
@@ -165,8 +186,15 @@ _provisioned: set[str] = set()
 _provision_lock = threading.Lock()
 
 
+def forget_schema(schema: str) -> None:
+    with _provision_lock:
+        _provisioned.discard(schema)
+
+
 def ensure_schema(schema: str, init) -> None:
     """Create the user's schema and run the journal's own table setup once."""
+    if not _SCHEMA.fullmatch(schema):
+        raise ValueError("invalid journal schema")
     if schema in _provisioned:
         return
     with _provision_lock:

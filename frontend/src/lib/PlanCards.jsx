@@ -7,7 +7,7 @@ import { Icon } from "./ui";
 const PRICING = {
   INR: {
     monthly: { amt: "₹99", unit: ["INR / month", "billed monthly"], desc: "Pro — Monthly" },
-    annual: { amt: "₹1,990", unit: ["INR / year", "billed annually"], desc: "Pro — Annual" },
+    annual: { amt: "₹699", unit: ["INR / year", "billed annually"], desc: "Pro — Annual" },
   },
   USD: {
     monthly: { amt: "$9", unit: ["USD / month", "billed monthly"], desc: "Pro — Monthly" },
@@ -105,12 +105,12 @@ export default function PlanCards() {
     <>
       {msg && <div className="ex-note" role="status" aria-live="polite" style={{ marginBottom: 14 }}>{msg}</div>}
 
-      {!isPro && (
+      {(
         <div className="bill-bar"><span className="bill-period-label">Choose your billing period</span>
           <div className="bill-seg" role="group" aria-label="Billing period">
             <button className={cycle === "monthly" ? "on" : ""} aria-pressed={cycle === "monthly"} disabled={busy} onClick={() => setCycle("monthly")}>Monthly</button>
             <button className={cycle === "annual" ? "on" : ""} aria-pressed={cycle === "annual"} disabled={busy} onClick={() => setCycle("annual")}>
-              Annual {currency === "USD" && <span className="bill-save">SAVE 16%</span>}
+              Annual <span className="bill-save">{currency === "INR" ? "SAVE 41%" : "SAVE 16%"}</span>
             </button>
           </div>
         </div>

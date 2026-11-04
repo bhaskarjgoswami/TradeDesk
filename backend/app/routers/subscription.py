@@ -43,12 +43,16 @@ def _auth():
 
 
 def _verify_payment_sig(order_id: str, payment_id: str, signature: str) -> bool:
+    if not RAZORPAY_KEY_SECRET:
+        return False
     body = f"{order_id}|{payment_id}".encode()
     expected = hmac.new(RAZORPAY_KEY_SECRET.encode(), body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(expected, signature or "")
 
 
 def _verify_webhook_sig(payload: bytes, signature: str) -> bool:
+    if not RAZORPAY_WEBHOOK_SECRET:
+        return False
     expected = hmac.new(RAZORPAY_WEBHOOK_SECRET.encode(), payload, hashlib.sha256).hexdigest()
     return hmac.compare_digest(expected, signature or "")
 
@@ -75,7 +79,7 @@ def status(user=Depends(get_current_user)):
 
 @router.post("/checkout")
 def create_checkout(body: dict, user=Depends(limit("checkout", 10))):
-    if not RAZORPAY_KEY_ID:
+    if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
         raise HTTPException(503, "Payments not configured")
     plan = (body or {}).get("plan", "monthly")
     currency = ((body or {}).get("currency") or "INR").upper()
@@ -109,6 +113,8 @@ def create_checkout(body: dict, user=Depends(limit("checkout", 10))):
 
 @router.post("/verify")
 def verify_payment(body: dict, user=Depends(limit("verify", 10))):
+    if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
+        raise HTTPException(503, "Payments not configured")
     order_id = (body or {}).get("razorpay_order_id")
     payment_id = (body or {}).get("razorpay_payment_id")
     signature = (body or {}).get("razorpay_signature")
@@ -136,6 +142,8 @@ def verify_payment(body: dict, user=Depends(limit("verify", 10))):
 
 @router.post("/webhook")
 async def razorpay_webhook(request: Request):
+    if not RAZORPAY_WEBHOOK_SECRET:
+        raise HTTPException(503, "Payment webhook not configured")
     payload = await request.body()
     sig = request.headers.get("x-razorpay-signature", "")
     if not _verify_webhook_sig(payload, sig):

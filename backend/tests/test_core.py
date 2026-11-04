@@ -233,7 +233,8 @@ def test_tier_and_day_count():
     assert tier_and_day_count(FakeConn({"subscription_tier": None, "subscription_expires_at": None, "n": 1}), "u", "d") == ("free", 1)
 
 
-def test_inr_monthly_checkout_charges_99_rupees(monkeypatch):
+@pytest.mark.parametrize("plan,amount", [("monthly", 9900), ("annual", 69900)])
+def test_inr_checkout_prices(monkeypatch, plan, amount):
     import httpx
     from app.routers import subscription
     captured = {}
@@ -243,9 +244,10 @@ def test_inr_monthly_checkout_charges_99_rupees(monkeypatch):
         return httpx.Response(200, json={"id": "order_monthly_99"})
 
     monkeypatch.setattr(subscription, "RAZORPAY_KEY_ID", "rzp_test")
+    monkeypatch.setattr(subscription, "RAZORPAY_KEY_SECRET", "test-secret")
     monkeypatch.setattr(subscription.httpx, "post", create_order)
-    response = client.post("/api/subscription/checkout", json={"plan": "monthly", "currency": "INR"})
+    response = client.post("/api/subscription/checkout", json={"plan": plan, "currency": "INR"})
     assert response.status_code == 200
-    assert captured["amount"] == 9900  # Razorpay expects paise.
+    assert captured["amount"] == amount  # Razorpay expects paise.
     assert captured["currency"] == "INR"
-    assert response.json()["amount"] == 9900
+    assert response.json()["amount"] == amount

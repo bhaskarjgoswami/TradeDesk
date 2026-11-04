@@ -71,7 +71,7 @@ export default function Landing() {
             <div className="pub-card featured">
               <h3>Pro</h3>
               <div className="pub-price">₹99/mo · $9/mo</div>
-              <ul><li>Unlimited trades per day</li><li>No daily cap on Delta imports</li><li>Annual: ₹1,990 / $90 (USD: 2 months free)</li><li>One-time payment, no auto-renew</li></ul>
+              <ul><li>Unlimited trades per day</li><li>No daily cap on Delta imports</li><li>Annual: ₹699 / $90 (USD: 2 months free)</li><li>One-time payment, no auto-renew</li></ul>
             </div>
           </div>
         </section>

@@ -1,5 +1,7 @@
 import os
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from .journal.pgcompat import MissingJournalSchema
 from fastapi.middleware.cors import CORSMiddleware
 from .config import FRONTEND_URL
 from .routers import trades, stats, daylogs, exchange, subscription, account, playbooks
@@ -51,3 +53,8 @@ app.include_router(journal_router)
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "TradeDesk API"}
+
+
+@app.exception_handler(MissingJournalSchema)
+def missing_journal_schema(request, exc):
+    return JSONResponse(status_code=503, content={"detail": "Journal temporarily unavailable. Please try again."})

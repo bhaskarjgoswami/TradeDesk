@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 
+from .database import get_conn
 from .config import SUPABASE_JWT_SECRET, SUPABASE_URL, SUPABASE_ANON_KEY
 
 bearer = HTTPBearer()
@@ -55,4 +56,15 @@ def get_current_user(creds: HTTPAuthorizationCredentials = Depends(bearer)) -> d
     uid = payload.get("sub")
     if not uid:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    # JWT signatures remain valid until expiry after an Auth user is deleted.
+    # The signup trigger creates this profile; its deletion revokes API access.
+    try:
+        with get_conn(readonly=True) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1 FROM public.user_profiles WHERE id=%s", (uid,))
+                exists = cur.fetchone()
+    except Exception:
+        raise HTTPException(status_code=503, detail="Account verification temporarily unavailable")
+    if not exists:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Account is no longer available")
     return {"user_id": uid, "email": payload.get("email", "")}
