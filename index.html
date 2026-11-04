@@ -589,10 +589,10 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
     <div class="tb-brand"><div class="logo"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></div> Trade Journal</div>
     <div class="tb-right"><button type="button" class="btn ghost" id="routineOpen" aria-controls="routinePanel" aria-expanded="false">Pre-Market Routine</button><div class="tb-bell"><svg class="hi" viewBox="0 0 24 24"><path d="M6 9.5a6 6 0 0 1 12 0c0 4.5 1.8 5.5 1.8 5.5H4.2S6 14 6 9.5"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></div>
       <div class="tb-acct">
-        <button type="button" class="tb-avatar" id="tbAvatar" title="Account" aria-label="Account menu" aria-controls="avatarMenu" aria-expanded="false">B</button>
-        <div class="tb-menu" id="avatarMenu">
-          <button type="button" class="tb-menu-item" id="menuSettings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V20a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H4a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H10a1.6 1.6 0 0 0 1-1.5V4a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V10a1.6 1.6 0 0 0 1.5 1H20a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg> Settings</button>
-          <button type="button" class="tb-menu-item danger" id="menuLogout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Log out</button>
+        <button type="button" class="tb-avatar" id="tbAvatar" title="Account" aria-label="Account menu" aria-haspopup="menu" aria-controls="avatarMenu" aria-expanded="false">B</button>
+        <div class="tb-menu" id="avatarMenu" role="menu" aria-label="Account">
+          <button type="button" class="tb-menu-item" id="menuSettings" role="menuitem"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V20a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H4a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H10a1.6 1.6 0 0 0 1-1.5V4a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V10a1.6 1.6 0 0 0 1.5 1H20a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg> Settings</button>
+          <button type="button" class="tb-menu-item danger" id="menuLogout" role="menuitem"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Log out</button>
         </div>
       </div></div>
   </div>
@@ -893,11 +893,13 @@ $('#loginForm').addEventListener('submit',async e=>{
   }catch{$('#loginErr').textContent='Could not reach the server.';}
 });
 function doLogout(){booted=false;routineState=null;routineDraft=null;settingsDraft=null;$('#routinePanel').hidden=true;fetch('/api/logout',{method:'POST'}).catch(()=>{}).finally(()=>{showLogin();});}
+function closeAccountMenu(){$('#avatarMenu').classList.remove('show');$('#tbAvatar').setAttribute('aria-expanded','false');}
+document.addEventListener('focusin',event=>{if(!event.target.closest('.tb-acct'))closeAccountMenu();});
 $('#tbAvatar').onclick=e=>{e.stopPropagation();const open=$('#avatarMenu').classList.toggle('show');$('#tbAvatar').setAttribute('aria-expanded',String(open));if(open)$('#menuSettings').focus();};
-$('#avatarMenu').addEventListener('keydown',e=>{const items=[$('#menuSettings'),$('#menuLogout')];if(e.key==='Escape'){$('#avatarMenu').classList.remove('show');$('#tbAvatar').setAttribute('aria-expanded','false');$('#tbAvatar').focus();}if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();items[(items.indexOf(document.activeElement)+(e.key==='ArrowDown'?1:-1)+items.length)%items.length].focus();}});
-document.addEventListener('click',e=>{if(!e.target.closest('.tb-acct'))$('#avatarMenu').classList.remove('show');});
-$('#menuSettings').onclick=()=>{$('#avatarMenu').classList.remove('show');openSettings();};
-$('#menuLogout').onclick=()=>{$('#avatarMenu').classList.remove('show');if(confirm('Log out of Trade Journal?'))doLogout();};
+$('#avatarMenu').addEventListener('keydown',e=>{const items=[$('#menuSettings'),$('#menuLogout')];if(e.key==='Escape'){closeAccountMenu();$('#tbAvatar').setAttribute('aria-expanded','false');$('#tbAvatar').focus();}if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();items[(items.indexOf(document.activeElement)+(e.key==='ArrowDown'?1:-1)+items.length)%items.length].focus();}});
+document.addEventListener('click',e=>{if(!e.target.closest('.tb-acct'))closeAccountMenu();});
+$('#menuSettings').onclick=()=>{closeAccountMenu();openSettings();};
+$('#menuLogout').onclick=()=>{closeAccountMenu();if(confirm('Log out of Trade Journal?'))doLogout();};
 
 // ---------- settings ----------
 let settingsTab='account';
