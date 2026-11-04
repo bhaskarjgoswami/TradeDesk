@@ -115,7 +115,9 @@ class Connection:
         # code commits mid-block and keeps going, so re-apply after every commit.
         with self._conn.cursor() as cur:
             cur.execute("SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname=%s)", (self._schema,))
-            if not cur.fetchone()[0]:
+            row = cur.fetchone()
+            exists = next(iter(row.values())) if isinstance(row, dict) else row[0]
+            if not exists:
                 raise MissingJournalSchema("Journal namespace is unavailable")
             # The name is strictly validated in __init__. pg_catalog remains
             # implicitly available; shared application tables are never searched.

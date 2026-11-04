@@ -26,7 +26,7 @@ def database(monkeypatch):
     target = urlparse(DSN)
     if target.hostname not in ("localhost", "127.0.0.1") or target.path != "/tradedesk_test":
         pytest.fail("Isolation tests only run on a disposable localhost/tradedesk_test database")
-    pool = ThreadedConnectionPool(1, 8, DSN)
+    pool = ThreadedConnectionPool(1, 8, DSN, cursor_factory=RealDictCursor)
     @contextlib.contextmanager
     def public_connect(**kwargs):
         conn = pool.getconn()
@@ -87,7 +87,7 @@ def test_two_journals_never_read_or_delete_each_others_trades(database):
     with public_connect() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT title FROM public.trades")
-            assert cur.fetchall() == [("legacy-private-record",)]
+            assert cur.fetchall() == [{"title":"legacy-private-record"}]
 
 
 def test_missing_cached_schema_cannot_fall_back_to_shared_trades(database):
@@ -101,7 +101,7 @@ def test_missing_cached_schema_cannot_fall_back_to_shared_trades(database):
     with public_connect() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT title FROM public.trades")
-            assert cur.fetchall() == [("legacy-private-record",)]
+            assert cur.fetchall() == [{"title":"legacy-private-record"}]
 
 
 def test_deleted_profile_revokes_an_otherwise_valid_token(database, monkeypatch):
