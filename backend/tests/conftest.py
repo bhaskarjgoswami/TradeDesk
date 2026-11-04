@@ -8,6 +8,9 @@ os.environ.setdefault("SUPABASE_SERVICE_ROLE_KEY", "service")
 os.environ.setdefault("SUPABASE_JWT_SECRET", "test-jwt-secret-at-least-thirty-two-characters")
 os.environ.setdefault("DATABASE_URL", "postgresql://u:p@localhost:1/db")
 os.environ.setdefault("EXCHANGE_ENC_KEY", "x" * 43 + "=")
+# Never let unit tests load real payment keys from the ignored local .env.
+for name in ("RAZORPAY_KEY_ID","RAZORPAY_KEY_SECRET","RAZORPAY_WEBHOOK_SECRET"):
+    os.environ.setdefault(name, "")
 
 
 import pytest

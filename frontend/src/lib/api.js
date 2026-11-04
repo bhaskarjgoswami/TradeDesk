@@ -24,8 +24,11 @@ async function request(method, path, body) {
     catch { throw new Error("Can't reach the server right now. Please try again in a moment."); }
   }
   if (res.status === 401) {
-    await supabase.auth.signOut().catch(() => {});
-    throw Object.assign(new Error("Your session expired. Please sign in again."), { status: 401 });
+    const error = await res.clone().json().catch(() => ({}));
+    if (error.detail?.code !== "razorpay_auth_failed") {
+      await supabase.auth.signOut().catch(() => {});
+      throw Object.assign(new Error("Your session expired. Please sign in again."), { status: 401 });
+    }
   }
   if (!res.ok) {
     let detail = `HTTP ${res.status}`;
@@ -34,6 +37,7 @@ async function request(method, path, body) {
       const d = j.detail ?? j.message ?? j.error;
       if (typeof d === "string") detail = d;
       else if (Array.isArray(d)) detail = d.map((x) => x?.msg || (typeof x === "string" ? x : JSON.stringify(x))).join("; ");
+      else if (typeof d?.message === "string") detail = d.message;
       else if (d) detail = JSON.stringify(d);
     } catch {}
     const err = new Error(detail);

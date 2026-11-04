@@ -70,6 +70,7 @@ export default function PlanCards() {
     setBusy(true);
     setMsg("Starting secure checkout…");
     try {
+      let verificationStarted = false;
       const ok = await loadRazorpay();
       if (!ok) throw new Error("Couldn't load Razorpay. Check your connection and retry.");
       const order = await api.checkout(cycle, currency);
@@ -83,6 +84,7 @@ export default function PlanCards() {
         prefill: { email: order.email },
         theme: { color: "#6366f1" },
         handler: async (resp) => {
+          verificationStarted = true;
           setMsg("Verifying payment…");
           try {
             await api.verifyPayment({
@@ -97,7 +99,7 @@ export default function PlanCards() {
           }
           setBusy(false);
         },
-        modal: { ondismiss: () => { setBusy(false); setMsg(""); } },
+        modal: { ondismiss: () => { if (!verificationStarted) { setBusy(false); setMsg((current) => current.startsWith("Payment failed:") ? current : "Checkout closed."); } } },
       });
       rzp.on("payment.failed", (r) => {
         setMsg("Payment failed: " + (r.error?.description || "please try again"));
@@ -112,8 +114,9 @@ export default function PlanCards() {
 
   return (
     <>
+      {catalog?.mode === "test" && <p className="ex-note" role="status">Test Mode — checkout uses simulated payments. No real money is collected.</p>}
       {catalogError && <p role="alert">Couldn’t load current checkout availability. <button className="btn" onClick={loadPlans}>Try again</button></p>}
-      {catalog && !checkoutAvailable && <p role="status">Payments are being set up. You can continue using your Free journal.</p>}
+      {catalog && !checkoutAvailable && <p role="status">Payments are being set up. Your journal remains available.</p>}
       {session && tierStatus === "loading" && <p role="status">Loading your membership…</p>}
       {session && tierStatus === "error" && <p role="alert">We couldn’t load your membership. <button className="btn" onClick={() => refreshTier().catch(() => {})}>Try again</button></p>}
       {msg && <div className="ex-note" role="status" aria-live="polite" style={{ marginBottom: 14 }}>{msg}</div>}
