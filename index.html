@@ -692,14 +692,49 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
             </div>
           </div>
           <div class="set-sec settings-panel" data-settings-panel="integrations" role="tabpanel" hidden>
-            <div class="set-label">Exchange</div>
-            <div class="set-row" style="margin-bottom:6px"><span>Choose your exchange</span>
+            <div class="set-label">Brokers &amp; exchanges</div>
+            <div class="set-row" style="margin-bottom:6px"><label for="exSelect">Choose your broker or exchange</label>
               <select id="exSelect" class="set-select">
-                <option value="delta">Delta Exchange (India)</option>
-                <option value="binance">Binance</option>
-                <option value="bybit">Bybit</option>
-                <option value="coinbase">Coinbase</option>
-                <option value="other">Other</option>
+                <optgroup label="Indian brokers">
+                  <option value="zerodha">Zerodha</option>
+                  <option value="upstox">Upstox</option>
+                  <option value="angel_one">Angel One</option>
+                  <option value="groww">Groww</option>
+                  <option value="dhan">Dhan</option>
+                  <option value="5paisa">5paisa</option>
+                  <option value="icici_direct">ICICI Direct</option>
+                  <option value="hdfc_securities">HDFC Securities</option>
+                  <option value="kotak_neo">Kotak Neo</option>
+                  <option value="motilal_oswal">Motilal Oswal</option>
+                </optgroup>
+                <optgroup label="Forex brokers">
+                  <option value="ic_markets">IC Markets</option>
+                  <option value="pepperstone">Pepperstone</option>
+                  <option value="oanda">OANDA</option>
+                  <option value="fxcm">FXCM</option>
+                  <option value="ig">IG</option>
+                  <option value="exness">Exness</option>
+                  <option value="xm">XM</option>
+                  <option value="fxtm">FXTM</option>
+                  <option value="eightcap">Eightcap</option>
+                  <option value="avatrade">AvaTrade</option>
+                </optgroup>
+                <optgroup label="Crypto exchanges">
+                  <option value="delta" selected>Delta Exchange (India)</option>
+                  <option value="binance">Binance</option>
+                  <option value="bybit">Bybit</option>
+                  <option value="coinbase">Coinbase</option>
+                  <option value="okx">OKX</option>
+                  <option value="kraken">Kraken</option>
+                  <option value="kucoin">KuCoin</option>
+                  <option value="bitget">Bitget</option>
+                  <option value="mexc">MEXC</option>
+                  <option value="gate">Gate</option>
+                  <option value="crypto_com">Crypto.com</option>
+                  <option value="coindcx">CoinDCX</option>
+                  <option value="coinswitch">CoinSwitch</option>
+                </optgroup>
+                <option value="other">Other broker / exchange</option>
               </select>
             </div>
             <div class="ex-creds">
@@ -712,8 +747,9 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
                   <button class="btn" id="exSave">Save</button>
                 </div>
               </div>
-              <div class="ex-note" id="exNote"></div><div class="ex-note">Trading with another broker? Map and import its trade-history CSV. <button type="button" class="btn ghost" data-ws-action="import">Import broker CSV</button></div>
             </div>
+            <div class="ex-note" id="exNote" role="status"></div>
+            <div class="ex-note">Map and import your broker’s trade-history CSV. <button type="button" class="btn ghost" data-ws-action="import">Import broker CSV</button></div>
           </div>
           <div class="set-sec settings-panel" data-settings-panel="data" role="tabpanel" hidden>
             <div class="set-label">Data</div>
@@ -962,15 +998,19 @@ $('#setDeltaTest').onclick=async()=>{$('#setDelta').textContent='Testing…';
 // ---------- exchange chooser ----------
 const EX_PULL={delta:true};
 function exchangeNote(){
-  const ex=$('#exSelect').value;
-  $('#exNote').innerHTML=EX_PULL[ex]
-    ?'⚡ Auto-pull of fills is supported for this exchange. Use a <b>read-only</b> API key.'
-    :'Credentials are saved, but automatic trade pulling isn’t available for this exchange yet — log trades manually.';
+  const ex=$('#exSelect').value,direct=!!EX_PULL[ex];
+  $('.ex-creds').hidden=!direct;
+  $('#exNote').innerHTML=direct
+    ?'Auto-pull is available for Delta. Use a <b>read-only</b> API key.'
+    :'Import trades using a CSV file or add them manually. Direct API sync is not available for this broker.';
 }
 async function renderExchange(){
   try{
     const r=await(await fetch('/api/exchange')).json();
-    $('#exSelect').value=r.exchange||'delta';
+    let chosen=r.exchange||'delta';
+    try{chosen=localStorage.getItem('tj_selected_broker')||chosen;}catch{}
+    $('#exSelect').value=chosen;
+    if(!$('#exSelect').value)$('#exSelect').value='other';
     $('#exKey').value='';$('#exSecret').value='';
     $('#exKey').placeholder=r.has_creds?('Saved · '+r.key_masked):'Enter API key';
     $('#exSecret').placeholder=r.has_creds?'•••••••• (saved)':'Enter API secret';
@@ -978,9 +1018,14 @@ async function renderExchange(){
   }catch{}
   exchangeNote();
 }
-$('#exSelect').onchange=exchangeNote;
+$('#exSelect').onchange=()=>{
+  $('#exKey').value='';$('#exSecret').value='';
+  try{localStorage.setItem('tj_selected_broker',$('#exSelect').value);}catch{}
+  exchangeNote();
+};
 $('#exSave').onclick=async()=>{
   const exchange=$('#exSelect').value,key=$('#exKey').value.trim(),secret=$('#exSecret').value.trim();
+  if(!EX_PULL[exchange]){toast('Use CSV import for this broker');return;}
   if(!key||!secret){toast('Enter both API key and secret');return;}
   await fetch('/api/exchange',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({exchange,key,secret})});
   toast('Credentials saved ✓');renderExchange();
