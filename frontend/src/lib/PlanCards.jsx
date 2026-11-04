@@ -136,13 +136,14 @@ export default function PlanCards() {
           <article className={"plan-card" + (session && membershipReady && !isPro ? " current" : "")}>
             <div className="pc-top">
               <h2 className="pc-name">{FREE.name}</h2>
+              {session && membershipReady && !isPro && <span className="pc-current-plan">Current plan</span>}
             </div>
             <div className="pc-divider" />
             <div className="pc-body">
               <ul className="pc-feats">{FREE.features.map((f) => <li key={f}><span className="pc-check" aria-hidden="true">{Icon.check}</span>{f}</li>)}</ul>
             </div>
             <div className="pc-bottom">
-              <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{currency === "INR" ? "₹0" : "$0"}</span><span className="pc-unit">/ month</span></div><button className="pc-btn" disabled>{session && membershipReady && !isPro ? "Current plan" : "Free plan"}</button></div>
+              <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{currency === "INR" ? "₹0" : "$0"}</span><span className="pc-unit">/ month</span></div>{!(session && membershipReady && !isPro) && <button className="pc-btn" disabled>Free plan</button>}</div>
             </div>
           </article>
         </div>
@@ -150,6 +151,7 @@ export default function PlanCards() {
           <article className={"plan-card featured" + (isPro ? " current" : "")}>
             <div className="pc-top">
               <h2 className="pc-name">Pro</h2>
+              {session && membershipReady && isPro && <span className="pc-current-plan">Current plan</span>}
             </div>
             <div className="pc-divider" />
             <div className="pc-body">
@@ -157,7 +159,7 @@ export default function PlanCards() {
             </div>
             <div className="pc-bottom">
               <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{price.amt}</span><span className="pc-unit">/ {cycle === "monthly" ? "month" : "year"}</span></div>
-                {!session ? <a className="pc-btn primary" href="/app?signup=1">Get Pro <span aria-hidden="true">→</span></a> : <button className="pc-btn primary" onClick={upgrade} disabled={isPro || busy || !membershipReady || !checkoutAvailable}>{busy ? "Opening checkout…" : <>{isPro ? "Current plan" : !checkoutAvailable ? "Checkout unavailable" : "Get Pro"} <span aria-hidden="true">→</span></>}</button>}
+                {!session ? <a className="pc-btn primary" href="/app?signup=1">Get Pro <span aria-hidden="true">→</span></a> : !isPro && <button className="pc-btn primary" onClick={upgrade} disabled={isPro || busy || !membershipReady || !checkoutAvailable}>{busy ? "Opening checkout…" : <>{!checkoutAvailable ? "Checkout unavailable" : "Get Pro"} <span aria-hidden="true">→</span></>}</button>}
               </div>
             </div>
           </article>

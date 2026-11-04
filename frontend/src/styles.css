@@ -603,3 +603,8 @@ table.grp .num{text-align:right;font-variant-numeric:tabular-nums}
 /* Keep the plan cards aligned. */
 .plan-option{display:flex;flex-direction:column;min-width:0}
 .plan-option>.plan-card{flex:1}
+
+.plan-card .pc-top{flex-direction:row;align-items:center;justify-content:space-between;gap:12px}
+.pc-current-plan{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;min-height:35px;padding:0 18px;border-radius:999px;background:#dce0d6;color:#68715f;font-size:11px;font-weight:500;white-space:nowrap}
+.featured .pc-current-plan{background:#272a24;color:#aab29f}
+ .plan-card .pc-name{display:flex;align-items:center;min-height:35px}
