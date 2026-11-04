@@ -1,6 +1,6 @@
 # TradeDesk
 
-TradeDesk is a web trade journal with a shared desktop/web interface, Supabase cloud accounts, Delta Exchange imports, and Razorpay period purchases. Native mobile apps are planned; `mobile/` is a placeholder.
+TradeDesk is a web trade journal with a shared desktop/web interface, Supabase cloud accounts, broker CSV imports, an optional Delta Exchange connector, and Razorpay period purchases. Native mobile apps are planned; `mobile/` is a placeholder.
 
 ## Structure
 
@@ -29,8 +29,8 @@ tradedesk/
 
 | Plan | Price | Limits |
 |---|---|---|
-| Free | $0 | 2 trades/day, Delta sync, screenshot uploads |
-| Pro | ₹99/month or ₹699/year (India) · $9/month or $90/year (intl) | Unlimited trades |
+| Free | $0 / ₹0 | 2 trade entries/day, broker CSV imports, screenshots |
+| Pro | USD $9/month or $90/year · INR ₹99/month or ₹699/year | Unlimited trades |
 
 ## Local dev (backend)
 
@@ -80,10 +80,18 @@ The existing FastAPI integration uses authenticated endpoints `POST /api/subscri
 
 Install `backend/requirements.txt`, then configure `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in the ignored `backend/.env` for local use and in Render Environment for hosting. Never add the secret to a `VITE_` variable. The server returns only the public Key ID with the order.
 
-Checkout accepts `{plan: "monthly" | "annual", currency: "INR" | "USD", amount?: integer, receipt?: string}`. The server determines the price: India is ₹99 monthly / ₹699 annually. If an amount is supplied, it must be at least 100 minor units and exactly match the selected server price; receipts contain 1–40 characters and are generated when omitted. Orders are stored in the existing billing ledger.
+Checkout accepts `{plan: "monthly" | "annual", currency: "INR" | "USD", amount?: integer, receipt?: string}`. The server determines the price: INR ₹99 monthly / ₹699 annually, or USD $9 monthly / $90 annually. If an amount is supplied, it must be at least 100 minor units and exactly match the selected server price; receipts contain 1–40 characters and are generated when omitted. Orders are stored in the existing billing ledger.
 
 Verification accepts `razorpay_order_id`, `razorpay_payment_id`, and `razorpay_signature`. HMAC verification is followed by server-side ownership, amount, currency and captured-payment checks before Pro is granted. Invalid or missing signatures return 400. Provider authentication failures return 401 with a provider-specific error code; other provider errors return 500. Existing unique payment/order records prevent replay.
 
 To test locally, start the backend with `uvicorn app.main:app --reload --port 8787`, configure the frontend public Supabase/API settings for the same environment, run `npm run dev` in `frontend`, sign in, open `/billing`, select a period, and click Get Pro. With test keys, a Test Mode notice appears. Use Razorpay's documented test-payment flow; confirm Pro only activates after verification. Also dismiss checkout and test a failed payment. No real money is collected in Test Mode.
 
 Test Mode works through the signed browser callback without a webhook. Before live checkout is enabled, configure `RAZORPAY_WEBHOOK_SECRET` and an `order.paid` webhook at `https://tradedesk-nopw.onrender.com/api/subscription/webhook`, enable automatic capture in Razorpay, complete merchant activation, and replace the test credentials with Live credentials. Live checkout remains disabled until its webhook secret is configured. Access periods are one-time purchases, without automatic renewal.
+
+## Global journal and broker imports
+
+TradeDesk is a journal for traders worldwide. Billing and new journal currency selections offer USD and INR. India-timezone visitors initially see INR, other visitors see USD, and billing currency can be switched and is remembered on the device. Annual is the initial purchase period. Active Pro members see a disabled Current plan action; the Free action is disabled.
+
+Use Settings → Data → Import broker CSV for exports from other brokers. Map the broker's columns, explicitly choose the date and decimal format, review position direction, select gross/net P&L and fee conventions, then review the preview before importing. Comma, semicolon and tab separators are supported. Buy/Sell direction conversion is opt-in. Net P&L is normalized to gross with fees recorded separately, preserving the original net result. Broker labels are saved in tags. Files must contain trade/position records; individual fills need to be combined first. Imports retain existing validation, duplicate detection and Free daily quotas.
+
+New journals can choose their base currency before recording trades. Existing trade amounts are never relabeled by changing base currency; display currency converts for viewing. Older saved currencies remain readable. Delta is the optional direct API connector currently implemented; other brokers use the CSV mapping flow or manual entry. International card acceptance requires the merchant's payment-provider international-payments activation before going live.

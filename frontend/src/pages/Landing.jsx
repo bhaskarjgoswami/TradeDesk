@@ -4,7 +4,7 @@ import { Icon } from "../lib/ui";
 
 const FEATURES = [
   { icon: "book", title: "Daily journal", text: "Every trading day on one page: trades, P&L, win rate and profit factor, with a pre-trade checklist you define." },
-  { icon: "bolt", title: "Delta Exchange import", text: "Pull the day's fills and rebuild them into round-trip trades with entry, exit, stop, fees and realized P&L." },
+  { icon: "bolt", title: "Bring any broker", text: "Map your broker’s CSV columns or log trades manually. Keep your trading history together across markets and accounts." },
   { icon: "chart", title: "Performance", text: "Equity curve, average R, best and worst trades, and a breakdown by setup so you can see where your edge actually is." },
   { icon: "card", title: "Screenshots", text: "Paste a chart straight into the trade. Stored privately and shown only to you." },
 ];
@@ -43,7 +43,7 @@ export default function Landing() {
       <main>
         <section className="pub-hero">
           <h1>Review every trade.<br />Sharpen your edge.</h1>
-          <p>A private trading journal for crypto and Indian traders. Log setups, screenshots and P&amp;L, import your Delta Exchange fills, and see what is really working.</p>
+          <p>A private trading journal for traders worldwide. Bring trades from any broker, review your setups and screenshots, and understand your performance.</p>
           <div className="pub-cta">
             <a href="/app?signup=1" className="btn">Start journaling free</a>
             <a href="#features" className="btn ghost">See features</a>
@@ -66,12 +66,12 @@ export default function Landing() {
             <div className="pub-card">
               <h3>Free</h3>
               <div className="pub-price">₹0 / $0</div>
-              <ul><li>2 trades per day</li><li>Daily journal and calendar</li><li>Performance stats</li><li>Delta import and screenshots</li></ul>
+              <ul><li>Up to 2 trades entry / day</li><li>Daily journal and calendar</li><li>Performance stats</li><li>Broker CSV imports and screenshots</li></ul>
             </div>
             <div className="pub-card featured">
               <h3>Pro</h3>
               <div className="pub-price">₹99/mo · $9/mo</div>
-              <ul><li>Unlimited trades entry per day</li><li>No daily cap on Delta imports</li><li>Annual: ₹699 / $90 (USD: 2 months free)</li><li>One-time payment, no auto-renew</li></ul>
+              <ul><li>Unlimited trades entry per day</li><li>No daily cap on trade imports</li><li>Annual: ₹699 / $90 (USD: 2 months free)</li><li>One-time payment, no auto-renew</li></ul>
             </div>
           </div>
         </section>

@@ -12,7 +12,7 @@ export default function Billing() {
           <div className="billing-toplinks"><a href="/contact">Need a hand?</a><a className="billing-back" href="/app"><span aria-hidden="true">←</span> Back to journal</a></div>
         </nav>
         <header className="billing-heading">
-          <div className="billing-hero-copy"><div className="billing-eyebrow"><span /> PLAN &amp; BILLING</div><h1>Choose your next level.</h1><p>Simple plans for a more considered trading process.</p></div>
+          <div className="billing-hero-copy"><div className="billing-eyebrow"><span /> PLAN &amp; BILLING</div><h1>Choose your next level.</h1><p>A trading journal for every market, wherever you trade.</p></div>
           {session && <aside className="billing-membership" aria-label="Current subscription">
             <div className="billing-membership-label">YOUR MEMBERSHIP <span className="billing-active">Current plan</span></div>
             <div className="billing-membership-plan"><span className="billing-member-icon">{isPro ? Icon.bolt : Icon.book}</span><div><strong>{tierStatus === "ready" ? `TradeDesk ${isPro ? "Pro" : "Free"}` : "Your membership"}</strong><span>{tierStatus !== "ready" ? (tierStatus === "error" ? "Membership temporarily unavailable" : "Loading membership…") : isPro && expiresAt ? `Active until ${new Date(expiresAt).toLocaleDateString()}` : isPro ? "Unlimited daily trades" : "A thoughtful place to start"}</span></div></div>

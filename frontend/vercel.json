@@ -50,7 +50,7 @@
       ]
     },
     {
-      "source": "/(workspace|calendar|trade|playbook|profile|meditation).js",
+      "source": "/(broker-import|workspace|calendar|trade|playbook|profile|meditation).js",
       "headers": [
         {
           "key": "Cache-Control",

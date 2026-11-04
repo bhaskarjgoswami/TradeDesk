@@ -712,7 +712,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
                   <button class="btn" id="exSave">Save</button>
                 </div>
               </div>
-              <div class="ex-note" id="exNote"></div>
+              <div class="ex-note" id="exNote"></div><div class="ex-note">Trading with another broker? Map and import its trade-history CSV. <button type="button" class="btn ghost" data-ws-action="import">Import broker CSV</button></div>
             </div>
           </div>
           <div class="set-sec settings-panel" data-settings-panel="data" role="tabpanel" hidden>
@@ -1572,6 +1572,7 @@ async function initJournal(){
   }catch{showLogin();}
 }
 </script>
+<script src="/broker-import.js"></script>
 <script src="/workspace.js"></script>
 <script src="/calendar.js"></script>
 <script src="/trade.js"></script>

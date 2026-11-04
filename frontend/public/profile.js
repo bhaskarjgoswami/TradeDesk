@@ -24,7 +24,7 @@ function renderProfileEditor(){const host=$('#profileEditor');if(!host)return;co
     ${f('First name','firstName',p.firstName,'autocomplete="given-name" maxlength="60"')}${f('Surname','lastName',p.lastName,'autocomplete="family-name" maxlength="60"')}
     ${f('Display name','displayName',p.displayName,'maxlength="60" placeholder="How your name appears in the app"')}
     <label class="tf-field">Email<input value="${esc(userEmail||'')}" disabled title="Your login email"></label>
-    ${f('Mobile number','mobile',p.mobile,'type="tel" autocomplete="tel" inputmode="tel" maxlength="24" placeholder="+91 98765 43210"')}
+    ${f('Mobile number','mobile',p.mobile,'type="tel" autocomplete="tel" inputmode="tel" maxlength="24" placeholder="Include your country code"')}
     ${sel('Country','country',pfCountries(),p.country,'Select country')}
     ${f('Zip / postal code','zip',p.zip,'autocomplete="postal-code" maxlength="12" placeholder="e.g. 560001"')}
     ${sel('Time zone','timezone',pfZones().map(z=>[z,z.replace(/_/g,' ')]),zone,'Select time zone')}

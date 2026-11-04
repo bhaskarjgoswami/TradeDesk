@@ -38,7 +38,7 @@ self.addEventListener("fetch", (e) => {
   }
 
   // journal UI scripts/styles are not content-hashed: network first, cache for offline
-  if (/^\/(workspace|calendar|trade|playbook|profile|meditation)\.js$|^\/(workspace|theme|theme-mercury)\.css$/.test(url.pathname)) {
+  if (/^\/(broker-import|workspace|calendar|trade|playbook|profile|meditation)\.js$|^\/(workspace|theme|theme-mercury)\.css$/.test(url.pathname)) {
     e.respondWith(
       fetch(req).then((res) => {
         if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }

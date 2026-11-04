@@ -18,6 +18,8 @@ const PRICING = {
 // Default to ₹ for India, $ everywhere else — user can switch.
 function defaultCurrency() {
   try {
+    const saved = localStorage.getItem("tradedesk_billing_currency");
+    if (["USD", "INR"].includes(saved)) return saved;
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
     return tz === "Asia/Kolkata" || tz === "Asia/Calcutta" ? "INR" : "USD";
   } catch { return "USD"; }
@@ -25,15 +27,15 @@ function defaultCurrency() {
 
 const FREE = {
   name: "Free", tagline: "A clear foundation for your daily routine.", icon: "book",
-  features: ["Up to 2 trades entry / day", "Daily journal & calendar", "Performance stats", "Delta Exchange fill import", "Screenshot attachments"],
+  features: ["Up to 2 trades entry / day", "Daily journal & calendar", "Performance stats", "CSV imports from any broker", "Screenshot attachments"],
 };
 // Keep in sync with what the backend actually gates (trades.py FREE_DAILY_LIMIT).
 const PRO_FEATURES = [
   "Unlimited trades entry per day",
-  "No daily cap on Delta imports",
+  "No daily cap on trade imports",
   "Daily journal & calendar",
   "Performance stats",
-  "Delta Exchange fill import",
+  "CSV imports from any broker",
   "Screenshot attachments",
 ];
 
@@ -50,7 +52,7 @@ function loadRazorpay() {
 
 export default function PlanCards() {
   const { session, tier, tierStatus, refreshTier, expiresAt } = useAuth();
-  const [currency] = useState(defaultCurrency()); // 'INR' for India tz, else 'USD' — auto-detected
+  const [currency, setCurrency] = useState(defaultCurrency());
   const [cycle, setCycle] = useState("annual"); // 'monthly' | 'annual'
   const [catalog, setCatalog] = useState(null);
   const [catalogError, setCatalogError] = useState(false);
@@ -65,7 +67,7 @@ export default function PlanCards() {
   const membershipReady = !session || tierStatus === "ready";
 
   async function upgrade() {
-    if (!session || !membershipReady || !checkoutAvailable) return;
+    if (!session || isPro || !membershipReady || !checkoutAvailable) return;
     setBusy(true);
     setMsg("Starting secure checkout…");
     try {
@@ -120,13 +122,14 @@ export default function PlanCards() {
       {session && tierStatus === "error" && <p role="alert">We couldn’t load your membership. <button className="btn" onClick={() => refreshTier().catch(() => {})}>Try again</button></p>}
       {msg && <div className="ex-note" role="status" aria-live="polite" style={{ marginBottom: 14 }}>{msg}</div>}
 
-      <div className="bill-bar"><span className="bill-period-label">Choose your billing period</span>
+      <div className="bill-bar"><div className="bill-controls"><span className="bill-period-label">Billing period</span>
           <div className="bill-seg" role="group" aria-label="Billing period">
             <button className={cycle === "monthly" ? "on" : ""} aria-pressed={cycle === "monthly"} disabled={busy} onClick={() => setCycle("monthly")}>Monthly</button>
             <button className={cycle === "annual" ? "on" : ""} aria-pressed={cycle === "annual"} disabled={busy} onClick={() => setCycle("annual")}>
               Annual <span className="bill-save">{currency === "INR" ? "SAVE 41%" : "SAVE 16%"}</span>
             </button>
-          </div>
+          </div></div>
+          <div className="bill-controls"><span className="bill-period-label">Currency</span><div className="bill-seg" role="group" aria-label="Billing currency">{["USD", "INR"].map(code => <button key={code} type="button" className={currency === code ? "on" : ""} aria-pressed={currency === code} disabled={busy} onClick={() => { setCurrency(code); try { localStorage.setItem("tradedesk_billing_currency",code); } catch {} }}>{code === "USD" ? "$ USD" : "₹ INR"}</button>)}</div></div>
       </div>
 
       <div className="plan-grid">
@@ -159,7 +162,7 @@ export default function PlanCards() {
           </div>
           <div className="pc-bottom">
             <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{price.amt}</span><span className="pc-unit">/ {cycle === "monthly" ? "month" : "year"}</span></div>
-              {!session ? <a className="pc-btn primary" href="/app?signup=1">Get Pro <span aria-hidden="true">→</span></a> : <button className="pc-btn primary" onClick={upgrade} disabled={busy || !membershipReady || !checkoutAvailable}>{busy ? "Opening checkout…" : <>{!checkoutAvailable ? "Checkout unavailable" : isPro ? "Renew Pro" : "Get Pro"} <span aria-hidden="true">→</span></>}</button>}
+              {!session ? <a className="pc-btn primary" href="/app?signup=1">Get Pro <span aria-hidden="true">→</span></a> : <button className="pc-btn primary" onClick={upgrade} disabled={isPro || busy || !membershipReady || !checkoutAvailable}>{busy ? "Opening checkout…" : <>{isPro ? "Current plan" : !checkoutAvailable ? "Checkout unavailable" : "Get Pro"} <span aria-hidden="true">→</span></>}</button>}
             </div>
             <div className="pc-note">{isPro && expiresAt ? `Active until ${new Date(expiresAt).toLocaleDateString()}` : "One-time payment · no auto-renew"}</div>
           </div>
