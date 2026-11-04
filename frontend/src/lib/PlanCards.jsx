@@ -25,7 +25,7 @@ function defaultCurrency() {
 
 const FREE = {
   name: "Free", tagline: "A clear foundation for your daily routine.", icon: "book",
-  features: ["Up to 2 trades / day", "Daily journal & calendar", "Performance stats", "Delta Exchange fill import", "Screenshot attachments"],
+  features: ["Up to 2 trades entry / day", "Daily journal & calendar", "Performance stats", "Delta Exchange fill import", "Screenshot attachments"],
 };
 // Keep in sync with what the backend actually gates (trades.py FREE_DAILY_LIMIT).
 const PRO_FEATURES = [
