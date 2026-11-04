@@ -12,7 +12,7 @@ export default function Billing() {
         <header className="billing-heading">
           <h1>Plans &amp; billing</h1>
         </header>
-        <section className="billing-plans" aria-label="Available plans"><PlanCards showMembership /></section>
+        <section className="billing-plans" aria-label="Available plans"><PlanCards /></section>
         <footer className="billing-footer">
           <span>One-time payment · no auto-renew</span>
           <div><a href="/terms">Terms</a><a href="/refunds">Refunds</a><a href="/contact">Support</a></div>

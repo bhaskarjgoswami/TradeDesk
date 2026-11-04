@@ -50,8 +50,8 @@ function loadRazorpay() {
   });
 }
 
-export default function PlanCards({ showMembership = false }) {
-  const { session, tier, tierStatus, expiresAt, refreshTier } = useAuth();
+export default function PlanCards() {
+  const { session, tier, tierStatus, refreshTier } = useAuth();
   const [currency, setCurrency] = useState(defaultCurrency());
   const [cycle, setCycle] = useState("annual"); // 'monthly' | 'annual'
   const [catalog, setCatalog] = useState(null);
@@ -65,16 +65,6 @@ export default function PlanCards({ showMembership = false }) {
   const loadPlans = () => { setCatalogError(false); api.plans().then(setCatalog).catch(()=>setCatalogError(true)); };
   useEffect(loadPlans, []);
   const membershipReady = !session || tierStatus === "ready";
-
-  function membershipLabel(pro) {
-    if (!showMembership || !session) return null;
-    return <div className="pc-membership-slot">
-      {tierStatus === "ready" && isPro === pro && <aside className="billing-membership" aria-label="Current subscription">
-        <span>Current plan</span><strong>{pro ? "Pro" : "Free"}</strong>
-        {pro && expiresAt && <span className="billing-expiry">Until {new Date(expiresAt).toLocaleDateString()}</span>}
-      </aside>}
-    </div>;
-  }
 
   async function upgrade() {
     if (!session || isPro || !membershipReady || !checkoutAvailable) return;
@@ -155,7 +145,6 @@ export default function PlanCards({ showMembership = false }) {
               <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{currency === "INR" ? "₹0" : "$0"}</span><span className="pc-unit">/ month</span></div><button className="pc-btn" disabled>{session && membershipReady && !isPro ? "Current plan" : "Free plan"}</button></div>
             </div>
           </article>
-          {membershipLabel(false)}
         </div>
         <div className="plan-option">
           <article className={"plan-card featured" + (isPro ? " current" : "")}>
@@ -172,7 +161,6 @@ export default function PlanCards({ showMembership = false }) {
               </div>
             </div>
           </article>
-          {membershipLabel(true)}
         </div>
       </div>
     </>
