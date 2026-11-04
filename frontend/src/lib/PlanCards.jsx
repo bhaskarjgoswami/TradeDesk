@@ -49,9 +49,9 @@ function loadRazorpay() {
 }
 
 export default function PlanCards() {
-  const { session, tier, tierStatus, plan, refreshTier, expiresAt } = useAuth();
+  const { session, tier, tierStatus, refreshTier, expiresAt } = useAuth();
   const [currency] = useState(defaultCurrency()); // 'INR' for India tz, else 'USD' — auto-detected
-  const [cycle, setCycle] = useState(plan || "monthly"); // 'monthly' | 'annual'
+  const [cycle, setCycle] = useState("annual"); // 'monthly' | 'annual'
   const [catalog, setCatalog] = useState(null);
   const [catalogError, setCatalogError] = useState(false);
   const [msg, setMsg] = useState("");
@@ -63,7 +63,6 @@ export default function PlanCards() {
   const loadPlans = () => { setCatalogError(false); api.plans().then(setCatalog).catch(()=>setCatalogError(true)); };
   useEffect(loadPlans, []);
   const membershipReady = !session || tierStatus === "ready";
-  useEffect(() => { if (plan) setCycle(plan); }, [plan]);
 
   async function upgrade() {
     if (!session || !membershipReady || !checkoutAvailable) return;
