@@ -189,7 +189,7 @@ def test_portable_backup_restores_records_and_private_screenshots(database, monk
         def delete(self,url): return httpx.Response(200)
     monkeypatch.setattr(portable.httpx,"Client",Storage)
     with router.scoped({"user_id":UIDS[0]}):
-        core.create_trade({"date":"2026-11-04","symbol":"BTCUSD","direction":"Long","images":json.dumps(["/images/setup.png"])})
+        core.create_trade({"date":"2026-11-04","symbol":"BTCUSD","direction":"Long","images":json.dumps(["images/setup.png","/images/setup.png"])})
         archive=portable.backup(pgcompat.db,UIDS[0])
         with zipfile.ZipFile(io.BytesIO(archive)) as z:
             assert z.read("images/setup.png")==b"screenshot-bytes"
@@ -202,7 +202,7 @@ def test_portable_backup_restores_records_and_private_screenshots(database, monk
         assert uploaded[0][0].split("/")[-2]==UIDS[0]
         assert uploaded[0][1]==b"screenshot-bytes"
         with pgcompat.db() as conn: restored=conn.execute("SELECT images FROM trades").fetchone()["images"]
-        assert "/images/setup.png" not in restored
+        assert "images/setup.png" not in restored
         core.create_trade({"date":"2026-11-05","symbol":"ETHUSD","direction":"Short"})
 
 

@@ -13,7 +13,7 @@ from . import core
 TABLES = ("workspace_items", "trades", "day_logs", "journal_settings", "routine_progress")
 MAX_BYTES = 50 * 1024 * 1024
 HEADERS = {"Authorization": "Bearer " + SUPABASE_SERVICE_ROLE_KEY, "apikey": SUPABASE_SERVICE_ROLE_KEY}
-IMAGE = re.compile(r"/images/([a-zA-Z0-9_.-]+)")
+IMAGE = re.compile(r"(?<![\w/])(/?images/)([a-zA-Z0-9_.-]+)")
 
 
 def snapshot(connect):
@@ -33,7 +33,7 @@ def _image_url(uid, name):
 def backup(connect, uid):
     data = snapshot(connect)
     encoded = json.dumps(data, ensure_ascii=False).encode()
-    names = sorted(set(IMAGE.findall(encoded.decode())))
+    names = sorted({match.group(2) for match in IMAGE.finditer(encoded.decode())})
     if len(names) > 1000 or len(encoded) > MAX_BYTES:
         raise ValueError("Backup exceeds the 50 MB download limit")
     result = io.BytesIO()
@@ -84,6 +84,7 @@ def restore(connect, uid, encoded):
                 if any(conn.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone() for table in ("trades","day_logs","workspace_items")):
                     raise ValueError("Restore is available only in an empty journal. Existing records will never be overwritten.")
                 text = json.dumps(data)
+                renamed = {}
                 for name in names:
                     new_name = uuid.uuid4().hex + "." + name.rsplit(".",1)[-1]
                     content = archive.read("images/" + name)
@@ -93,8 +94,8 @@ def restore(connect, uid, encoded):
                     response = client.post(_image_url(uid,new_name),content=content,headers={"Content-Type":media})
                     if response.status_code not in (200,201): raise ValueError("Screenshot restore failed")
                     uploaded.append(new_name)
-                    text = text.replace("/images/"+name, "/images/"+new_name)
-                data = json.loads(text)
+                    renamed[name] = new_name
+                data = json.loads(IMAGE.sub(lambda match: match.group(1)+renamed.get(match.group(2),match.group(2)),text))
                 for table in TABLES:
                     columns = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
                     if table in ("journal_settings","routine_progress"): conn.execute(f"DELETE FROM {table}")
