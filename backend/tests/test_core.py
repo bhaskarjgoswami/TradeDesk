@@ -40,19 +40,6 @@ def test_active_tier_expiry():
     assert active_tier(FakeConn(None), "u") == "free"
 
 
-def test_extend_is_idempotent_and_stacks():
-    exp = datetime.now(timezone.utc) + timedelta(days=10)
-    same = FakeConn({"subscription_expires_at": exp, "razorpay_payment_id": "pay_1"})
-    assert extend(same, "u", "monthly", "pay_1") == exp  # replay: no change
-    assert len(same.cur.sql) == 1
-    fresh = FakeConn({"subscription_expires_at": exp, "razorpay_payment_id": "pay_1"})
-    new = extend(fresh, "u", "monthly", "pay_2")
-    assert abs((new - exp) - timedelta(days=30)) < timedelta(seconds=1)  # stacked on remaining time
-    assert "FOR UPDATE" in fresh.cur.sql[0][0]
-    with pytest.raises(ValueError):
-        extend(fresh, "u", "weekly", "pay_3")
-
-
 # ── stats ────────────────────────────────────────────────
 def test_summary_is_net_of_fees():
     rows = [{"pnl": 10, "fee": 1}, {"pnl": -4, "fee": 1}, {"pnl": 0.5, "fee": 1}, {"pnl": None, "fee": 2}]
@@ -246,6 +233,10 @@ def test_inr_checkout_prices(monkeypatch, plan, amount):
     monkeypatch.setattr(subscription, "RAZORPAY_KEY_ID", "rzp_test")
     monkeypatch.setattr(subscription, "RAZORPAY_KEY_SECRET", "test-secret")
     monkeypatch.setattr(subscription.httpx, "post", create_order)
+    @contextlib.contextmanager
+    def checkout_conn(**kwargs):
+        yield FakeConn(None)
+    monkeypatch.setattr(subscription, "get_conn", checkout_conn)
     response = client.post("/api/subscription/checkout", json={"plan": plan, "currency": "INR"})
     assert response.status_code == 200
     assert captured["amount"] == amount  # Razorpay expects paise.

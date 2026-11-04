@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useRef } from "react";
 import { supabase } from "./supabase";
 import { api } from "./api";
 import { setCurrency } from "./calc";
@@ -22,11 +22,14 @@ const AuthCtx = createContext(null);
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [tier, setTier] = useState("free");
+  const [tier, setTier] = useState(null);
+  const [tierStatus, setTierStatus] = useState("loading");
+  const requestVersion = useRef(0);
   const [sub, setSub] = useState({ plan: null, expiresAt: null });
 
   const applyStatus = (s) => {
     setTier(s.tier);
+    setTierStatus("ready");
     setSub({ plan: s.plan || null, expiresAt: s.expires_at || null });
   };
 
@@ -41,14 +44,29 @@ export function AuthProvider({ children }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  async function refreshTier() {
+    const version = ++requestVersion.current;
+    setTierStatus("loading");
+    try {
+      const status = await api.subStatus();
+      if (version === requestVersion.current) applyStatus(status);
+    } catch (error) {
+      if (version === requestVersion.current) setTierStatus("error");
+      throw error;
+    }
+  }
+
   useEffect(() => {
     if (session) {
-      api.subStatus().then(applyStatus).catch(() => {});
+      refreshTier().catch(() => {});
     } else {
-      setTier("free");
+      ++requestVersion.current;
+      setTier(null);
+      setTierStatus("signed-out");
       setSub({ plan: null, expiresAt: null });
     }
-  }, [session]);
+    return () => { ++requestVersion.current; };
+  }, [session?.user?.id]);
 
   // Memoised: consumers use prefs.* as effect dependencies.
   const prefs = useMemo(() => prefsFrom(session?.user), [session?.user]);
@@ -66,11 +84,12 @@ export function AuthProvider({ children }) {
     prefs,
     savePrefs,
     tier,
+    tierStatus,
     isPro: tier === "pro",
     plan: sub.plan,
     expiresAt: sub.expiresAt,
     loading,
-    refreshTier: () => api.subStatus().then(applyStatus).catch(() => {}),
+    refreshTier,
     signOut: () => supabase.auth.signOut(),
   };
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;

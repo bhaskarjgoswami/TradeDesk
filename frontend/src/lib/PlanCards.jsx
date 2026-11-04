@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "./api";
 import { useAuth } from "./AuthContext";
 import { Icon } from "./ui";
@@ -49,15 +49,18 @@ function loadRazorpay() {
 }
 
 export default function PlanCards() {
-  const { tier, refreshTier, expiresAt } = useAuth();
+  const { session, tier, tierStatus, plan, refreshTier, expiresAt } = useAuth();
   const [currency] = useState(defaultCurrency()); // 'INR' for India tz, else 'USD' — auto-detected
-  const [cycle, setCycle] = useState("monthly"); // 'monthly' | 'annual'
+  const [cycle, setCycle] = useState(plan || "monthly"); // 'monthly' | 'annual'
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const isPro = tier === "pro";
   const price = PRICING[currency][cycle];
+  const membershipReady = !session || tierStatus === "ready";
+  useEffect(() => { if (plan) setCycle(plan); }, [plan]);
 
   async function upgrade() {
+    if (!session || !membershipReady) return;
     setBusy(true);
     setMsg("Starting secure checkout…");
     try {
@@ -82,7 +85,7 @@ export default function PlanCards() {
               razorpay_signature: resp.razorpay_signature,
             });
             setMsg("🎉 Welcome to Pro!");
-            refreshTier();
+            await refreshTier();
           } catch (e) {
             setMsg("Payment received but verification failed — contact support if Pro isn't active. " + e.message);
           }
@@ -103,21 +106,21 @@ export default function PlanCards() {
 
   return (
     <>
+      {session && tierStatus === "loading" && <p role="status">Loading your membership…</p>}
+      {session && tierStatus === "error" && <p role="alert">We couldn’t load your membership. <button className="btn" onClick={() => refreshTier().catch(() => {})}>Try again</button></p>}
       {msg && <div className="ex-note" role="status" aria-live="polite" style={{ marginBottom: 14 }}>{msg}</div>}
 
-      {(
-        <div className="bill-bar"><span className="bill-period-label">Choose your billing period</span>
+      <div className="bill-bar"><span className="bill-period-label">Choose your billing period</span>
           <div className="bill-seg" role="group" aria-label="Billing period">
             <button className={cycle === "monthly" ? "on" : ""} aria-pressed={cycle === "monthly"} disabled={busy} onClick={() => setCycle("monthly")}>Monthly</button>
             <button className={cycle === "annual" ? "on" : ""} aria-pressed={cycle === "annual"} disabled={busy} onClick={() => setCycle("annual")}>
               Annual <span className="bill-save">{currency === "INR" ? "SAVE 41%" : "SAVE 16%"}</span>
             </button>
           </div>
-        </div>
-      )}
+      </div>
 
       <div className="plan-grid">
-        <article className={"plan-card" + (!isPro ? " current" : "")}>
+        <article className={"plan-card" + (session && membershipReady && !isPro ? " current" : "")}>
           <div className="pc-top">
             <span className="pc-plan-label">ESSENTIALS</span>
             <h2 className="pc-name">{FREE.name}</h2>
@@ -129,7 +132,7 @@ export default function PlanCards() {
             <ul className="pc-feats">{FREE.features.map((f) => <li key={f}><span className="pc-check" aria-hidden="true">{Icon.check}</span>{f}</li>)}</ul>
           </div>
           <div className="pc-bottom">
-            <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{currency === "INR" ? "₹0" : "$0"}</span><span className="pc-unit">/ month</span></div><button className="pc-btn" disabled>{!isPro ? "Current plan" : "Free plan"}</button></div>
+            <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{currency === "INR" ? "₹0" : "$0"}</span><span className="pc-unit">/ month</span></div><button className="pc-btn" disabled>{session && membershipReady && !isPro ? "Current plan" : "Free plan"}</button></div>
             <div className="pc-note">No payment needed</div>
           </div>
         </article>
@@ -146,7 +149,7 @@ export default function PlanCards() {
           </div>
           <div className="pc-bottom">
             <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{price.amt}</span><span className="pc-unit">/ {cycle === "monthly" ? "month" : "year"}</span></div>
-              {isPro ? <button className="pc-btn" disabled>Current plan</button> : <button className="pc-btn primary" onClick={upgrade} disabled={busy}>{busy ? "Opening checkout…" : <>Get Pro <span aria-hidden="true">→</span></>}</button>}
+              {!session ? <a className="pc-btn primary" href="/app?signup=1">Get Pro <span aria-hidden="true">→</span></a> : <button className="pc-btn primary" onClick={upgrade} disabled={busy || !membershipReady}>{busy ? "Opening checkout…" : <>{isPro ? "Renew Pro" : "Get Pro"} <span aria-hidden="true">→</span></>}</button>}
             </div>
             <div className="pc-note">{isPro && expiresAt ? `Active until ${new Date(expiresAt).toLocaleDateString()}` : "One-time payment · no auto-renew"}</div>
           </div>

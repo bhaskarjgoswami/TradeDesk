@@ -3,7 +3,7 @@ import PlanCards from "../lib/PlanCards";
 import { Icon } from "../lib/ui";
 
 export default function Billing() {
-  const { session, user, isPro, expiresAt } = useAuth();
+  const { session, user, isPro, expiresAt, tierStatus } = useAuth();
   return (
     <div className="billing-surface">
       <main className="billing-page">
@@ -15,11 +15,11 @@ export default function Billing() {
           <div className="billing-hero-copy"><div className="billing-eyebrow"><span /> PLAN &amp; BILLING</div><h1>Choose your next level.</h1><p>Simple plans for a more considered trading process.</p></div>
           {session && <aside className="billing-membership" aria-label="Current subscription">
             <div className="billing-membership-label">YOUR MEMBERSHIP <span className="billing-active">Current plan</span></div>
-            <div className="billing-membership-plan"><span className="billing-member-icon">{isPro ? Icon.bolt : Icon.book}</span><div><strong>TradeDesk {isPro ? "Pro" : "Free"}</strong><span>{isPro && expiresAt ? `Active until ${new Date(expiresAt).toLocaleDateString()}` : isPro ? "Unlimited daily trades" : "A thoughtful place to start"}</span></div></div>
+            <div className="billing-membership-plan"><span className="billing-member-icon">{isPro ? Icon.bolt : Icon.book}</span><div><strong>{tierStatus === "ready" ? `TradeDesk ${isPro ? "Pro" : "Free"}` : "Your membership"}</strong><span>{tierStatus !== "ready" ? (tierStatus === "error" ? "Membership temporarily unavailable" : "Loading membership…") : isPro && expiresAt ? `Active until ${new Date(expiresAt).toLocaleDateString()}` : isPro ? "Unlimited daily trades" : "A thoughtful place to start"}</span></div></div>
             <div className="billing-account">{user?.email}</div>
           </aside>}
         </header>
-        {session ? <section className="billing-plans" aria-label="Available plans"><PlanCards /></section> : <section className="billing-status"><div><strong>Your workspace is one sign-in away.</strong><p>Sign in to compare plans and manage your subscription.</p></div><a className="btn" href="/app">Sign in to TradeDesk <span aria-hidden="true">↗</span></a></section>}
+        <section className="billing-plans" aria-label="Available plans"><PlanCards /></section>
         <section className="billing-assurances" aria-label="Payment information">
           <div><span className="billing-assurance-icon">{Icon.card}</span><span><strong>Secure by design</strong><small>Checkout powered by Razorpay</small></span></div>
           <div><span className="billing-assurance-icon">{Icon.check}</span><span><strong>You stay in control</strong><small>One-time payment. No auto-renew.</small></span></div>

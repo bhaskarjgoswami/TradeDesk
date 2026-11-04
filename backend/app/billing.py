@@ -53,33 +53,40 @@ def _tier(row) -> str:
     return "pro" if exp > datetime.now(timezone.utc) else "free"
 
 
-def extend(conn, uid: str, plan: str, payment_id: str):
-    """
-    Grant/extend Pro for `plan`. Idempotent on `payment_id` so the checkout
-    verify call and the webhook can both fire without double-counting.
-    Returns the resulting expiry datetime.
-    """
+def extend(conn, uid: str, plan: str, payment_id: str, order_id: str):
+    """Grant a server-recorded paid order exactly once in the caller's transaction."""
     days = PLAN_DAYS.get(plan)
     if not days:
         raise ValueError(f"unknown plan: {plan}")
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT subscription_expires_at, razorpay_payment_id FROM user_profiles WHERE id=%s FOR UPDATE",
-            (uid,),
+            "SELECT subscription_expires_at FROM public.user_profiles WHERE id=%s FOR UPDATE", (uid,),
         )
         row = cur.fetchone()
-        if row and row["razorpay_payment_id"] == payment_id:
-            return _aware(row["subscription_expires_at"])  # already applied
-
-        now = datetime.now(timezone.utc)
-        base = now
-        cur_exp = _aware(row["subscription_expires_at"]) if row else None
-        if cur_exp and cur_exp > now:
-            base = cur_exp  # stack on remaining time if renewing early
-        new_exp = base + timedelta(days=days)
-
+        if not row:
+            raise ValueError("Account no longer exists")
+        cur.execute("SELECT user_id, plan FROM public.billing_orders WHERE id=%s", (order_id,))
+        order = cur.fetchone()
+        if not order or str(order["user_id"]) != uid or order["plan"] != plan:
+            raise ValueError("Unknown or mismatched order")
         cur.execute(
-            "UPDATE user_profiles SET subscription_tier='pro', subscription_plan=%s, "
+            "SELECT user_id, order_id, granted_until FROM public.billing_payments "
+            "WHERE payment_id=%s OR order_id=%s", (payment_id, order_id),
+        )
+        applied = cur.fetchone()
+        if applied:
+            if str(applied["user_id"]) != uid or applied["order_id"] != order_id:
+                raise ValueError("Payment already belongs to another order")
+            return _aware(row["subscription_expires_at"])
+        now = datetime.now(timezone.utc)
+        current = _aware(row["subscription_expires_at"])
+        new_exp = max(now, current) + timedelta(days=days) if current else now + timedelta(days=days)
+        cur.execute(
+            "INSERT INTO public.billing_payments(payment_id,order_id,user_id,granted_until) VALUES (%s,%s,%s,%s)",
+            (payment_id, order_id, uid, new_exp),
+        )
+        cur.execute(
+            "UPDATE public.user_profiles SET subscription_tier='pro', subscription_plan=%s, "
             "subscription_expires_at=%s, razorpay_payment_id=%s, updated_at=now() WHERE id=%s",
             (plan, new_exp, payment_id, uid),
         )

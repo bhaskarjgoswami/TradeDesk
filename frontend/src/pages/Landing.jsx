@@ -28,7 +28,7 @@ export function PublicHeader() {
     <header className="pub-head">
       <Link to="/" className="pub-brand"><span className="pub-mark">{Icon.book}</span>{BRAND}</Link>
       <nav>
-        <a href="/#pricing">Pricing</a>
+        <a href="/billing">Pricing</a>
         <a href="/app" className="btn ghost">Sign in</a>
         <a href="/app?signup=1" className="btn">Start free</a>
       </nav>
