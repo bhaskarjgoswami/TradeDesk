@@ -1565,9 +1565,11 @@ $('#routineOpen').onclick=async()=>{const wasHidden=$('#routinePanel').hidden;if
 let booted=false;
 async function boot(){
   if(booted)return;booted=true;
-  $('#app').classList.add('view-journal');
-  await loadPlanSettings();await loadRoutine();await loadWorkspace();await loadAll();await loadDays(false);await selectDay(TODAY());
-  $('#app').classList.remove('detail');setView('month');routineQuietSync();
+  selectedDate=TODAY();
+  $('#dvTitle').textContent=fmtDateLong(selectedDate);
+  setView('journal');
+  await loadPlanSettings();await loadRoutine();await loadWorkspace();await loadAll();await loadDays(false);await selectDay(selectedDate);
+  routineQuietSync();
   if(routineTimer)clearInterval(routineTimer);routineTimer=setInterval(()=>{if(booted)loadRoutine();},60000);
 }
 async function initJournal(){

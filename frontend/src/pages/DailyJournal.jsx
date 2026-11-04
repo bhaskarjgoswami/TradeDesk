@@ -21,7 +21,7 @@ export default function DailyJournal() {
   const { ask, toast } = useFeedback();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [days, setDays] = useState([]);
-  const [active, setActive] = useState(null);
+  const [active, setActive] = useState(() => params.get("date") || TODAY());
   const [detail, setDetail] = useState(null);
   const [formMode, setFormMode] = useState(null); // null | "new" | <tradeId>
   const [pullMsg, setPullMsg] = useState("");
@@ -43,10 +43,10 @@ export default function DailyJournal() {
   // initial load — honor ?date=&edit= coming from the All Trades page
   useEffect(() => {
     (async () => {
-      const list = await loadDays();
+      await loadDays();
       const d = params.get("date");
       const e = params.get("edit");
-      const target = d || (list.length ? list[0].date : TODAY());
+      const target = d || TODAY();
       await selectDay(target);
       if (e) setFormMode(e === "new" ? "new" : Number(e));
       if (d || e) setParams({}, { replace: true });
