@@ -58,6 +58,11 @@ def _verify_webhook_sig(payload: bytes, signature: str) -> bool:
     return hmac.compare_digest(expected, signature or "")
 
 
+@router.get("/plans")
+def public_plans():
+    return {"prices": AMOUNTS, "checkout_available": bool(RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET and RAZORPAY_WEBHOOK_SECRET)}
+
+
 @router.get("/status")
 def status(user=Depends(get_current_user)):
     uid = user["user_id"]

@@ -52,15 +52,21 @@ export default function PlanCards() {
   const { session, tier, tierStatus, plan, refreshTier, expiresAt } = useAuth();
   const [currency] = useState(defaultCurrency()); // 'INR' for India tz, else 'USD' — auto-detected
   const [cycle, setCycle] = useState(plan || "monthly"); // 'monthly' | 'annual'
+  const [catalog, setCatalog] = useState(null);
+  const [catalogError, setCatalogError] = useState(false);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const isPro = tier === "pro";
-  const price = PRICING[currency][cycle];
+  const display = PRICING[currency][cycle];
+  const price = catalog?.prices?.[currency]?.[cycle] != null ? {...display,amt:new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US",{style:"currency",currency,maximumFractionDigits:0}).format(catalog.prices[currency][cycle]/100)} : display;
+  const checkoutAvailable = catalog?.checkout_available === true;
+  const loadPlans = () => { setCatalogError(false); api.plans().then(setCatalog).catch(()=>setCatalogError(true)); };
+  useEffect(loadPlans, []);
   const membershipReady = !session || tierStatus === "ready";
   useEffect(() => { if (plan) setCycle(plan); }, [plan]);
 
   async function upgrade() {
-    if (!session || !membershipReady) return;
+    if (!session || !membershipReady || !checkoutAvailable) return;
     setBusy(true);
     setMsg("Starting secure checkout…");
     try {
@@ -106,6 +112,8 @@ export default function PlanCards() {
 
   return (
     <>
+      {catalogError && <p role="alert">Couldn’t load current checkout availability. <button className="btn" onClick={loadPlans}>Try again</button></p>}
+      {catalog && !checkoutAvailable && <p role="status">Payments are being set up. You can continue using your Free journal.</p>}
       {session && tierStatus === "loading" && <p role="status">Loading your membership…</p>}
       {session && tierStatus === "error" && <p role="alert">We couldn’t load your membership. <button className="btn" onClick={() => refreshTier().catch(() => {})}>Try again</button></p>}
       {msg && <div className="ex-note" role="status" aria-live="polite" style={{ marginBottom: 14 }}>{msg}</div>}
@@ -149,7 +157,7 @@ export default function PlanCards() {
           </div>
           <div className="pc-bottom">
             <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{price.amt}</span><span className="pc-unit">/ {cycle === "monthly" ? "month" : "year"}</span></div>
-              {!session ? <a className="pc-btn primary" href="/app?signup=1">Get Pro <span aria-hidden="true">→</span></a> : <button className="pc-btn primary" onClick={upgrade} disabled={busy || !membershipReady}>{busy ? "Opening checkout…" : <>{isPro ? "Renew Pro" : "Get Pro"} <span aria-hidden="true">→</span></>}</button>}
+              {!session ? <a className="pc-btn primary" href="/app?signup=1">Get Pro <span aria-hidden="true">→</span></a> : <button className="pc-btn primary" onClick={upgrade} disabled={busy || !membershipReady || !checkoutAvailable}>{busy ? "Opening checkout…" : <>{!checkoutAvailable ? "Checkout unavailable" : isPro ? "Renew Pro" : "Get Pro"} <span aria-hidden="true">→</span></>}</button>}
             </div>
             <div className="pc-note">{isPro && expiresAt ? `Active until ${new Date(expiresAt).toLocaleDateString()}` : "One-time payment · no auto-renew"}</div>
           </div>

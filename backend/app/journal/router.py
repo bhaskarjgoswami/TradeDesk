@@ -13,7 +13,7 @@ import urllib.error
 
 import httpx
 import psycopg2
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 
 from ..auth import get_current_user, media_token, decode_media_token
@@ -123,6 +123,16 @@ def get_trades(request: Request, user=Depends(get_current_user)):
         return ok(core.list_trades(qs(request)))
 
 
+@router.get("/api/trades/page")
+def get_trade_page(request: Request, limit: int = Query(500,ge=1,le=500), before_id: int = Query(0,ge=0), user=Depends(get_current_user)):
+    with scoped(user):
+        params=qs(request)
+        params["limit"]=[limit]
+        params["before_id"]=[before_id]
+        rows=core.list_trades(params)
+        return ok({"rows":rows,"next_cursor":rows[-1]["id"] if len(rows)==limit else None})
+
+
 @router.post("/api/trades")
 def post_trade(request: Request, user=Depends(get_current_user)):
     data = body(request)
@@ -177,7 +187,10 @@ def put_daylog(request: Request, user=Depends(get_current_user)):
     if not data.get("date"):
         return err("date required", 400)
     with scoped(user):
-        return ok(core.upsert_daylog(data["date"], data))
+        try:
+            return ok(core.upsert_daylog(data["date"], data))
+        except ValueError as e:
+            return err(str(e),400)
 
 
 # ── market data & exchange ───────────────────────────────

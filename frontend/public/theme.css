@@ -11,7 +11,7 @@
   --link:#0070f3;--link-deep:#0761d1;--link-bg-soft:#d3e5ff;
   --bg:var(--canvas);--sidebar:var(--canvas);--panel:var(--canvas);--panel2:var(--canvas-soft);--line:var(--hairline);
   /* spec mute #888888 is 3.5:1 on white; #6f6f6f keeps small captions at AA */
-  --txt:var(--ink);--mut:var(--mute);--dim:#a1a1a1;
+  --txt:var(--ink);--mut:var(--mute);--dim:#6f6f6f;
   --accent:var(--ink);--accent-weak:var(--canvas-soft-2);
   --grn:#1a8d48;--red:#ee0000;--amb:#ab570a;
   --missing-bg:#ffefcf;--missing-line:#f5d9a0;--missing-txt:#ab570a;
@@ -27,7 +27,7 @@
   --hairline:#2e2e2e;--hairline-strong:#454545;--canvas:#0a0a0a;--canvas-soft:#000000;--canvas-soft-2:#1a1a1a;
   --link:#3291ff;--link-deep:#52a8ff;--link-bg-soft:rgba(50,145,255,.16);
   --bg:var(--canvas);--sidebar:var(--canvas);--panel:#111111;--panel2:#161616;--line:var(--hairline);
-  --txt:var(--ink);--mut:var(--mute);--dim:#666666;
+  --txt:var(--ink);--mut:var(--mute);--dim:#8f8f8f;
   --accent:var(--ink);--accent-weak:#1f1f1f;
   --grn:#45c26b;--red:#ff4d4d;--amb:#f5a623;
   --missing-bg:rgba(245,166,35,.1);--missing-line:rgba(245,166,35,.25);--missing-txt:#f5a623;

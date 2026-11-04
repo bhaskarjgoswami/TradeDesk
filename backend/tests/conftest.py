@@ -8,3 +8,16 @@ os.environ.setdefault("SUPABASE_SERVICE_ROLE_KEY", "service")
 os.environ.setdefault("SUPABASE_JWT_SECRET", "test-jwt-secret-at-least-thirty-two-characters")
 os.environ.setdefault("DATABASE_URL", "postgresql://u:p@localhost:1/db")
 os.environ.setdefault("EXCHANGE_ENC_KEY", "x" * 43 + "=")
+
+
+import pytest
+
+@pytest.fixture(autouse=True)
+def isolated_rate_limits(monkeypatch):
+    from collections import Counter
+    from app import ratelimit
+    counts=Counter()
+    def hit(uid,action,maximum):
+        counts[uid,action]+=1
+        return counts[uid,action]
+    monkeypatch.setattr(ratelimit,"record_hit",hit)

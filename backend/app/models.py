@@ -32,7 +32,32 @@ class Review(BaseModel):
         return list(dict.fromkeys(v))
 
 
+def valid_day(value):
+    from datetime import date
+    if value is not None:
+        if len(value)!=10: raise ValueError("Use YYYY-MM-DD")
+        date.fromisoformat(value)
+    return value
+
+
 class TradeIn(BaseModel):
+    @field_validator("date")
+    @classmethod
+    def _day(cls,value): return valid_day(value)
+
+    @field_validator("direction")
+    @classmethod
+    def _direction(cls,value):
+        if value not in (None,"Long","Short"): raise ValueError("Choose Long or Short")
+        return value
+
+    @field_validator("entry","stop","exit","qty","risk","fee","pnl","r_multiple")
+    @classmethod
+    def _number(cls,value,info):
+        import math
+        if value is not None and (not math.isfinite(value) or abs(value)>1e12 or (info.field_name not in ("pnl","r_multiple") and value<0)):
+            raise ValueError("Invalid trade amount")
+        return value
     date: Optional[str] = None
     symbol: Optional[str] = None
     direction: Optional[str] = None
@@ -59,6 +84,9 @@ class TradeIn(BaseModel):
 
 
 class DayLogIn(BaseModel):
+    @field_validator("date")
+    @classmethod
+    def _day(cls,value): return valid_day(value)
     date: str
     market: Optional[str] = ""
     watchlist: Optional[str] = ""

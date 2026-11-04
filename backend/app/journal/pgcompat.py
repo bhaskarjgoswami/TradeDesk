@@ -224,6 +224,7 @@ def install_trade_guards(schema: str):
     if not _SCHEMA.fullmatch(schema):
         raise ValueError("invalid journal schema")
     with Connection(schema) as conn:
+        conn._query(f'CREATE INDEX IF NOT EXISTS trades_date_id ON "{schema}".trades(date DESC,id DESC)')
         conn._query(f'''CREATE OR REPLACE FUNCTION "{schema}".enforce_trade_quota()
         RETURNS trigger LANGUAGE plpgsql AS $$
         DECLARE paid boolean; used integer;

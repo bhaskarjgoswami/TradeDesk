@@ -106,8 +106,24 @@ async function handle(url, init, nativeFetch) {
   headers.set("Authorization", `Bearer ${t}`);
   let res;
   try {
+    if (path === "/api/trades" && method === "GET") {
+      const search = new URLSearchParams(url.split("?")[1] || "");
+      search.set("limit","500");
+      const rows=[];
+      while (true) {
+        const page = await nativeFetch(API + "/api/trades/page?" + search, {...init,headers});
+        if (!page.ok) { if(page.status===401)window.sessionExpired?.(); return page; }
+        const data=await page.json();
+        rows.push(...data.rows);
+        if (!data.next_cursor) break;
+        search.set("before_id",data.next_cursor);
+      }
+      rows.sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")) || b.id-a.id);
+      return json(rows);
+    }
     res = await nativeFetch(API + url, { ...init, headers });
   } catch (e) {
+    if (path === "/api/trades" && method === "GET") return json({error:"Could not load your journal. Please try again."},503);
     if (method !== "GET") throw e; // never retry writes
     await new Promise((r) => setTimeout(r, 800)); // API redeploying: retry reads once
     res = await nativeFetch(API + url, { ...init, headers });
@@ -192,7 +208,7 @@ supabase.auth.onAuthStateChange((event, session) => {
 window.addEventListener("pageshow", (event) => {
   if (event.persisted) supabase.auth.getSession().then(({ data }) => refreshSidebarMembership(data.session, true));
 });
-window.__td.resolve({ handle });
+window.__td.resolve({ handle, deleteAccount:async()=>{await api.deleteAccount();await supabase.auth.signOut();location.reload();} });
 
 
 function showPasswordRecovery() {

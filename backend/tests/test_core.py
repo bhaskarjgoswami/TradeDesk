@@ -111,10 +111,8 @@ def test_image_urls_only_signs_own_paths():
 # ── rate limits ──────────────────────────────────────────
 def test_rate_limit_blocks_after_quota():
     from app import ratelimit
-    ratelimit._hits.clear()
     codes = [client.post("/api/trades/upload", json={"data": "bad"}).status_code for _ in range(21)]
     assert codes[:20] == [400] * 20 and codes[20] == 429
-    ratelimit._hits.clear()
 
 
 # ── CSV import ───────────────────────────────────────────

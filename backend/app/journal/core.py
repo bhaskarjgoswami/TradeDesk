@@ -442,7 +442,17 @@ def list_trades(params):
         s = "%" + params["search"][0] + "%"
         q += " AND (logic LIKE ? OR notes LIKE ? OR tags LIKE ? OR symbol LIKE ? OR setup LIKE ?)"
         args += [s, s, s, s, s]
-    q += " ORDER BY date DESC, id DESC"
+    if params.get("limit"):
+        limit = int(params["limit"][0])
+        before = int(params.get("before_id", [0])[0])
+        if not 1 <= limit <= 500 or before < 0: raise ValueError("Invalid trade page")
+        if before:
+            q += " AND id < ?"
+            args.append(before)
+        q += " ORDER BY id DESC LIMIT ?"
+        args.append(limit)
+    else:
+        q += " ORDER BY date DESC, id DESC"
     with db() as conn:
         rows = conn.execute(q, args).fetchall()
     return [row_to_dict(r) for r in rows]
@@ -482,7 +492,7 @@ def validate_trade(data):
             except (TypeError, ValueError):
                 raise ValueError("Invalid " + key)
             clean[key] = number
-        elif not isinstance(value, str) or len(value) > (2_000_000 if key == "images" else 100_000):
+        elif not isinstance(value, str) or len(value) > (200_000 if key == "images" else 100_000 if key in ("plan","review","checklist") else 20_000):
             raise ValueError("Invalid " + key)
     if clean.get("outcome") not in (None, "", "Win", "Loss", "BE", "Open"):
         raise ValueError("Invalid outcome")
@@ -635,7 +645,23 @@ def get_daylog(date):
     }
 
 
+def validate_daylog(day, data):
+    from datetime import date
+    try:
+        if not isinstance(day,str) or len(day)!=10: raise ValueError()
+        date.fromisoformat(day)
+    except (TypeError,ValueError):
+        raise ValueError("Use a valid YYYY-MM-DD journal date")
+    if not isinstance(data,dict): raise ValueError("Journal entry must be an object")
+    for key in DAY_FIELDS:
+        value=data.get(key, "")
+        if value is not None and (not isinstance(value,str) or len(value)>100000):
+            raise ValueError("Invalid journal " + key)
+    return data
+
+
 def upsert_daylog(date, data):
+    data = validate_daylog(date, data)
     now = time.strftime("%Y-%m-%d %H:%M:%S")
     vals = [data.get(f, "") for f in DAY_FIELDS]
     with db() as conn:

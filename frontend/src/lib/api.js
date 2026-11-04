@@ -87,6 +87,7 @@ export const api = {
   deleteAccount: () => request("DELETE", "/api/account"),
 
   // subscription (Razorpay)
+  plans: () => request("GET", "/api/subscription/plans"),
   subStatus: () => request("GET", "/api/subscription/status"),
   checkout: (plan, currency) => request("POST", "/api/subscription/checkout", { plan, currency }),
   verifyPayment: (payload) => request("POST", "/api/subscription/verify", payload),

@@ -12,3 +12,9 @@ def test_invalid_journal_trade_is_rejected(patch):
 def test_journal_trade_keeps_signed_pnl_and_blank_optional_numbers():
     data=validate_trade({"date":"2026-11-04","symbol":"BTCUSD","direction":"Short","pnl":-12.5,"entry":""})
     assert data["pnl"] == -12.5 and data["entry"] is None
+
+
+@pytest.mark.parametrize("day,data", [("2026-02-30",{}),("tomorrow",{}),("2026-11-04",{"notes":{},"market":{}})])
+def test_invalid_day_log_values_rejected(day,data):
+    from app.journal.core import validate_daylog
+    with pytest.raises(ValueError): validate_daylog(day,data)

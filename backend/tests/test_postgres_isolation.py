@@ -53,6 +53,7 @@ def database(monkeypatch):
     with public_connect() as conn:
         with conn.cursor() as cur:
             cur.execute((Path(__file__).parents[2] / "supabase/migrations/20261104_payment_ledger.sql").read_text())
+            cur.execute((Path(__file__).parents[2] / "supabase/migrations/20261104_rate_limits.sql").read_text())
     monkeypatch.setattr(pgcompat, "_get_pool", lambda: pool)
     monkeypatch.setattr(auth, "get_conn", public_connect)
     schemas = [pgcompat.schema_for(uid) for uid in UIDS]
@@ -203,3 +204,29 @@ def test_portable_backup_restores_records_and_private_screenshots(database, monk
         with pgcompat.db() as conn: restored=conn.execute("SELECT images FROM trades").fetchone()["images"]
         assert "/images/setup.png" not in restored
         core.create_trade({"date":"2026-11-05","symbol":"ETHUSD","direction":"Short"})
+
+
+def test_shared_rate_limit_is_atomic_and_survives_worker_state(database,monkeypatch):
+    import importlib
+    from concurrent.futures import ThreadPoolExecutor
+    import app.ratelimit as module
+    # Reload the real function after the unit-suite isolation fixture stubs it.
+    module=importlib.reload(module)
+    connect,_=database
+    monkeypatch.setattr(module,"get_conn",connect)
+    with ThreadPoolExecutor(max_workers=3) as workers:
+        hits=list(workers.map(lambda _:module.record_hit(UIDS[0],"checkout",2),range(3)))
+    assert sorted(hits)==[1,2,3]
+    assert module.record_hit(UIDS[0],"checkout",2)==3
+
+
+def test_trade_cursor_pages_do_not_duplicate_or_drop_rows(database):
+    from app.journal import router,core
+    _,(schema,_)=database
+    with pgcompat.Connection(schema) as conn:
+        for number in range(3): conn.execute("INSERT INTO trades(title,date) VALUES (?,?)",(str(number),"2026-11-04"))
+    with router.scoped({"user_id":UIDS[0]}):
+        first=core.list_trades({"limit":[2]})
+        second=core.list_trades({"limit":[2],"before_id":[first[-1]["id"]]})
+    assert len(first)==2 and len(second)==1
+    assert len({row["id"] for row in first+second})==3

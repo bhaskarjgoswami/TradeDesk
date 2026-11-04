@@ -24,3 +24,10 @@ def test_unpaid_or_mismatched_payment_never_grants(monkeypatch, change):
         subscription._apply_paid_order("order_1","pay_1","u1")
     assert exc.value.status_code == 409
     grant.assert_not_called()
+
+
+def test_public_price_catalog_matches_approved_inr_prices(monkeypatch):
+    monkeypatch.setattr(subscription,"RAZORPAY_KEY_ID","")
+    result=subscription.public_plans()
+    assert result["prices"]["INR"]=={"monthly":9900,"annual":69900}
+    assert result["checkout_available"] is False
