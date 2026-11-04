@@ -16,5 +16,6 @@ def test_readiness_fails_when_database_is_unavailable(monkeypatch):
 
 def test_security_headers_present():
     response=TestClient(main.app).get("/health")
+    assert response.headers["cache-control"] == "no-store"
     assert response.headers["x-content-type-options"] == "nosniff"
     assert response.headers["x-frame-options"] == "DENY"
