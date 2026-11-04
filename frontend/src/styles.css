@@ -617,3 +617,15 @@ table.grp .num{text-align:right;font-variant-numeric:tabular-nums}
 .billing-page>*{flex-shrink:0}
 .billing-plans{padding-bottom:24px}
 .billing-page>.billing-footer{margin-top:auto}
+
+/* Give the centered billing sections and feature rows more breathing room. */
+.billing-page .billing-heading{justify-content:center;text-align:center;padding:56px 0 44px}
+.billing-page .bill-bar{margin-bottom:48px}
+.billing-page .pc-feats,.billing-page .featured .pc-feats{row-gap:28px}
+.billing-page .billing-plans{padding-bottom:48px}
+@media(max-width:620px){
+  .billing-page .billing-heading{padding:40px 0 32px}
+  .billing-page .bill-bar{margin-bottom:32px}
+  .billing-page .pc-feats,.billing-page .featured .pc-feats{row-gap:24px}
+  .billing-page .billing-plans{padding-bottom:32px}
+}
