@@ -1,9 +1,7 @@
-import { useAuth } from "../lib/AuthContext";
 import PlanCards from "../lib/PlanCards";
 import { Icon } from "../lib/ui";
 
 export default function Billing() {
-  const { session, isPro, expiresAt, tierStatus } = useAuth();
   return (
     <div className="billing-surface">
       <main className="billing-page">
@@ -13,13 +11,8 @@ export default function Billing() {
         </nav>
         <header className="billing-heading">
           <h1>Plans &amp; billing</h1>
-          {session && <aside className="billing-membership" aria-label="Current subscription">
-            <span>Current plan</span>
-            <strong>{tierStatus === "ready" ? (isPro ? "Pro" : "Free") : tierStatus === "error" ? "Unavailable" : "Loading…"}</strong>
-            {tierStatus === "ready" && isPro && expiresAt && <span className="billing-expiry">Until {new Date(expiresAt).toLocaleDateString()}</span>}
-          </aside>}
         </header>
-        <section className="billing-plans" aria-label="Available plans"><PlanCards /></section>
+        <section className="billing-plans" aria-label="Available plans"><PlanCards showMembership /></section>
         <footer className="billing-footer">
           <span>One-time payment · no auto-renew</span>
           <div><a href="/terms">Terms</a><a href="/refunds">Refunds</a><a href="/contact">Support</a></div>

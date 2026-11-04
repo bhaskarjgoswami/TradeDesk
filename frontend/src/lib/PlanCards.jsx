@@ -50,8 +50,8 @@ function loadRazorpay() {
   });
 }
 
-export default function PlanCards() {
-  const { session, tier, tierStatus, refreshTier } = useAuth();
+export default function PlanCards({ showMembership = false }) {
+  const { session, tier, tierStatus, expiresAt, refreshTier } = useAuth();
   const [currency, setCurrency] = useState(defaultCurrency());
   const [cycle, setCycle] = useState("annual"); // 'monthly' | 'annual'
   const [catalog, setCatalog] = useState(null);
@@ -65,6 +65,16 @@ export default function PlanCards() {
   const loadPlans = () => { setCatalogError(false); api.plans().then(setCatalog).catch(()=>setCatalogError(true)); };
   useEffect(loadPlans, []);
   const membershipReady = !session || tierStatus === "ready";
+
+  function membershipLabel(pro) {
+    if (!showMembership || !session) return null;
+    return <div className="pc-membership-slot">
+      {tierStatus === "ready" && isPro === pro && <aside className="billing-membership" aria-label="Current subscription">
+        <span>Current plan</span><strong>{pro ? "Pro" : "Free"}</strong>
+        {pro && expiresAt && <span className="billing-expiry">Until {new Date(expiresAt).toLocaleDateString()}</span>}
+      </aside>}
+    </div>;
+  }
 
   async function upgrade() {
     if (!session || isPro || !membershipReady || !checkoutAvailable) return;
@@ -132,32 +142,38 @@ export default function PlanCards() {
       </div>
 
       <div className="plan-grid">
-        <article className={"plan-card" + (session && membershipReady && !isPro ? " current" : "")}>
-          <div className="pc-top">
-            <h2 className="pc-name">{FREE.name}</h2>
-          </div>
-          <div className="pc-divider" />
-          <div className="pc-body">
-            <ul className="pc-feats">{FREE.features.map((f) => <li key={f}><span className="pc-check" aria-hidden="true">{Icon.check}</span>{f}</li>)}</ul>
-          </div>
-          <div className="pc-bottom">
-            <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{currency === "INR" ? "₹0" : "$0"}</span><span className="pc-unit">/ month</span></div><button className="pc-btn" disabled>{session && membershipReady && !isPro ? "Current plan" : "Free plan"}</button></div>
-          </div>
-        </article>
-        <article className={"plan-card featured" + (isPro ? " current" : "")}>
-          <div className="pc-top">
-            <h2 className="pc-name">Pro</h2>
-          </div>
-          <div className="pc-divider" />
-          <div className="pc-body">
-            <ul className="pc-feats">{PRO_FEATURES.map((f) => <li key={f}><span className="pc-check" aria-hidden="true">{Icon.check}</span>{f}</li>)}</ul>
-          </div>
-          <div className="pc-bottom">
-            <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{price.amt}</span><span className="pc-unit">/ {cycle === "monthly" ? "month" : "year"}</span></div>
-              {!session ? <a className="pc-btn primary" href="/app?signup=1">Get Pro <span aria-hidden="true">→</span></a> : <button className="pc-btn primary" onClick={upgrade} disabled={isPro || busy || !membershipReady || !checkoutAvailable}>{busy ? "Opening checkout…" : <>{isPro ? "Current plan" : !checkoutAvailable ? "Checkout unavailable" : "Get Pro"} <span aria-hidden="true">→</span></>}</button>}
+        <div className="plan-option">
+          <article className={"plan-card" + (session && membershipReady && !isPro ? " current" : "")}>
+            <div className="pc-top">
+              <h2 className="pc-name">{FREE.name}</h2>
             </div>
-          </div>
-        </article>
+            <div className="pc-divider" />
+            <div className="pc-body">
+              <ul className="pc-feats">{FREE.features.map((f) => <li key={f}><span className="pc-check" aria-hidden="true">{Icon.check}</span>{f}</li>)}</ul>
+            </div>
+            <div className="pc-bottom">
+              <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{currency === "INR" ? "₹0" : "$0"}</span><span className="pc-unit">/ month</span></div><button className="pc-btn" disabled>{session && membershipReady && !isPro ? "Current plan" : "Free plan"}</button></div>
+            </div>
+          </article>
+          {membershipLabel(false)}
+        </div>
+        <div className="plan-option">
+          <article className={"plan-card featured" + (isPro ? " current" : "")}>
+            <div className="pc-top">
+              <h2 className="pc-name">Pro</h2>
+            </div>
+            <div className="pc-divider" />
+            <div className="pc-body">
+              <ul className="pc-feats">{PRO_FEATURES.map((f) => <li key={f}><span className="pc-check" aria-hidden="true">{Icon.check}</span>{f}</li>)}</ul>
+            </div>
+            <div className="pc-bottom">
+              <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{price.amt}</span><span className="pc-unit">/ {cycle === "monthly" ? "month" : "year"}</span></div>
+                {!session ? <a className="pc-btn primary" href="/app?signup=1">Get Pro <span aria-hidden="true">→</span></a> : <button className="pc-btn primary" onClick={upgrade} disabled={isPro || busy || !membershipReady || !checkoutAvailable}>{busy ? "Opening checkout…" : <>{isPro ? "Current plan" : !checkoutAvailable ? "Checkout unavailable" : "Get Pro"} <span aria-hidden="true">→</span></>}</button>}
+              </div>
+            </div>
+          </article>
+          {membershipLabel(true)}
+        </div>
       </div>
     </>
   );
