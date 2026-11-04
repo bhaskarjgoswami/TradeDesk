@@ -51,7 +51,7 @@ function loadRazorpay() {
 }
 
 export default function PlanCards() {
-  const { session, tier, tierStatus, refreshTier, expiresAt } = useAuth();
+  const { session, tier, tierStatus, refreshTier } = useAuth();
   const [currency, setCurrency] = useState(defaultCurrency());
   const [cycle, setCycle] = useState("annual"); // 'monthly' | 'annual'
   const [catalog, setCatalog] = useState(null);
@@ -115,56 +115,47 @@ export default function PlanCards() {
 
   return (
     <>
-      {catalog?.mode === "test" && <p className="ex-note" role="status">Test Mode — checkout uses simulated payments. No real money is collected.</p>}
       {catalogError && <p role="alert">Couldn’t load current checkout availability. <button className="btn" onClick={loadPlans}>Try again</button></p>}
       {catalog && !checkoutAvailable && <p role="status">Payments are being set up. Your journal remains available.</p>}
       {session && tierStatus === "loading" && <p role="status">Loading your membership…</p>}
       {session && tierStatus === "error" && <p role="alert">We couldn’t load your membership. <button className="btn" onClick={() => refreshTier().catch(() => {})}>Try again</button></p>}
       {msg && <div className="ex-note" role="status" aria-live="polite" style={{ marginBottom: 14 }}>{msg}</div>}
 
-      <div className="bill-bar"><div className="bill-controls"><span className="bill-period-label">Billing period</span>
+      <div className="bill-bar"><div className="bill-controls">
           <div className="bill-seg" role="group" aria-label="Billing period">
             <button className={cycle === "monthly" ? "on" : ""} aria-pressed={cycle === "monthly"} disabled={busy} onClick={() => setCycle("monthly")}>Monthly</button>
             <button className={cycle === "annual" ? "on" : ""} aria-pressed={cycle === "annual"} disabled={busy} onClick={() => setCycle("annual")}>
               Annual <span className="bill-save">{currency === "INR" ? "SAVE 41%" : "SAVE 16%"}</span>
             </button>
           </div></div>
-          <div className="bill-controls"><span className="bill-period-label">Currency</span><div className="bill-seg" role="group" aria-label="Billing currency">{["USD", "INR"].map(code => <button key={code} type="button" className={currency === code ? "on" : ""} aria-pressed={currency === code} disabled={busy} onClick={() => { setCurrency(code); try { localStorage.setItem("tradedesk_billing_currency",code); } catch {} }}>{code === "USD" ? "$ USD" : "₹ INR"}</button>)}</div></div>
+          <div className="bill-controls">{catalog?.mode === "test" && <span className="billing-test-mode" role="status" aria-label="Test mode: simulated payments only" title="Simulated payments only">Test mode</span>}<div className="bill-seg" role="group" aria-label="Billing currency">{["USD", "INR"].map(code => <button key={code} type="button" className={currency === code ? "on" : ""} aria-pressed={currency === code} disabled={busy} onClick={() => { setCurrency(code); try { localStorage.setItem("tradedesk_billing_currency",code); } catch {} }}>{code === "USD" ? "$ USD" : "₹ INR"}</button>)}</div></div>
       </div>
 
       <div className="plan-grid">
         <article className={"plan-card" + (session && membershipReady && !isPro ? " current" : "")}>
           <div className="pc-top">
-            <span className="pc-plan-label">ESSENTIALS</span>
             <h2 className="pc-name">{FREE.name}</h2>
-            <p className="pc-tag">A clear foundation for your daily routine.</p>
           </div>
           <div className="pc-divider" />
           <div className="pc-body">
-            <div className="pc-feathead">Everyday essentials</div>
             <ul className="pc-feats">{FREE.features.map((f) => <li key={f}><span className="pc-check" aria-hidden="true">{Icon.check}</span>{f}</li>)}</ul>
           </div>
           <div className="pc-bottom">
             <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{currency === "INR" ? "₹0" : "$0"}</span><span className="pc-unit">/ month</span></div><button className="pc-btn" disabled>{session && membershipReady && !isPro ? "Current plan" : "Free plan"}</button></div>
-            <div className="pc-note">No payment needed</div>
           </div>
         </article>
         <article className={"plan-card featured" + (isPro ? " current" : "")}>
           <div className="pc-top">
-            <span className="pc-plan-label">UNLIMITED TRADES</span>
             <h2 className="pc-name">Pro</h2>
-            <p className="pc-tag">Your full process. Room to grow.</p>
           </div>
           <div className="pc-divider" />
           <div className="pc-body">
-            <div className="pc-feathead">Included in Pro</div>
             <ul className="pc-feats">{PRO_FEATURES.map((f) => <li key={f}><span className="pc-check" aria-hidden="true">{Icon.check}</span>{f}</li>)}</ul>
           </div>
           <div className="pc-bottom">
             <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{price.amt}</span><span className="pc-unit">/ {cycle === "monthly" ? "month" : "year"}</span></div>
               {!session ? <a className="pc-btn primary" href="/app?signup=1">Get Pro <span aria-hidden="true">→</span></a> : <button className="pc-btn primary" onClick={upgrade} disabled={isPro || busy || !membershipReady || !checkoutAvailable}>{busy ? "Opening checkout…" : <>{isPro ? "Current plan" : !checkoutAvailable ? "Checkout unavailable" : "Get Pro"} <span aria-hidden="true">→</span></>}</button>}
             </div>
-            <div className="pc-note">{isPro && expiresAt ? `Active until ${new Date(expiresAt).toLocaleDateString()}` : "One-time payment · no auto-renew"}</div>
           </div>
         </article>
       </div>

@@ -579,3 +579,23 @@ table.grp .num{text-align:right;font-variant-numeric:tabular-nums}
 .billing-page .plan-card:not(.featured) .pc-btn:disabled{background:#dce0d6;border-color:#dce0d6;color:#68715f;cursor:not-allowed;box-shadow:none}
 .billing-page .featured .pc-btn:disabled{background:#272a24;border-color:#464b3e;color:#aab29f;cursor:not-allowed;box-shadow:none}
 @media(max-width:620px){.bill-controls{gap:8px}.billing-page .bill-bar{align-items:flex-start}.billing-page .bill-seg button{padding:8px 12px}}
+
+/* Minimal billing: one title, compact membership, plans and essential terms. */
+.billing-topbar>.billing-back{display:inline-flex;align-items:center;gap:8px;color:#65675f;font-size:12px}
+.billing-topbar>.billing-back:hover{color:#171917}
+.billing-heading{padding:28px 0 24px;gap:20px}
+.billing-heading h1{margin:0;font-size:28px;letter-spacing:-.9px}
+.billing-membership{display:flex;align-items:center;flex-wrap:wrap;gap:9px;width:auto;padding:9px 13px;border-radius:999px;background:#f6f7f3;color:#72766c;font-size:11px}
+.billing-membership strong{font-size:12px;font-weight:550;color:#242722}
+.billing-expiry{padding-left:9px;border-left:1px solid #dfe2d9}
+.billing-page .bill-bar{margin-bottom:20px}
+.billing-test-mode{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:#efeeff;color:#5954b6;font-size:10px;white-space:nowrap}
+.billing-page .plan-card{min-height:390px;box-shadow:none}
+.billing-page .pc-top{padding:27px 30px 22px}
+.billing-page .pc-name{font-size:26px}
+.billing-page .pc-divider{margin:0 30px}
+.billing-page .pc-body{padding:25px 30px 30px}
+.billing-page .pc-bottom{margin:0 30px;padding:23px 0 25px}
+.billing-page .pc-amt{font-size:27px;letter-spacing:-.8px}
+.billing-footer{margin-top:24px;padding-top:18px;color:#777c71}
+@media(max-width:620px){.billing-heading{flex-direction:row;align-items:center;flex-wrap:wrap;padding:24px 0 20px}.billing-heading h1{font-size:25px}.billing-membership{width:auto}.billing-page .plan-card{min-height:0}.billing-page .pc-top,.billing-page .pc-body{padding-left:24px;padding-right:24px}.billing-page .pc-divider,.billing-page .pc-bottom{margin-left:24px;margin-right:24px}.billing-test-mode{font-size:9px}.billing-footer{margin-top:20px;gap:10px}}
