@@ -1562,8 +1562,9 @@ async function boot(){
   if(booted)return;booted=true;
   selectedDate=TODAY();
   $('#dvTitle').textContent=fmtDateLong(selectedDate);
-  setView('journal');
-  await loadPlanSettings();await loadRoutine();await loadWorkspace();await loadAll();await loadDays(false);await selectDay(selectedDate);
+  setView('month');
+  await loadPlanSettings();await loadRoutine();await loadWorkspace();await loadAll();await loadDays(false);
+  if(view==='month')renderMonth();
   routineQuietSync();
   if(routineTimer)clearInterval(routineTimer);routineTimer=setInterval(()=>{if(booted)loadRoutine();},60000);
 }
