@@ -76,7 +76,7 @@ def ready():
     try:
         with get_conn(readonly=True) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT to_regclass('public.user_profiles') IS NOT NULL AND to_regclass('public.billing_orders') IS NOT NULL AND to_regclass('public.api_rate_windows') IS NOT NULL AS ready")
+                cur.execute("SELECT to_regclass('public.user_profiles') IS NOT NULL AND to_regclass('public.billing_orders') IS NOT NULL AND to_regclass('public.api_rate_buckets') IS NOT NULL AS ready")
                 row = cur.fetchone()
                 if not row or not row["ready"]:
                     return JSONResponse(status_code=503, content={"status": "unavailable"})

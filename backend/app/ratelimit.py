@@ -15,14 +15,14 @@ def record_hit(uid,action,maximum):
     try:
         with get_conn() as conn:
             with conn.cursor() as cur:
-                cur.execute("INSERT INTO public.api_rate_windows(user_id,action,bucket,hits) VALUES (%s,%s,%s,1) "
-                            "ON CONFLICT(user_id,action,bucket) DO UPDATE SET hits=LEAST(public.api_rate_windows.hits+1,%s) RETURNING hits",(uid,action,window,maximum+1))
+                cur.execute("INSERT INTO public.api_rate_buckets(user_id,action,bucket,hits) VALUES (%s,%s,%s,1) "
+                            "ON CONFLICT(user_id,action,bucket) DO UPDATE SET hits=LEAST(public.api_rate_buckets.hits+1,%s) RETURNING hits",(uid,action,window,maximum+1))
                 row = cur.fetchone()
                 hits = row["hits"] if isinstance(row,dict) else row[0]
                 if window > _cleanup_at:
                     with _cleanup_lock:
                         if window > _cleanup_at:
-                            cur.execute("DELETE FROM public.api_rate_windows WHERE bucket < %s",(window-2,))
+                            cur.execute("DELETE FROM public.api_rate_buckets WHERE bucket < %s",(window-2,))
                             _cleanup_at = window
         return hits
     except Exception:
