@@ -569,3 +569,10 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 @media(min-width:981px){.app.collapsed .sidebar .navitem{padding:8px 0}.app.collapsed .sidebar .sidefoot{padding:20px 0 8px;align-items:center}.app.collapsed .sidebar-membership{display:grid;place-items:center;width:38px;height:38px;padding:0;border-radius:10px}.app.collapsed .sidebar-member-header,.app.collapsed .sidebar-member-copy,.app.collapsed .sidebar-member-upgrade{display:none}.app.collapsed .sidebar-member-body{margin:0}.app.collapsed .sidebar #sideToggle{width:38px;height:36px;justify-content:center;padding:8px}.app.collapsed .sidebar #sideToggle .tgl-lbl{display:none}}
 @media(max-width:980px){.app.collapsed .sidebar #sideToggle{width:100%;justify-content:flex-start}.app.collapsed .sidebar #sideToggle .tgl-lbl{display:inline}}
 @media(prefers-reduced-motion:reduce){.sidebar,.sidebar #sideToggle svg,.sidebar-membership{transition:none}}
+
+/* Center account details and keep account actions aligned to the form. */
+.settings-panel[data-settings-panel="account"]{width:100%;max-width:808px;margin-inline:auto}
+.settings-panel[data-settings-panel="account"] .pf-form{width:100%;max-width:none}
+.settings-panel .btn.danger:not(.ghost),.ws-dialog .btn.danger:not(.ghost){background:#d32f2f!important;color:#fff;border:0}
+.settings-panel .btn.danger:not(.ghost):hover,.ws-dialog .btn.danger:not(.ghost):hover{background:#b71c1c!important}
+.settings-panel .btn.danger:disabled,.ws-dialog .btn.danger:disabled{opacity:.55;cursor:not-allowed}
