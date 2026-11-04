@@ -29,7 +29,7 @@ const FREE = {
 };
 // Keep in sync with what the backend actually gates (trades.py FREE_DAILY_LIMIT).
 const PRO_FEATURES = [
-  "Unlimited trades per day",
+  "Unlimited trades entry per day",
   "No daily cap on Delta imports",
   "Daily journal & calendar",
   "Performance stats",
