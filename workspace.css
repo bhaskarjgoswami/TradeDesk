@@ -668,3 +668,8 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 
 /* The search wrapper supplies the visible keyboard focus indicator. */
 .welcome-dialog .welcome-search input:focus{outline:none!important;box-shadow:none}
+
+/* Show just the current question while retaining carousel navigation. */
+.welcome-slide{visibility:hidden;transition:transform .3s ease,opacity .3s ease}
+.welcome-slide.is-active{visibility:visible}
+.welcome-dialog[data-edge] .welcome-rail{--welcome-align:var(--welcome-card-inset)}
