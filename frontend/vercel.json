@@ -118,6 +118,11 @@
       "source": "/performance",
       "destination": "/app",
       "permanent": false
+    },
+    {
+      "source": "/billing",
+      "destination": "/app#billing",
+      "permanent": false
     }
   ],
   "git": {

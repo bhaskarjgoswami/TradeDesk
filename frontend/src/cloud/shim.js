@@ -292,3 +292,21 @@ function showPasswordRecovery() {
 }
 
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)supabase.auth.getSession().then(({data})=>setImageCookie(data.session));});
+
+// Mount the existing React billing screen inside the journal pane on demand.
+window.renderBilling=async()=>{
+  const host=document.getElementById('billingMount');
+  if(!host||host.dataset.mounted||host.dataset.loading)return;
+  host.dataset.loading='true';
+  host.innerHTML='<p class="billing-pane-status" role="status">Loading…</p>';
+  try{
+    const {mountBilling}=await import('./EmbeddedBilling');
+    host.replaceChildren();
+    mountBilling(host,()=>supabase.auth.getSession().then(({data})=>refreshSidebarMembership(data.session,true)));
+    host.dataset.mounted='true';
+  }catch{
+    host.innerHTML='<div class="billing-pane-status" role="alert"><p>Could not load billing. Please try again.</p><button type="button" class="btn">Try again</button></div>';
+    host.querySelector('button').onclick=()=>window.renderBilling();
+    window.TDLocale?.apply(host);
+  }finally{delete host.dataset.loading;}
+};
