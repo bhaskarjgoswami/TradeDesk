@@ -2,7 +2,7 @@
 'use strict';
 // A brief, optional welcome flow. Values use the existing per-account profile.
 window.maybeOnboarding = function () {
-  if (!window.tdNewAccount || PF.data.settings.onboardingCompleted || document.querySelector('#welcomeDialog')) return;
+  if (!window.tdNewAccount || typeof PF.data.settings.onboardingCompleted !== 'boolean' || PF.data.settings.onboardingCompleted || document.querySelector('#welcomeDialog')) return;
   const previousFocus = document.activeElement, initial = {...PF.data.settings};
   const dialog = document.createElement('dialog');
   dialog.id = 'welcomeDialog'; dialog.className = 'welcome-dialog';

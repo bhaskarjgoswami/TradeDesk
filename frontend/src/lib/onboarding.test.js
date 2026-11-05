@@ -16,3 +16,7 @@ test('two steps retain choices and store answers on the existing revisioned prof
 });
 test('skip saves optional blanks once and does not ask again',async()=>{const {dom,w,writes}=setup();try{w.document.querySelector('[data-welcome-skip]').click();await tick();assert.equal(writes.length,1);assert.equal(writes[0].body.settings.gender,'');assert.equal(writes[0].body.settings.ageGroup,'');assert.equal(writes[0].body.settings.onboardingCompleted,true);assert.equal(w.PF.data.settings.firstName,'Alex');assert.equal(w.document.querySelector('#welcomeDialog'),null);}finally{dom.window.close();}});
 test('save failure retains the entered answers and allows retry without completing onboarding',async()=>{const {dom,w,writes}=setup({fail:true});try{w.document.querySelector('[name=country]').value='IN';w.document.querySelector('[data-welcome-skip]').click();await tick();assert.equal(writes.length,1);const d=w.document.querySelector('#welcomeDialog');assert.ok(d);assert.equal(d.querySelector('[name=country]').value,'IN');assert.equal(d.querySelector('#welcomeStatus').textContent,'Try again');assert.equal(d.querySelector('#welcomeNext').disabled,false);assert.equal(w.PF.data.settings.onboardingCompleted,false);}finally{dom.window.close();}});
+
+test('an unavailable profile is not mistaken for a fresh signup',()=>{
+ const {dom,w}=setup({existing:true});try{w.tdNewAccount=true;w.PF.data={settings:{},revision:0};w.maybeOnboarding();assert.equal(w.document.querySelector('#welcomeDialog'),null);}finally{dom.window.close();}
+});
