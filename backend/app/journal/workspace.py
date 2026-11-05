@@ -9,7 +9,7 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-KINDS = {'note', 'strategy', 'event', 'session', 'resource', 'blocked'}
+KINDS = {'note', 'strategy', 'event', 'session', 'resource', 'blocked', 'feedback'}
 CURRENCIES = {'USD', 'INR', 'EUR', 'GBP', 'AUD', 'CAD', 'JPY', 'USDT', 'SGD', 'AED', 'CHF', 'HKD', 'CNY'}
 DEFAULT_PREFS = dict(currency='USD', capital=0, name='My trading journal', displayCurrency='USD', fxRate=1, fxAt='')
 DEFAULT_PROFILE = dict(firstName='', lastName='', displayName='', mobile='', country='', zip='', timezone='',
@@ -99,7 +99,15 @@ def validate_item(data):
     kind=data['kind'];title=text(data.get('title'),'Title',200,True);body=data.get('body')
     if not isinstance(body,dict):
         raise ValueError('Item content is required')
-    if kind=='note':
+    if kind=='feedback':
+        category=body.get('category')
+        if category not in ('suggestion','issue','general'):
+            raise ValueError('Choose a valid feedback category')
+        images=image_list(body.get('images',[]))
+        if len(images)>3:
+            raise ValueError('Use up to three feedback images')
+        clean=dict(category=category,message=text(body.get('message'),'Feedback',4000,True),images=images)
+    elif kind=='note':
         clean=dict(content=text(body.get('content',''),'Note',50000),tags=text(body.get('tags',''),'Tags',500),
                    pinned=body.get('pinned') is True)
     elif kind=='strategy':

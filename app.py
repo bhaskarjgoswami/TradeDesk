@@ -1119,7 +1119,7 @@ class Handler(BaseHTTPRequestHandler):
             except FileNotFoundError:self._send_json({'error':'Language not found'},404)
             return
 
-        if path in ('/language.js','/onboarding.js','/workspace.js','/workspace.css','/theme.css','/theme-mercury.css','/calendar.js','/trade.js','/playbook.js','/profile.js','/meditation.js'):
+        if path in ('/language.js','/onboarding.js','/feedback-page.js','/workspace.js','/workspace.css','/theme.css','/theme-mercury.css','/calendar.js','/trade.js','/playbook.js','/profile.js','/meditation.js'):
             filename=os.path.join(HERE,path[1:])
             try:
                 with open(filename,'rb') as handle:body=handle.read()

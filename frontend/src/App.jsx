@@ -196,6 +196,7 @@ export default function App() {
   // Legal pages are public and render the same for signed-in users.
   const legal = LEGAL_PAGES.find((p) => loc.pathname === "/" + p);
   // The journal itself is the local app's UI at /app; old in-app routes go there.
+  if(loc.pathname==="/feedback"){window.location.replace("/app#feedback");return null;}
   if (["/journal", "/trades", "/playbook", "/performance", "/login"].includes(loc.pathname)) {
     window.location.replace("/app" + (loc.search.includes("mode=signup") ? "?signup=1" : ""));
     return null;
