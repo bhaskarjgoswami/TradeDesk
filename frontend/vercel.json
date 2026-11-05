@@ -50,7 +50,7 @@
       ]
     },
     {
-      "source": "/(broker-import|workspace|calendar|trade|playbook|profile|meditation).js",
+      "source": "/(language|onboarding|feedback-page|trade-drafts|broker-import|workspace|calendar|trade|playbook|profile|meditation).js",
       "headers": [
         {
           "key": "Cache-Control",
@@ -111,17 +111,32 @@
     },
     {
       "source": "/playbook",
-      "destination": "/app",
+      "destination": "/app#edge",
       "permanent": false
     },
     {
       "source": "/performance",
-      "destination": "/app",
+      "destination": "/app#performance",
       "permanent": false
     },
     {
       "source": "/billing",
       "destination": "/app#billing",
+      "permanent": false
+    },
+    {
+      "source": "/settings",
+      "destination": "/app#settings",
+      "permanent": false
+    },
+    {
+      "source": "/subscription",
+      "destination": "/app#billing",
+      "permanent": false
+    },
+    {
+      "source": "/feedback",
+      "destination": "/app#feedback",
       "permanent": false
     }
   ],

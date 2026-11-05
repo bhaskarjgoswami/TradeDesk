@@ -195,12 +195,8 @@ export default function App() {
   // Legal pages are public and render the same for signed-in users.
   const legal = LEGAL_PAGES.find((p) => loc.pathname === "/" + p);
   // The journal itself is the local app's UI at /app; old in-app routes go there.
-  if(loc.pathname==="/billing"){window.location.replace("/app#billing");return null;}
-  if(loc.pathname==="/feedback"){window.location.replace("/app#feedback");return null;}
-  if (["/journal", "/trades", "/playbook", "/performance", "/login"].includes(loc.pathname)) {
-    window.location.replace("/app" + (loc.search.includes("mode=signup") ? "?signup=1" : ""));
-    return null;
-  }
+  const legacyTargets={"/billing":"/app#billing","/subscription":"/app#billing","/feedback":"/app#feedback","/settings":"/app#settings","/playbook":"/app#edge","/performance":"/app#performance","/journal":"/app","/trades":"/app","/login":"/app"};
+  if(legacyTargets[loc.pathname]){window.location.replace(legacyTargets[loc.pathname].replace('/app','/app'+(loc.search.includes('mode=signup')?'?signup=1':'')));return null;}
   if (legal) return <ErrorBoundary><Suspense fallback={<PageLoading />}><Legal page={legal} /></Suspense></ErrorBoundary>;
   if (loading) {
     return <div className="login"><div style={{ color: "#7e7e82" }}>Loading…</div></div>;

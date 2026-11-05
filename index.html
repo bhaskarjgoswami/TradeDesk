@@ -597,6 +597,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
         </div>
       </div></div>
   </div>
+  <div class="offline-notice" id="offlineNotice" role="status" hidden>You are offline. New changes will not sync until your connection returns. Unsaved trade drafts stay in this tab.</div>
   <div class="appbody">
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
@@ -896,7 +897,7 @@ $$('.navitem[data-view]').forEach(n=>n.onclick=event=>{event.preventDefault();se
 $('#sidebarMembership').onclick=event=>{event.preventDefault();setView('billing');};
 function setView(v){
   view=v;
-  if(['feedback','billing'].includes(v)||['#feedback','#billing'].includes(location.hash))history.replaceState(null,'',location.pathname+location.search+(['feedback','billing'].includes(v)?'#'+v:''));
+  if(['month','settings','edge','performance','focus','feedback','billing'].includes(v))history.replaceState(null,'',location.pathname+location.search+(v==='month'?'':'#'+v));
   $$('.navitem').forEach(n=>n.classList.toggle('on',n.dataset.view===v));
   $$('.pane').forEach(p=>p.classList.remove('on'));
   $('#pane-'+v).classList.add('on');
@@ -936,7 +937,7 @@ $('#loginForm').addEventListener('submit',async e=>{
     else{const d=await r.json().catch(()=>({}));$('#loginErr').textContent=d.error||'Login failed';}
   }catch{$('#loginErr').textContent='Could not reach the server.';}
 });
-function doLogout(){booted=false;routineState=null;routineDraft=null;settingsDraft=null;$('#routinePanel').hidden=true;fetch('/api/logout',{method:'POST'}).catch(()=>{}).finally(()=>{showLogin();});}
+async function doLogout(){if(!confirm('Log out? Unsaved drafts on this device will be removed.'))return;try{const response=await fetch('/api/logout',{method:'POST'});if(!response.ok)throw Error('Could not log out. Please try again.');window.TradeDeskDrafts?.clearAll();booted=false;routineState=null;routineDraft=null;settingsDraft=null;allTrades=[];dayData=null;$('#routinePanel').hidden=true;showLogin();location.reload();}catch(error){toast(error.message||'Could not log out. Please try again.');}}
 function closeAccountMenu(){$('#avatarMenu').classList.remove('show');$('#tbAvatar').setAttribute('aria-expanded','false');}
 document.addEventListener('focusin',event=>{if(!event.target.closest('.tb-acct'))closeAccountMenu();});
 $('#tbAvatar').onclick=e=>{e.stopPropagation();const open=$('#avatarMenu').classList.toggle('show');$('#tbAvatar').setAttribute('aria-expanded',String(open));if(open)$('#menuSettings').focus();};
@@ -995,7 +996,7 @@ async function savePlanDefaults(){if(settingsBusy||settingsUploads)return;readSe
 }
 $$('#setDesign button').forEach(b=>b.onclick=()=>{try{localStorage.setItem('tj_design',b.dataset.d);}catch{}applyDesign(b.dataset.d);$$('#setDesign button').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-pressed',String(x===b));});setTimeout(()=>renderEquity(),300);});
 $$('#setTheme button').forEach(b=>b.onclick=()=>{theme=b.dataset.t;localStorage.setItem('tj_theme',theme);applyTheme(theme);$$('#setTheme button').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-pressed',String(x===b));});});
-$('#setLogout').onclick=()=>{if(confirm('Log out of Trade Journal?'))doLogout();};
+$('#setLogout').onclick=doLogout;
 $('#setDeltaTest').onclick=async()=>{$('#setDelta').textContent='Testing…';
   try{const r=await(await fetch('/api/delta/today')).json();
     if(r.error==='no-credentials')$('#setDelta').textContent='No credentials saved';
@@ -1617,7 +1618,7 @@ async function boot(){
   if(booted)return;booted=true;
   selectedDate=TODAY();
   $('#dvTitle').textContent=fmtDateLong(selectedDate);
-  setView(['#feedback','#billing'].includes(location.hash)?location.hash.slice(1):'month');
+  setView(['#settings','#edge','#performance','#focus','#feedback','#billing'].includes(location.hash)?location.hash.slice(1):'month');
   try{await loadPlanSettings();await loadRoutine();await loadWorkspace();await loadAll();await loadDays(false);}
   catch(error){booted=false;toast(error.message||'Could not load your journal. Please try again.');return;}
   if(view==='month')renderMonth();
@@ -1635,6 +1636,7 @@ async function initJournal(){
 <script src="/broker-import.js"></script>
 <script src="/workspace.js"></script>
 <script src="/calendar.js"></script>
+<script src="/trade-drafts.js"></script>
 <script src="/trade.js"></script>
 <script src="/playbook.js"></script>
 <script src="/profile.js"></script>

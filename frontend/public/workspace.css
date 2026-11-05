@@ -702,3 +702,5 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 
 /* White footer copy keeps sufficient contrast over any blurred page. */
 .welcome-footer-note{background:rgb(25 23 40 / .72);padding:9px 12px;border-radius:12px}.welcome-footer .welcome-skip{font-size:12px}.welcome-footer-note>span{font-size:11px}
+
+.offline-notice{padding:9px 24px;font-size:12px;line-height:1.5;color:#694b16;background:#fff2d6;border-bottom:1px solid #e8d19f}.offline-notice[hidden]{display:none}

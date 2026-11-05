@@ -168,4 +168,6 @@ $$('.navitem[data-view]').forEach(item=>item.onkeydown=event=>{if(['Enter',' '].
 const wsToggleSidebar=$('#sideToggle').onclick;$('#sideToggle').onclick=()=>{wsToggleSidebar();setTimeout(()=>renderEquity(),220);};
 window.addEventListener('resize',debounce(()=>renderEquity(),150));
 // Initialize after both script files have defined the form and workspace hooks.
-initJournal();
+function wsConnectionStatus(){const notice=$('#offlineNotice');if(notice)notice.hidden=navigator.onLine!==false;}
+window.addEventListener('online',wsConnectionStatus);window.addEventListener('offline',wsConnectionStatus);wsConnectionStatus();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>initJournal(),{once:true});else initJournal();

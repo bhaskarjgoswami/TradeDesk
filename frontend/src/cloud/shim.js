@@ -265,7 +265,7 @@ supabase.auth.onAuthStateChange((event, session) => {
 window.addEventListener("pageshow", (event) => {
   if (event.persisted) supabase.auth.getSession().then(({ data }) => refreshSidebarMembership(data.session, true));
 });
-window.__td.resolve({ handle, deleteAccount:async()=>{await api.deleteAccount();await supabase.auth.signOut();location.reload();} });
+window.__td.resolve({ handle, deleteAccount:async()=>{await api.deleteAccount();window.TradeDeskDrafts?.clearAll();await supabase.auth.signOut();location.reload();} });
 
 
 function showPasswordRecovery() {
@@ -310,3 +310,8 @@ window.renderBilling=async()=>{
     window.TDLocale?.apply(host);
   }finally{delete host.dataset.loading;}
 };
+
+if(import.meta.env.PROD&&'serviceWorker' in navigator){
+  const register=()=>navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  if(document.readyState==='complete')register();else window.addEventListener('load',register,{once:true});
+}

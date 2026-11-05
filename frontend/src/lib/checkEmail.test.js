@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import{readFileSync}from'node:fs';import{JSDOM}from'jsdom';
 import{confirmationRedirect}from'./authReturn.js';
-const shim=readFileSync(new URL('../cloud/shim.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'');
+const shim=readFileSync(new URL('../cloud/shim.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replaceAll('import.meta.env.PROD','false');
 const index=readFileSync(new URL('../../../index.html',import.meta.url),'utf8');
 const submit=index.match(/\$\('#loginForm'\)\.addEventListener\('submit',async e=>\{[\s\S]*?\n\}\);/)[0];
 const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
