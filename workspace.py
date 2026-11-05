@@ -15,7 +15,7 @@ KINDS = {'note', 'strategy', 'event', 'session', 'resource', 'blocked'}
 CURRENCIES = {'USD', 'INR', 'EUR', 'GBP', 'AUD', 'CAD', 'JPY', 'USDT', 'SGD', 'AED', 'CHF', 'HKD', 'CNY'}
 DEFAULT_PREFS = dict(currency='USD', capital=0, name='My trading journal', displayCurrency='USD', fxRate=1, fxAt='')
 DEFAULT_PROFILE = dict(firstName='', lastName='', displayName='', mobile='', country='', zip='', timezone='',
-                       experience='', markets='', bio='', photo='')
+                       experience='', markets='', bio='', photo='', language='', gender='', ageGroup='', tradingLevel='', onboardingCompleted=False, onboardingVersion=0)
 EXPERIENCE = {'', 'Under 1 year', '1-3 years', '3-5 years', '5+ years'}
 DEFAULT_GUARDRAILS = dict(enabled=False, riskPerTrade=0.5, dailyLoss=2, maxDrawdown=10,
                           maxTrades=3, maxOpenRisk=2, requireRoutine=False, requireChecklist=False)
@@ -182,6 +182,22 @@ def save_settings(connect,key,data):
         if photo and (not isinstance(photo,str) or not re.fullmatch(r'images/[a-zA-Z0-9_.-]+\.(png|jpg|jpeg|gif|webp)',photo)):
             raise ValueError('Upload a PNG, JPG, GIF or WebP photo')
         clean['photo']=photo or ''
+        for field, allowed in {
+            'language': {'', 'en', 'hi', 'es', 'fr', 'de', 'pt', 'ar', 'zh-CN'},
+            'gender': {'', 'man', 'woman', 'non-binary', 'prefer-not-to-say'},
+            'ageGroup': {'', 'under18', '18-24', '25-34', '35-44', '45-54', '55-64', '65+'},
+            'tradingLevel': {'', 'beginner', 'intermediate', 'experienced', 'professional'},
+        }.items():
+            selected=value.get(field,'')
+            if not isinstance(selected,str) or selected not in allowed:
+                raise ValueError('Choose a valid '+field)
+            clean[field]=selected
+        completed=value.get('onboardingCompleted',False)
+        version=value.get('onboardingVersion',0)
+        if type(completed) is not bool or type(version) is not int or version not in (0,1):
+            raise ValueError('Invalid onboarding state')
+        clean['onboardingCompleted']=completed
+        clean['onboardingVersion']=version
     elif key=='preferences':
         if value.get('currency') not in CURRENCIES:
             raise ValueError('Choose a supported journal currency')

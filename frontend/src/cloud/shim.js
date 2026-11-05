@@ -82,17 +82,21 @@ async function handle(url, init, nativeFetch) {
 
   if (path === "/api/session") {
     const { data } = await supabase.auth.getSession();
-    return json(data.session ? { authed: true, email: data.session.user.email } : { authed: false });
+    return json(data.session ? { authed: true, email: data.session.user.email, language: data.session.user.user_metadata?.preferred_language || "", onboarding: data.session.user.user_metadata?.tradedesk_onboarding_version === 1, name: data.session.user.user_metadata?.full_name || "" } : { authed: false });
   }
   if (path === "/api/login" && method === "POST") {
     const { email, password, name } = JSON.parse(init.body || "{}");
     if (mode === "signup") {
-      const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: String(name || "").trim().slice(0, 100) } } });
+      const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: String(name || "").trim().slice(0, 100), tradedesk_onboarding_version: 1, preferred_language: window.TDLocale?.language || "en" } } });
       if (error) return json({ error: error.message }, 400);
+      window.tdNewAccount=true;window.tdSignupName=String(name||"").trim();window.tdSignupLanguage=window.TDLocale?.language||"en";
       if (!data.session) return json({ ok:true, confirmation_required:true, message: "Account created. Check your email to confirm it, then sign in." });
       return json({ ok: true });
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    window.tdNewAccount=data?.user?.user_metadata?.tradedesk_onboarding_version===1;
+    window.tdSignupName=data?.user?.user_metadata?.full_name||"";
+    window.tdSignupLanguage=data?.user?.user_metadata?.preferred_language||"";
     return error ? json({ error: error.message === "Invalid login credentials" ? "Invalid email or password" : error.message }, 401) : json({ ok: true });
   }
   if (path === "/api/logout") {
@@ -145,6 +149,11 @@ function decorate() {
   const foot = card.querySelector(".login-foot");
   if (foot) foot.innerHTML = `Need help? Contact <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a> · <a href="/">Home</a>`;
 
+  if (!card.querySelector("[data-language-selector]")) {
+    const label=document.createElement("label");label.className="auth-language";
+    label.innerHTML='Language <select data-language-selector translate="no" aria-label="Language">'+window.TDLocale.languages.map(([code,name])=>`<option value="${code}" ${code===window.TDLocale.language?'selected':''}>${name}</option>`).join('')+'</select>';
+    card.append(label);
+  }
   const h1 = card.querySelector("h1"), sub = card.querySelector(".sub"), btn = card.querySelector(".login-btn");
   const btnIcon = btn?.querySelector("svg")?.outerHTML || "";
   const toggle = card.querySelector("#authModePrompt") || document.createElement("div");

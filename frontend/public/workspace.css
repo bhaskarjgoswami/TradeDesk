@@ -577,3 +577,26 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 .settings-panel .btn.danger:not(.ghost),.ws-dialog .btn.danger:not(.ghost){background:#d32f2f!important;color:#fff;border:0}
 .settings-panel .btn.danger:not(.ghost):hover,.ws-dialog .btn.danger:not(.ghost):hover{background:#b71c1c!important}
 .settings-panel .btn.danger:disabled,.ws-dialog .btn.danger:disabled{opacity:.55;cursor:not-allowed}
+
+/* Locale controls and responsive signup welcome cards. */
+.auth-language{display:flex!important;align-items:center;justify-content:center;gap:10px;margin:20px auto 0!important;width:100%;max-width:370px}
+.auth-language select{border:1px solid var(--line,#e1dff0);border-radius:30px;padding:7px 12px;background:transparent;color:inherit;font:inherit;max-width:170px}
+.welcome-dialog{width:min(530px,calc(100vw - 28px));max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--line);border-radius:24px;margin:auto;color:var(--txt);background:var(--panel);box-shadow:0 24px 100px #17172130}
+.welcome-dialog::backdrop{background:rgb(23 23 33 / .36);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.welcome-dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
+.welcome-head{display:flex;gap:18px;justify-content:space-between;align-items:flex-start;padding:28px 28px 18px}
+.welcome-eyebrow{color:var(--accent);font-size:12px;margin-bottom:14px}.welcome-head h2{font-size:25px;font-weight:550;line-height:1.25;margin-bottom:10px}.welcome-head p:not(.welcome-eyebrow){font-size:13px;color:var(--mut);line-height:1.7}
+.welcome-close{width:30px;height:30px;border:0;border-radius:50%;background:var(--accent-weak);color:var(--txt);font:inherit;font-size:22px;cursor:pointer;flex-shrink:0}
+.welcome-progress{display:flex;gap:6px;padding:0 28px 18px}.welcome-progress span{height:4px;background:var(--line);border-radius:10px;flex:1}.welcome-progress span.on{background:var(--accent)}
+.welcome-scroll{overflow-y:auto;overscroll-behavior:contain;padding:0 28px 22px;min-height:0}
+.welcome-card{background:var(--panel2);border:1px solid var(--line);border-radius:18px;padding:22px}.welcome-card h3{font-size:18px;font-weight:500;margin-bottom:22px}.welcome-step-count{font-size:11px;color:var(--mut);margin-bottom:10px}.welcome-fields{display:grid;gap:18px}.welcome-fields .tf-field{display:flex;flex-direction:column;gap:8px;font-size:12px}.welcome-fields select{width:100%;min-width:0;height:42px;border-radius:24px;border:1px solid var(--line);background:var(--panel);color:var(--txt);padding:0 14px;font:inherit}
+.welcome-optional{font-size:11px;color:var(--mut);line-height:1.7;margin-top:18px}.welcome-scroll .ws-form-status{margin-top:10px}
+.welcome-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding:18px 28px}.welcome-footer>div{display:flex;gap:8px}.welcome-footer .btn{white-space:normal;min-height:40px;height:auto;padding:10px 16px;font-size:12px}.welcome-dialog [hidden]{display:none!important}
+[dir="rtl"] .sidebar{border-inline-end:1px solid var(--line);border-right:0}
+[dir="rtl"] .navitem,[dir="rtl"] .ws-field,[dir="rtl"] .tf-field,[dir="rtl"] .language-control{text-align:start}
+[dir="rtl"] input[type="email"],[dir="rtl"] input[type="password"],[dir="rtl"] input[type="number"],[dir="rtl"] input[type="tel"],[dir="rtl"] .num,[dir="rtl"] .cal-amt{direction:ltr;unicode-bidi:isolate}
+[dir="rtl"] .tf-rail{border-right:0;border-inline-start:1px solid var(--line)}
+@media(max-width:980px){[dir="rtl"] .sidebar{left:auto;right:0;transform:translateX(100%)}[dir="rtl"] .sidebar.open{transform:translateX(0)}}
+@media(max-width:480px){.welcome-head{padding:22px 20px 16px}.welcome-head h2{font-size:22px}.welcome-progress{padding-inline:20px}.welcome-scroll{padding-inline:20px}.welcome-card{padding:18px}.welcome-footer{padding:16px 20px;flex-wrap:wrap}.welcome-footer>div{margin-inline-start:auto}}
+[dir="rtl"] .tb-menu{right:auto;left:0;text-align:start}
+[dir="rtl"] input[type="date"],[dir="rtl"] input[type="datetime-local"],[dir="rtl"] canvas{direction:ltr;unicode-bidi:isolate}

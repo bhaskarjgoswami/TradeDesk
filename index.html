@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="/language.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trade Journal</title>
@@ -1062,11 +1063,11 @@ async function loadDays(selectFirst){
 function fmtDate(d){
   if(!d)return '—';
   const dt=new Date(d+'T00:00:00');
-  return dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  return dt.toLocaleDateString(window.TDLocale?.language||'en',{weekday:'short',month:'short',day:'numeric'});
 }
 function fmtDateLong(d){
   const dt=new Date(d+'T00:00:00');
-  return dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  return dt.toLocaleDateString(window.TDLocale?.language||'en',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
 }
 
 $('#logDayBtn').onclick=()=>{
@@ -1078,7 +1079,7 @@ $('#logDayBtn').onclick=()=>{
 async function selectDay(date){
   selectedDate=date;
   $$('.daycard').forEach(c=>c.classList.remove('sel'));
-  dayData=await (await fetch('/api/daylog?date='+date)).json();
+  dayData=await (await fetch('/api/daylog?date='+date)).json();window.TDLocale?.protect(dayData);
   $('#dvTitle').textContent=fmtDateLong(date);
   $('#dvBody').style.display='';
   renderRail();
@@ -1168,7 +1169,7 @@ function chkBadge(json,planJson){let a=[],plan={};try{a=json?JSON.parse(json):[]
 
 
 // ---------- all trades table ----------
-async function loadAll(){allTrades=await (await fetch('/api/trades')).json();renderTags();}
+async function loadAll(){allTrades=await (await fetch('/api/trades')).json();window.TDLocale?.protect(allTrades);renderTags();}
 let searchTerm='';
 function renderAllTable(){
   const list=searchTerm?allTrades.filter(t=>[t.symbol,t.setup,t.notes,t.logic,t.tags,t.direction,t.outcome].some(v=>String(v||'').toLowerCase().includes(searchTerm))):allTrades;
@@ -1611,12 +1612,13 @@ async function boot(){
   await loadPlanSettings();await loadRoutine();await loadWorkspace();await loadAll();await loadDays(false);
   if(view==='month')renderMonth();
   routineQuietSync();
+  window.maybeOnboarding?.();
   if(routineTimer)clearInterval(routineTimer);routineTimer=setInterval(()=>{if(booted)loadRoutine();},60000);
 }
 async function initJournal(){
   try{
     const s=await (await fetch('/api/session')).json();
-    if(s.authed){userEmail=s.email||'';setAvatar(s.email);hideLogin();boot();}else showLogin();
+    if(s.authed){window.tdSignupLanguage=s.language||'';window.tdNewAccount=!!s.onboarding;window.tdSignupName=s.name||'';userEmail=s.email||'';setAvatar(s.email);hideLogin();boot();}else showLogin();
   }catch{showLogin();}
 }
 </script>
@@ -1627,5 +1629,6 @@ async function initJournal(){
 <script src="/playbook.js"></script>
 <script src="/profile.js"></script>
 <script src="/meditation.js"></script>
+<script src="/onboarding.js"></script>
 </body>
 </html>

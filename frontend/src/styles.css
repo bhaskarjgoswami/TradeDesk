@@ -629,3 +629,11 @@ table.grp .num{text-align:right;font-variant-numeric:tabular-nums}
   .billing-page .pc-feats,.billing-page .featured .pc-feats{row-gap:24px}
   .billing-page .billing-plans{padding-bottom:32px}
 }
+
+/* Language preference is independent of plan currency and display theme. */
+.language-control{display:inline-flex;align-items:center;gap:8px;color:inherit;font-size:11px}
+.language-control>span{color:#747184}.language-control select{background:transparent;border:1px solid #e1dff0;border-radius:24px;padding:7px 10px;color:inherit;font:inherit;max-width:165px;min-height:34px}
+.billing-topbar .language-control{margin-inline-start:auto;margin-inline-end:24px}
+[dir="rtl"] .language-control,[dir="rtl"] .pc-feats li,[dir="rtl"] .tf-field{text-align:start}
+[dir="rtl"] input[type="email"],[dir="rtl"] input[type="password"],[dir="rtl"] input[type="number"],[dir="rtl"] .pc-price{direction:ltr;unicode-bidi:isolate}
+@media(max-width:620px){.billing-topbar{flex-wrap:wrap;gap:12px;padding-block:16px}.billing-topbar .language-control{margin-inline-end:0}.language-control>span{display:none}.pub-head nav{flex-wrap:wrap;justify-content:flex-end}}

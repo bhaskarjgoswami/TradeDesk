@@ -1,3 +1,4 @@
+import LanguageSelector from "../components/LanguageSelector";
 import PlanCards from "../lib/PlanCards";
 import { Icon } from "../lib/ui";
 
@@ -7,6 +8,7 @@ export default function Billing() {
       <main className="billing-page">
         <nav className="billing-topbar" aria-label="Billing navigation">
           <a className="billing-brand" href="/app"><span>{Icon.book}</span>TradeDesk</a>
+          <LanguageSelector />
           <a className="billing-back" href="/app"><span aria-hidden="true">←</span> Back to journal</a>
         </nav>
         <header className="billing-heading">

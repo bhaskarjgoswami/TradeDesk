@@ -68,6 +68,17 @@ export function AuthProvider({ children }) {
     return () => { ++requestVersion.current; };
   }, [session?.user?.id]);
 
+  useEffect(() => {
+    let active=true;
+    if (session?.user) api.journalProfile().then(profile => {
+      if (!active) return;
+      window.TDLocale?.protect(profile);
+      const language=profile.settings?.language || session.user.user_metadata?.preferred_language;
+      if (language) window.TDLocale?.setLanguage(language);
+    }).catch(() => {});
+    return () => {active=false;};
+  }, [session?.user?.id]);
+
   // Memoised: consumers use prefs.* as effect dependencies.
   const prefs = useMemo(() => prefsFrom(session?.user), [session?.user]);
   setCurrency(prefs.currency);

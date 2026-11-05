@@ -45,10 +45,14 @@ async function request(method, path, body) {
     throw err;
   }
   if (res.status === 204) return null;
-  return res.json();
+  const data=await res.json();
+  window.TDLocale?.protect(data);
+  return data;
 }
 
 export const api = {
+  journalProfile: () => request("GET", "/j/api/workspace/profile"),
+  saveJournalProfile: (profile) => request("PUT", "/j/api/workspace/profile", profile),
   // trades
   listTrades: (params = {}) => {
     const q = new URLSearchParams(params).toString();

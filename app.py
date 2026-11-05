@@ -1112,7 +1112,14 @@ class Handler(BaseHTTPRequestHandler):
         path = parsed.path
         params = urllib.parse.parse_qs(parsed.query)
 
-        if path in ('/workspace.js','/workspace.css','/theme.css','/theme-mercury.css','/calendar.js','/trade.js','/playbook.js','/profile.js','/meditation.js'):
+        if re.fullmatch(r'/locales/(en|hi|es|fr|de|pt|ar|zh-CN)\.json',path):
+            try:
+                with open(os.path.join(HERE,path[1:]),encoding='utf-8') as handle:catalog=json.load(handle)
+                self._send_json(catalog)
+            except FileNotFoundError:self._send_json({'error':'Language not found'},404)
+            return
+
+        if path in ('/language.js','/onboarding.js','/workspace.js','/workspace.css','/theme.css','/theme-mercury.css','/calendar.js','/trade.js','/playbook.js','/profile.js','/meditation.js'):
             filename=os.path.join(HERE,path[1:])
             try:
                 with open(filename,'rb') as handle:body=handle.read()

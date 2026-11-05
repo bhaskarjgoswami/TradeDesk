@@ -24,7 +24,7 @@ export default function Auth() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({ email, password, options: {data: {tradedesk_onboarding_version:1,preferred_language:window.TDLocale?.language||"en"}} });
         if (error) throw error;
         setMsg("Account created. If email confirmation is on, check your inbox — otherwise you're in.");
       } else {

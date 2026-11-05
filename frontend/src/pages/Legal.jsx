@@ -36,7 +36,7 @@ const PAGES = {
         <h3>What we store</h3>
         <ul>
           <li>Account: email address and an encrypted password (managed by Supabase Auth).</li>
-          <li>Journal data you enter or import: trades, reviews, notes, playbooks, checklists, routine, preferences and chart screenshots.</li>
+          <li>Optional profile details: name, photo, country, language, trading experience, age group and gender. Journal data you enter or import: trades, reviews, notes, playbooks, checklists, routine, preferences and chart screenshots.</li>
           <li>Exchange API keys you save, encrypted by the application before storage.</li>
           <li>Plan status and payment reference IDs. Card and UPI details are handled by Razorpay and never reach us.</li>
         </ul>
