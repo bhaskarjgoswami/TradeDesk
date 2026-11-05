@@ -259,19 +259,19 @@ def _delta_error(e):
 
 
 @router.get("/api/delta/today")
-def delta_today(user=Depends(limit("delta", 6))):
+def delta_today(timezone: str = "", user=Depends(limit("delta", 6))):
     with scoped(user):
         try:
-            return ok({"trades": core.delta_today_trades()})
+            return ok({"trades": core.delta_today_trades(timezone)})
         except Exception as e:
             return _delta_error(e)
 
 
 @router.post("/api/delta/sync")
-def delta_sync(user=Depends(limit("delta", 6))):
+def delta_sync(request: Request, user=Depends(limit("delta", 6))):
     with scoped(user):
         try:
-            return ok(core.delta_sync())
+            return ok(core.delta_sync(body(request).get("timezone")))
         except Exception as e:
             return _delta_error(e)
 

@@ -50,9 +50,9 @@ function calWeeks(cells,byDate,month,today){const weeks=[];for(let w=0;w<6;w++){
 
 // Broker sync: import every closed Delta round-trip into the journal, then refill the calendar.
 async function calSyncBroker(){const button=$('#calSync');if(button.classList.contains('busy'))return;button.classList.add('busy');button.disabled=true;button.dataset.tip='Syncing…';
-  try{const response=await fetch('/api/delta/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const r=await response.json();
+  try{const response=await fetch('/api/delta/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({timezone:tfZoneName()})});const r=await response.json();
     if(r.error==='no-credentials'){toast('No broker API keys. Add your Delta keys in Settings → Integrations.');return;}
-    if(!response.ok||r.error){toast(r.error||'Sync failed');return;}
+    if(!response.ok||r.error){toast(r.detail||r.error||'Sync failed');return;}
     await loadAll();
     if(r.imported&&r.latest){const d=new Date(r.latest+'T12:00:00');CAL.month=new Date(d.getFullYear(),d.getMonth(),1);CAL.selected=r.latest;}
     renderMonth();

@@ -1032,11 +1032,13 @@ $('#exSelect').onchange=()=>{
   exchangeNote();
 };
 $('#exSave').onclick=async()=>{
-  const exchange=$('#exSelect').value,key=$('#exKey').value.trim(),secret=$('#exSecret').value.trim();
+  const exchange=$('#exSelect').value,key=$('#exKey').value.trim(),secret=$('#exSecret').value.trim(),button=$('#exSave');
   if(!EX_PULL[exchange]){toast('Use CSV import for this broker');return;}
   if(!key||!secret){toast('Enter both API key and secret');return;}
-  await fetch('/api/exchange',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({exchange,key,secret})});
-  toast('Credentials saved ✓');renderExchange();
+  button.disabled=true;
+  try{const response=await fetch('/api/exchange',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({exchange,key,secret})});const result=await response.json().catch(()=>null);if(!response.ok)throw Error(result?.error||'Could not save broker credentials. Please try again.');toast('Credentials saved ✓');await renderExchange();}
+  catch(error){toast(error.message||'Could not save broker credentials. Please try again.');}
+  finally{button.disabled=false;}
 };
 $('#setExport').onclick=async()=>{
   const rows=await(await fetch('/api/trades')).json();

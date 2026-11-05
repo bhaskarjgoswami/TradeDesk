@@ -7,7 +7,8 @@ const TF_CHARTS=[['htf','HTF','Higher timeframe: bias, range and key levels'],['
 const TF_EMOTION_IN=['Calm','Confident','Anxious','FOMO','Frustrated','Tired'],TF_EMOTION_OUT=['Satisfied','Calm','Relieved','Frustrated','Regretful'];
 const TF_MISTAKES=['Entered before confirmation','Chased the entry','Moved stop wider','Exited too early','Oversized position','Traded outside my session','Revenge trade','No stop loss'];
 const tfNum=name=>{const v=$('#tfForm [name='+name+']')?.value;return v===''||v==null?null:Number(v);};
-const tfSplit=value=>value?String(value).split('T'):['',''];
+const tfZoneName=()=>{try{return (typeof PF!=='undefined'&&PF.data.settings.timezone)||Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC';}catch{return 'UTC';}};
+const tfSplit=value=>{if(!value)return ['',''];if(!/[zZ]|[+-]\d\d:\d\d$/.test(value))return String(value).split('T');try{const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:tfZoneName(),year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(value)).map(p=>[p.type,p.value]));return [`${p.year}-${p.month}-${p.day}`,`${p.hour}:${p.minute}`];}catch{return String(value).split('T');}};
 const tfPlans=()=>WS.items.strategy.filter(i=>i.body.active||i.id===Number(TF.trade?.strategy_id));
 function tfTemplate(id){const item=WS.items.strategy.find(i=>i.id===Number(id));if(item)return{...clonePlan(item.body),name:item.title};const base=PLAN_SETTINGS.templates[PLAN_SETTINGS.defaultType];return base?clonePlan(base):{name:'Default checklist',criteria:[]};}
 // Contract size from the last trade on the same symbol (Delta lots are fractions of a coin).
@@ -27,7 +28,7 @@ function renderTradePage(){const t=TF.trade||TF.draft||{},review=wsReview(t),[en
   $('#ws-trade').innerHTML=`<div class="tf-head"><div class="tf-title"><h1>${TF.trade?'Edit Trade':'Add Trade'}</h1><p>Record the trade after you exit. Write it by hand or pull your fills from Delta.</p></div>${TF.trade?`<span class="ws-tag">${esc(t.symbol||'')} · ${esc(t.date||'')}</span>`:`<button type="button" class="btn ghost" id="tfPull">↧ Pull from Delta</button>`}</div>
   ${item?`<div class="tf-import"><b>Delta import · ${TF.queueIdx+1} of ${TF.queue.length}</b><span>${esc(item.symbol||'')}${item.time?' · '+esc(item.time):''}</span>${item.open?'<span class="ws-tag amber">Still open · journal it after you exit</span>':''}<button type="button" class="ws-link" id="tfSkip">Skip ›</button></div>`:''}
   <form id="tfForm" class="tf-grid" novalidate>
-   <section class="ws-card tf-left"><h2>Trade Details</h2>
+   <section class="ws-card tf-left"><h2>Trade Details</h2><p class="tf-hint">${esc(tfZoneName())} · Leave times blank if unknown.</p>
     <div class="tf-row">${f('Entry Date','date',TF.date,'date','required')}${f('Entry Time','entry_clock',entryTime||'','time')}</div>
     <div class="tf-row">${f('Exit Date','exit_date',exitDate||'','date')}${f('Exit Time','exit_clock',exitTime||'','time')}</div>
     <div class="tf-row"><label class="tf-field">Instrument<input name="symbol" list="tfSymbols" value="${esc(t.symbol||'')}" placeholder="Search for a symbol" autocomplete="off" required><datalist id="tfSymbols">${symbols.map(s=>`<option value="${esc(s)}">`).join('')}</datalist></label>${sel('Direction','direction',['Long','Short'],t.direction)}</div>
@@ -90,7 +91,7 @@ function tfRecalc(){const form=$('#tfForm');if(!form)return;const entry=tfNum('e
 async function tfSave(){if(TF.busy||TF.uploads)return;const form=$('#tfForm'),status=$('#tfStatus');
   if(!form.date.value||!form.symbol.value.trim()||!form.direction.value){status.textContent='Entry date, instrument and direction are required.';(!form.date.value?form.date:!form.symbol.value.trim()?form.symbol:form.direction).focus();return;}
   const contract=tfNum('contract_value');if(contract!==null&&(!Number.isFinite(contract)||contract<=0)){status.textContent='Enter a positive number of units per lot / contract.';return;}if(TF.autoPnl&&tfNum('entry')!==null&&tfNum('exit')!==null&&tfNum('qty')>0&&!contract){status.textContent='Enter units per lot / contract, or enter your broker’s P&L.';form.elements.contract_value.focus();return;}
-  const t=TF.trade||{},old=wsReview(t),pnl=tfNum('pnl'),swap=tfNum('swap')||0,commission=tfNum('commission')||0,stamp=(d,clock)=>d?`${d}T${clock||'00:00'}`:null;
+  const t=TF.trade||TF.draft||{},old=wsReview(t),pnl=tfNum('pnl'),swap=tfNum('swap')||0,commission=tfNum('commission')||0,stamp=(d,clock,previous)=>{const [oldDate,oldClock]=tfSplit(previous);return d&&d===oldDate&&clock===oldClock?previous:d?(clock?`${d}T${clock}`:d):null;};
   const template=tfTemplate(TF.strategy),charts={...TF.charts},images=TF_CHARTS.map(([k])=>charts[k]).filter(Boolean),hasReview=Boolean(form.emotionIn.value||form.emotionOut.value||form.mistakes.value.trim()||form.management.value.trim()||form.followed.checked);
   const body={date:form.date.value,symbol:form.symbol.value.trim().toUpperCase(),direction:form.direction.value,setup:t.setup||template.name||'',tf_bias:t.tf_bias||'',logic:t.logic||'',
     entry:tfNum('entry'),stop:tfNum('stop'),exit:tfNum('exit'),target:tfNum('target'),qty:tfNum('qty'),risk:tfNum('risk'),pnl,r_multiple:tfNum('r_multiple'),
@@ -98,7 +99,7 @@ async function tfSave(){if(TF.busy||TF.uploads)return;const form=$('#tfForm'),st
     checklist:t.checklist||null,fee:swap+commission||null,swap:swap||null,
     plan:JSON.stringify({...wsJson(t.plan),version:2,template,type:'custom',active:true,exitRules:template.exitRules||'',charts}),
     review:JSON.stringify({version:1,followedPlan:hasReview?form.followed.checked:(old.followedPlan??null),quality:old.quality||'',execution:old.execution||'',emotionIn:form.emotionIn.value,emotionOut:form.emotionOut.value,management:form.management.value.trim(),mistakes:form.mistakes.value.trim(),reviewed:hasReview||old.reviewed===true,reviewedAt:hasReview?(old.reviewedAt||new Date().toISOString()):(old.reviewedAt||null)}),
-    strategy_id:TF.strategy?Number(TF.strategy):null,entry_time:stamp(form.date.value,form.entry_clock.value),exit_time:stamp(form.exit_date.value||(form.exit_clock.value?form.date.value:''),form.exit_clock.value),contract_value:contract,clientId:TF.clientId,expectedRevision:TF.trade?.revision};
+    strategy_id:TF.strategy?Number(TF.strategy):null,entry_time:stamp(form.date.value,form.entry_clock.value,t.entry_time),exit_time:stamp(form.exit_date.value||(form.exit_clock.value?form.date.value:''),form.exit_clock.value,t.exit_time),contract_value:contract,timezone:tfZoneName(),sourceId:TF.draft?.source_id,clientId:TF.clientId,expectedRevision:TF.trade?.revision};
   TF.busy=true;$('#tfSave').disabled=true;status.textContent='Saving…';
   let saved;
   try{
@@ -119,12 +120,12 @@ async function tfSave(){if(TF.busy||TF.uploads)return;const form=$('#tfForm'),st
   toast(t.id?'Trade updated':'Trade saved ✓');if(TF.queue.length){tfNextImport();return;}if(t.id&&TF.back==='tradeview'){openTradeDetail(saved.id);return;}calShowDay(body.date);
 }
 // Delta: pull today's fills, then journal them one at a time on this page.
-async function tfPull(){const button=$('#tfPull');button.disabled=true;try{const r=await(await fetch('/api/delta/today')).json();
+async function tfPull(){const button=$('#tfPull');button.disabled=true;try{const r=await(await fetch('/api/delta/today?timezone='+encodeURIComponent(tfZoneName()))).json();
     if(r.error==='no-credentials'){toast('No Delta API keys. Add your read-only keys in Settings → Integrations.');return;}if(r.error){toast('Delta: '+r.error);return;}
-    if(!r.trades?.length){toast('No Delta trades for today');return;}TF.queue=r.trades;TF.queueIdx=-1;tfNextImport();}
+    if(!r.trades?.length){toast('No closed Delta trades for today');return;}TF.queue=r.trades.filter(t=>!t.source_id||!allTrades.some(saved=>saved.source_id===t.source_id));if(!TF.queue.length){toast('These broker trades are already in your journal.');return;}TF.queueIdx=-1;tfNextImport();}
   catch(error){toast('Could not reach Delta');}finally{if(button.isConnected)button.disabled=false;}}
 function tfNextImport(){TF.queueIdx++;const c=TF.queue[TF.queueIdx];if(!c){TF.queue=[];toast('All Delta trades reviewed ✓');const date=TF.date;loadAll().then(()=>calShowDay(date));return;}
-  const back=TF.back;openTradePage(null,c.date,null,{date:c.date,symbol:c.symbol,direction:c.direction,entry:c.entry,exit:c.exit,stop:c.stop,qty:c.qty,risk:c.risk,pnl:c.pnl,fee:c.fee,contract_value:c.cv||1}).then(()=>{TF.back=back;});}
+  const back=TF.back;openTradePage(null,c.date,null,{...c,contract_value:c.contract_value||c.cv||null}).then(()=>{TF.back=back;});}
 async function tfDelete(){if(!TF.trade||!confirm('Delete this trade permanently?'))return;try{const response=await fetch('/api/trades/'+TF.trade.id,{method:'DELETE'});if(!response.ok)throw Error('Could not delete this trade. Please try again.');TF.dirty=false;allTrades=allTrades.filter(t=>t.id!==TF.trade.id);toast('Trade deleted');const date=TF.trade.date;try{await loadAll();}catch{toast('Trade deleted. Refresh the journal when your connection returns.');}calShowDay(date);}catch(error){toast(error.message);}}
 async function tfLeave(){if(TF.trade&&TF.back==='tradeview'){openTradeDetail(TF.trade.id);return;}if(TF.back==='month'||TF.back==='journal'||!TF.back||TF.back==='trade'){calShowDay(TF.date);return;}setView(TF.back);}
 
@@ -133,8 +134,8 @@ async function tfLeave(){if(TF.trade&&TF.back==='tradeview'){openTradeDetail(TF.
 const TD={id:null,dirty:false};
 const tdOrdered=()=>[...allTrades].sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.entry_time||'').localeCompare(String(b.entry_time||''))||a.id-b.id);
 // Session from the entry time in UTC: Asia 00-07, London 07-13, New York 13-21.
-function tdSession(t){if(!t.entry_time)return '—';const d=new Date(t.entry_time);if(Number.isNaN(d.getTime()))return '—';const h=d.getUTCHours();return h<7?'Asia':h<13?'London':h<21?'New York':'After hours';}
-function tdDuration(t){const a=new Date(t.entry_time),b=new Date(t.exit_time),m=Math.round((b-a)/60000);if(!t.entry_time||!t.exit_time||!Number.isFinite(m)||m<0)return '—';return m<60?m+'m':m<1440?`${Math.floor(m/60)}h ${m%60}m`:`${Math.floor(m/1440)}d ${Math.floor(m%1440/60)}h`;}
+function tdSession(t){if(!t.entry_time||!String(t.entry_time).includes('T'))return '—';const d=new Date(t.entry_time);if(Number.isNaN(d.getTime()))return '—';const h=d.getUTCHours();return h<7?'Asia':h<13?'London':h<21?'New York':'After hours';}
+function tdDuration(t){const a=new Date(t.entry_time),b=new Date(t.exit_time),m=Math.round((b-a)/60000);if(!t.entry_time||!t.exit_time||!String(t.entry_time).includes('T')||!String(t.exit_time).includes('T')||!Number.isFinite(m)||m<0)return '—';return m<60?m+'m':m<1440?`${Math.floor(m/60)}h ${m%60}m`:`${Math.floor(m/1440)}d ${Math.floor(m%1440/60)}h`;}
 const tdCost=v=>v?money(-v):money(0);
 window.openTradeDetail=function(id){if(TD.dirty&&view==='tradeview'&&!confirm('Discard unsaved reflection changes?'))return;TD.id=id;TD.dirty=false;setView('tradeview');};
 function renderTradeDetail(){const t=allTrades.find(x=>x.id===TD.id);if(!t){calShowDay(wsLocalDate());return;}

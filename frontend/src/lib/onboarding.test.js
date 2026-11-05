@@ -4,10 +4,10 @@ import {readFileSync} from 'node:fs';
 import {JSDOM} from 'jsdom';
 const source=readFileSync(new URL('../../../onboarding.js',import.meta.url),'utf8');
 const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
-function setup({existing=false,completed=false,fail=false,initialProfile={}}={}){
+function setup({existing=false,completed=false,fail=false,initialProfile={},signupName='Alex Trader'}={}){
  const dom=new JSDOM('<!doctype html><button id="home">Journal</button>',{url:'https://tradedesk.example/app',runScripts:'outside-only'});const w=dom.window;
  w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');this.dispatchEvent(new w.Event('close'));};
- w.PF={data:{revision:4,settings:{firstName:'Alex',country:'GB',bio:'My strategy',onboardingCompleted:completed,...initialProfile}}};w.tdNewAccount=!existing;w.tdSignupName='Alex Trader';w.esc=s=>String(s).replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]));w.pfCountries=()=>[['GB','United Kingdom'],['IN','India']];w.pfPaintAvatar=()=>{};
+ w.PF={data:{revision:4,settings:{firstName:'Alex',country:'GB',bio:'My strategy',onboardingCompleted:completed,...initialProfile}}};w.tdNewAccount=!existing;w.tdSignupName=signupName;w.esc=s=>String(s).replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x]));w.pfCountries=()=>[['GB','United Kingdom'],['IN','India']];w.pfPaintAvatar=()=>{};
  w.TDLocale={languages:[['en','English'],['hi','हिन्दी']],language:'en',apply:()=>{},setLanguage:async code=>{w.TDLocale.language=code;return true;}};const writes=[];w.wsApi=async(path,method,body)=>{writes.push({path,method,body});if(fail)throw Error('Try again');return {settings:body.settings,revision:5};};w.eval(source);w.maybeOnboarding();return {dom,w,writes};
 }
 test('existing accounts and completed onboarding do not get a signup modal',()=>{for(const options of [{existing:true},{completed:true}]){const {dom,w}=setup(options);assert.equal(w.document.querySelector('#welcomeDialog'),null);dom.window.close();}});
@@ -74,3 +74,5 @@ test('carousel arrow keys navigate cards without taking over text-input arrow ke
   w.document.documentElement.dir='rtl';d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true,cancelable:true}));assert.equal(d.querySelector('[data-active="true"]').dataset.question,'tradingLevel');
  }finally{dom.window.close();}
 });
+
+test('long signup names can be skipped without exceeding profile limits',async()=>{const {dom,w,writes}=setup({signupName:'A'.repeat(100)});try{assert.equal(w.document.querySelector('[name=displayName]').value.length,60);assert.ok(w.document.querySelector('[name=firstName]').value.length<=60);w.document.querySelector('[data-welcome-skip]').click();await tick();assert.equal(writes.length,1);assert.equal(writes[0].body.settings.displayName.length,60);}finally{dom.window.close();}});

@@ -12,6 +12,7 @@ Run:  python3 app.py     (then open http://localhost:8787)
 from __future__ import annotations
 
 import json
+import re
 import workspace
 import os
 import sqlite3
@@ -305,7 +306,7 @@ def routine_state():
         row=conn.execute("SELECT value,revision FROM journal_settings WHERE key='routine'").fetchone()
         settings=validate_routine(json.loads(row['value'])) if row else json.loads(json.dumps(DEFAULT_ROUTINE))
         hours,minutes=map(int,settings['resetTime'].split(':'))
-        now=datetime.now(timezone.utc)
+        now=datetime.now(journal_zone())
         boundary=now.replace(hour=hours,minute=minutes,second=0,microsecond=0)
         if now < boundary:
             boundary-=timedelta(days=1)
@@ -488,13 +489,19 @@ def list_trades(params):
 
 def create_trade(data):
     client_id=data.get('clientId') if isinstance(data,dict) else None
-    clean=dict(data)
-    return workspace.create_trade_record(db,FIELDS,clean,client_id,apply_pending_checklist)
+    clean=normalize_trade_times(dict(data),data.get('timezone'))
+    fields=list(FIELDS)
+    source_id=data.get('sourceId')
+    if source_id:
+        if not isinstance(source_id,str) or not re.fullmatch(r'delta:[A-Za-z0-9_.-]{1,100}:[A-Za-z0-9_.:-]{1,100}',source_id):
+            raise ValueError('Invalid broker trade reference')
+        clean['source_id']=source_id;fields.append('source_id')
+    return workspace.create_trade_record(db,fields,clean,client_id,apply_pending_checklist)
 
 
 def update_trade(trade_id, data):
     expected=data.get('expectedRevision') if isinstance(data,dict) else None
-    clean=dict(data)
+    clean=normalize_trade_times(dict(data),data.get('timezone'))
     return workspace.update_trade_record(db,FIELDS,trade_id,clean,expected)
 
 
@@ -674,152 +681,77 @@ def delta_signed_get(path, query=""):
         return json.loads(resp.read().decode())
 
 
-def _fill_day(created_at):
-    """Return YYYY-MM-DD for a Delta created_at (ISO string or epoch us/s)."""
-    s = str(created_at)
-    if s.isdigit():
-        n = int(s)
-        if n > 1e14:      # microseconds
-            n //= 1_000_000
-        elif n > 1e11:    # milliseconds
-            n //= 1000
-        return time.strftime("%Y-%m-%d", time.localtime(n))
-    return s[:10]
+def journal_zone(preferred=None):
+    from zoneinfo import ZoneInfo,ZoneInfoNotFoundError
+    name=preferred or workspace.read_settings(db,'profile')['settings'].get('timezone') or 'UTC'
+    try:
+        if not isinstance(name,str) or len(name)>64:raise ValueError()
+        return ZoneInfo(name)
+    except (ZoneInfoNotFoundError,ValueError):
+        raise ValueError('Choose a valid time zone in Settings before importing trades.')
+
+
+def normalize_trade_times(data,zone_name=None):
+    from datetime import datetime,timezone,date
+    if not data.get('entry_time') and not data.get('exit_time'):return data
+    zone=journal_zone(zone_name)
+    times={}
+    for key in ('entry_time','exit_time'):
+        value=data.get(key)
+        if not value:continue
+        try:
+            if len(value)==10:
+                date.fromisoformat(value)
+                continue
+            parsed=datetime.fromisoformat(value.replace('Z','+00:00'))
+            if parsed.tzinfo is None:
+                aware=parsed.replace(tzinfo=zone)
+                if aware.astimezone(timezone.utc).astimezone(zone).replace(tzinfo=None)!=parsed:
+                    raise ValueError('This clock time does not exist because of daylight saving. Choose a valid time or leave it blank.')
+                other=parsed.replace(tzinfo=zone,fold=1)
+                if aware.utcoffset()!=other.utcoffset():
+                    raise ValueError('This clock time occurs twice because of daylight saving. Use UTC in Settings, or leave the time blank.')
+                parsed=aware
+            times[key]=parsed.astimezone(timezone.utc)
+            data[key]=times[key].isoformat()
+        except (ValueError,TypeError) as error:
+            if str(error).startswith('This clock time'):raise
+            raise ValueError('Use a valid '+key.replace('_',' ')) from error
+    if len(times)==2 and times['exit_time']<times['entry_time']:
+        raise ValueError('Exit time cannot be earlier than entry time.')
+    return data
+
+
+def _fill_day(created_at,zone=None):
+    from datetime import timezone
+    parsed=_fill_local(created_at)
+    return parsed.astimezone(zone or timezone.utc).strftime('%Y-%m-%d') if parsed else ''
 
 
 _CV_CACHE = {}
 
 
 def _contract_value(symbol):
-    """Contract value (e.g. BTCUSD = 0.001 BTC) for correct P&L/notional math."""
-    if symbol in _CV_CACHE:
-        return _CV_CACHE[symbol]
-    cv = 1.0
+    if symbol in _CV_CACHE:return _CV_CACHE[symbol]
     try:
-        url = f"{DELTA_BASE}/v2/products/{urllib.parse.quote(symbol)}"
-        with urllib.request.urlopen(url, timeout=8) as r:
-            d = json.loads(r.read().decode())
-        cv = float((d.get("result") or {}).get("contract_value") or 1)
-    except Exception:
-        pass
-    _CV_CACHE[symbol] = cv
+        url=f'{DELTA_BASE}/v2/products/{urllib.parse.quote(symbol)}'
+        with urllib.request.urlopen(url,timeout=8) as response:payload=json.loads(response.read().decode())
+        cv=float((payload.get('result') or {}).get('contract_value'))
+        import math
+        if not math.isfinite(cv) or cv<=0:raise ValueError()
+    except Exception as error:
+        raise RuntimeError('Could not verify the instrument contract size. Please retry the broker import.') from error
+    _CV_CACHE[symbol]=cv
     return cv
 
 
-def delta_today_trades():
-    """Reconstruct today's trades from fills, split into round-trips.
-
-    Walks each symbol's fills chronologically; a trade runs from flat back to
-    flat. Entry = VWAP of opening fills, exit = VWAP of closing fills, and P&L
-    is Delta's own realized_pnl (summed across closing fills) — exact, not an
-    estimate. Stop is matched from today's stop-loss orders by time + side.
-    """
-    data = delta_signed_get("/v2/fills", "?page_size=500")
-    fills = data.get("result", []) or []
-    today = time.strftime("%Y-%m-%d")
-    todays = [f for f in fills if _fill_day(f.get("created_at", "")) == today]
-
-    # today's stop-loss orders: (created_at, symbol, stop_price)
-    stop_orders = []
-    try:
-        od = delta_signed_get("/v2/orders/history", "?page_size=200")
-        for o in (od.get("result", []) or []):
-            if o.get("stop_order_type") == "stop_loss_order" and _fill_day(o.get("created_at", "")) == today:
-                if o.get("product_symbol") and o.get("stop_price"):
-                    stop_orders.append((str(o["created_at"]), o["product_symbol"], float(o["stop_price"])))
-    except Exception:
-        pass
-
-    def match_stop(sym, t_open, t_close, direction, entry):
-        cands = []
-        for (ts, s, sp) in stop_orders:
-            if s != sym or not (t_open <= ts <= t_close):
-                continue
-            # a long's stop sits below entry; a short's above
-            if direction == "Long" and sp < entry:
-                cands.append((ts, sp))
-            elif direction == "Short" and sp > entry:
-                cands.append((ts, sp))
-        cands.sort()
-        return cands[0][1] if cands else None
-
-    by_sym = {}
-    for f in todays:
-        sym = f.get("product_symbol") or f.get("symbol") or "?"
-        by_sym.setdefault(sym, []).append(f)
-
-    trades = []
-    for sym, fs in by_sym.items():
-        fs.sort(key=lambda f: str(f.get("created_at", "")))
-        cv = _contract_value(sym)
-        pos = 0.0
-        op_side = None
-        op_sz = op_not = cl_sz = cl_not = 0.0
-        realized = 0.0
-        fee = 0.0
-        t_open = None
-
-        def flush(t_close, last_fill):
-            nonlocal pos, op_side, op_sz, op_not, cl_sz, cl_not, realized, fee, t_open
-            entry = round(op_not / op_sz, 4) if op_sz else None
-            exit_ = round(cl_not / cl_sz, 4) if cl_sz else None
-            direction = "Long" if op_side == "buy" else "Short"
-            qty = op_sz
-            pnl = round(realized, 4) if cl_sz else None
-            outcome = ("Win" if pnl > 0 else "Loss" if pnl < 0 else "BE") if pnl is not None else ""
-            stop = match_stop(sym, t_open or "", t_close, direction, entry) if entry else None
-            risk = round(abs(entry - stop) * qty * cv, 2) if (entry and stop and qty) else None
-            trades.append({
-                "date": today, "symbol": sym, "direction": direction,
-                "entry": entry, "exit": exit_, "stop": stop, "risk": risk,
-                "qty": qty, "pnl": pnl, "fee": round(fee, 4), "outcome": outcome,
-                "open": cl_sz == 0, "fills": int(round(op_sz / max(qty, 1))) if qty else 1,
-                "cv": cv, "time": (t_open or "")[11:16],
-            })
-            pos = op_sz = op_not = cl_sz = cl_not = realized = fee = 0.0
-            op_side = None
-            t_open = None
-
-        for f in fs:
-            side = (f.get("side") or "").lower()
-            sz = abs(float(f.get("size") or 0))
-            px = float(f.get("price") or 0)
-            signed = sz if side == "buy" else -sz
-            rp = ((f.get("meta_data") or {}).get("new_position") or {}).get("realized_pnl")
-            comm = abs(float(f.get("commission") or 0))
-            if pos == 0:
-                op_side, op_sz, op_not = side, sz, sz * px
-                cl_sz = cl_not = realized = 0.0
-                fee = comm
-                pos = signed
-                t_open = str(f.get("created_at", ""))
-            elif (pos > 0 and side == "buy") or (pos < 0 and side == "sell"):
-                op_sz += sz
-                op_not += sz * px
-                fee += comm
-                pos += signed
-            else:
-                cl_sz += sz
-                cl_not += sz * px
-                fee += comm
-                if rp is not None:
-                    realized += float(rp)
-                pos += signed
-                if abs(pos) < 1e-9:
-                    flush(str(f.get("created_at", "")), f)
-        # leftover still-open position
-        if op_sz and pos != 0:
-            entry = round(op_not / op_sz, 4)
-            direction = "Long" if pos > 0 else "Short"
-            trades.append({
-                "date": today, "symbol": sym, "direction": direction,
-                "entry": entry, "exit": None, "stop": None, "risk": None,
-                "qty": op_sz, "pnl": None, "fee": round(fee, 4), "outcome": "",
-                "open": True, "fills": 1, "cv": cv, "time": (t_open or "")[11:16],
-            })
-
-    trades.sort(key=lambda t: (t["open"], t.get("time", "")))
-    return trades
+def delta_today_trades(timezone_name=None):
+    """Closed positions completed today, rebuilt across the full available history."""
+    from datetime import datetime
+    zone=journal_zone(timezone_name)
+    today=datetime.now(zone).date()
+    trades=delta_round_trips(delta_all_fills(),[],zone)
+    return [t for t in trades if _fill_local(t['exit_time']).astimezone(zone).date()==today]
 
 
 def _fill_local(created_at):
@@ -832,10 +764,10 @@ def _fill_local(created_at):
             n /= 1_000_000
         elif n > 1e11:
             n /= 1000
-        return datetime.fromtimestamp(n).astimezone()
+        return datetime.fromtimestamp(n,timezone.utc)
     try:
         d = datetime.fromisoformat(s.replace("Z", "+00:00"))
-        return (d if d.tzinfo else d.replace(tzinfo=timezone.utc)).astimezone()
+        return (d if d.tzinfo else d.replace(tzinfo=timezone.utc)).astimezone(timezone.utc)
     except ValueError:
         return None
 
@@ -850,16 +782,19 @@ def delta_all_fills(max_pages=6):
         after = (data.get("meta") or {}).get("after")
         if not after:
             break
+    if after:raise RuntimeError('Broker history exceeds this sync window. Import older history using CSV; no partial sync was saved.')
     return fills
 
 
-def delta_round_trips(fills, stop_orders):
+def delta_round_trips(fills, stop_orders, zone=None):
     """Rebuild closed round-trips (flat -> flat) per symbol from fills, across days.
 
     Entry/exit are VWAPs, P&L is Delta's realized_pnl summed over closing fills,
     fee is the commission on every fill. A still-open position is not returned.
     Each trade's source_id is the id of its first fill, so re-syncing is idempotent.
     """
+    from datetime import timezone
+    zone=zone or timezone.utc
     by_sym = {}
     for f in fills:
         by_sym.setdefault(f.get("product_symbol") or f.get("symbol") or "?", []).append(f)
@@ -887,7 +822,7 @@ def delta_round_trips(fills, stop_orders):
                 pos += sz if side == "buy" else -sz
                 continue
             close = min(sz, abs(pos))                 # reducing (a flip closes first)
-            cur["cl_sz"] += close; cur["cl_not"] += close * px; cur["fee"] += comm
+            cur["cl_sz"] += close; cur["cl_not"] += close * px; cur["fee"] += comm*(close/sz)
             if rp is not None:
                 cur["realized"] += float(rp); cur["has_rp"] = True
             pos += close if pos < 0 else -close
@@ -899,7 +834,7 @@ def delta_round_trips(fills, stop_orders):
                 rest = sz - close
                 if rest > 1e-9:                       # flip: remainder opens a new trade
                     cur = dict(side=side, op_sz=rest, op_not=rest * px, cl_sz=0.0, cl_not=0.0, realized=0.0,
-                               has_rp=False, fee=0.0, t_open=when, t_close=None, first_id=str(f.get("id") or "") + ":flip")
+                               has_rp=False, fee=comm*(rest/sz), t_open=when, t_close=None, first_id=str(f.get("id") or "") + ":flip")
                     pos = rest if side == "buy" else -rest
     out = []
     for sym, cv, c in trades:
@@ -916,21 +851,22 @@ def delta_round_trips(fills, stop_orders):
                 break
         risk = round(abs(entry - stop) * c["op_sz"] * cv, 2) if stop else None
         out.append({
-            "date": t_open.strftime("%Y-%m-%d") if t_open else time.strftime("%Y-%m-%d"),
+            "date": t_open.astimezone(zone).strftime("%Y-%m-%d") if t_open else time.strftime("%Y-%m-%d"),
             "symbol": sym, "direction": direction, "entry": entry, "exit": exit_, "stop": stop,
             "qty": c["op_sz"], "risk": risk, "pnl": pnl, "fee": round(c["fee"], 4),
             "r_multiple": round(pnl / risk, 2) if risk else None,
             "outcome": "Win" if pnl > 0 else "Loss" if pnl < 0 else "BE",
-            "entry_time": t_open.strftime("%Y-%m-%dT%H:%M") if t_open else None,
-            "exit_time": t_close.strftime("%Y-%m-%dT%H:%M") if t_close else None,
+            "entry_time": t_open.isoformat() if t_open else None,
+            "exit_time": t_close.isoformat() if t_close else None,
             "contract_value": cv, "tags": "delta", "notes": "Imported from Delta Exchange.",
             "source_id": f"delta:{sym}:{c['first_id']}",
         })
     return out
 
 
-def delta_sync():
+def delta_sync(timezone_name=None):
     """Import every closed Delta round-trip into the journal; skip ones already there."""
+    zone=journal_zone(timezone_name)
     fills = delta_all_fills()
     stop_orders = []
     try:
@@ -943,7 +879,7 @@ def delta_sync():
         stop_orders.sort(key=lambda x: x[0])
     except Exception:
         pass
-    trades = delta_round_trips(fills, stop_orders)
+    trades = delta_round_trips(fills, stop_orders,zone)
     added, dates = 0, []
     now = time.strftime("%Y-%m-%d %H:%M:%S")
     trades.sort(key=lambda t: t.get("entry_time") or "")
@@ -1204,7 +1140,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/delta/today":
             try:
-                self._send_json({"trades": delta_today_trades()})
+                self._send_json({"trades": delta_today_trades(params.get("timezone",[None])[0])})
             except RuntimeError as e:
                 if str(e) == "no-credentials":
                     self._send_json({"error": "no-credentials"}, 400)
@@ -1262,7 +1198,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path == "/api/delta/sync":
             try:
-                self._send_json(delta_sync())
+                self._send_json(delta_sync(self._read_body().get("timezone")))
             except RuntimeError as e:
                 self._send_json({"error": str(e)}, 400 if str(e) == "no-credentials" else 502)
             except urllib.error.HTTPError as e:

@@ -698,3 +698,6 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 @media(max-width:520px){.feedback-page{padding:25px 16px 40px}.feedback-card{padding:20px}.feedback-types{gap:7px}.feedback-types span{font-size:11px;padding:9px 11px}.feedback-footer{align-items:stretch;flex-direction:column}.feedback-images img{height:75px}}
 
 #billingMount{min-height:100%;width:100%}.billing-pane-status{padding:40px;text-align:center;color:var(--mut)}.billing-pane-status p{margin-bottom:16px}
+
+/* White footer copy keeps sufficient contrast over any blurred page. */
+.welcome-footer-note{background:rgb(25 23 40 / .72);padding:9px 12px;border-radius:12px}.welcome-footer .welcome-skip{font-size:12px}.welcome-footer-note>span{font-size:11px}

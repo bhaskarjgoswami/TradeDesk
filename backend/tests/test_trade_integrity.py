@@ -44,3 +44,9 @@ def test_failed_insert_does_not_consume_pretrade_checklist(journal):
         conn.execute("CREATE TRIGGER reject_insert BEFORE INSERT ON trades BEGIN SELECT RAISE(ABORT,'quota'); END")
     with pytest.raises(sqlite3.IntegrityError):core.create_trade(trade(clientId='will-retry'))
     with journal() as conn:assert conn.execute("SELECT 1 FROM journal_settings WHERE key='pending_checklist'").fetchone()
+
+def test_pull_and_sync_share_the_same_broker_trade_reference(journal):
+    first=core.create_trade(trade(clientId='pull-1',sourceId='delta:EURUSD:123'))
+    assert first['source_id']=='delta:EURUSD:123'
+    assert core.create_trade(trade(clientId='pull-1',sourceId='delta:EURUSD:123'))['id']==first['id']
+    with pytest.raises(workspace.Conflict):core.create_trade(trade(clientId='pull-again',sourceId='delta:EURUSD:123'))

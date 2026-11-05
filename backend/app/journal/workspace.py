@@ -175,6 +175,10 @@ def save_settings(connect,key,data):
         clean={field:text(value.get(field,''),label,limit) for field,label,limit in [
             ('firstName','First name',60),('lastName','Surname',60),('displayName','Display name',60),('country','Country',60),
             ('timezone','Time zone',60),('markets','Markets traded',200),('bio','Bio',500)]}
+        if clean['timezone']:
+            from zoneinfo import ZoneInfo,ZoneInfoNotFoundError
+            try:ZoneInfo(clean['timezone'])
+            except (ZoneInfoNotFoundError,ValueError):raise ValueError('Choose a valid time zone')
         mobile=text(value.get('mobile',''),'Mobile number',24)
         if mobile and not re.fullmatch(r'\+?[0-9][0-9 ()-]{5,22}',mobile):
             raise ValueError('Enter a mobile number with digits only, for example +91 98765 43210')
@@ -392,6 +396,8 @@ def create_trade_record(connect,fields,data,client_id,prepare):
                 if previous['request_hash']!=fingerprint:
                     raise Conflict('This save already completed with different values. Reload the saved trade before changing it.')
                 return dict(previous)
+        if data.get('source_id') and conn.execute('SELECT 1 FROM trades WHERE source_id=?',(data['source_id'],)).fetchone():
+            raise Conflict('This broker trade is already in your journal. Edit the saved trade instead.')
         prepare(conn,data)
         cols=list(fields)+['created_at','client_id','request_hash']
         values=[data.get(key) for key in fields]+[stamp(),client_id,fingerprint if client_id else None]
