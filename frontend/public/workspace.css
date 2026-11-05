@@ -623,7 +623,7 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 [dir="rtl"] #welcomeNext>span[aria-hidden]{display:inline-block;transform:scaleX(-1)}
 
 /* Compact, centered carousel: one full card with neighboring-card previews. */
-.welcome-dialog{width:min(660px,calc(100vw - 24px));border-radius:27px}
+.welcome-dialog{width:min(660px,calc(100vw - 24px));border:0;border-radius:0;background:transparent;box-shadow:none}
 .welcome-scroll{padding:10px 0 0;overflow:clip}
 .welcome-carousel{position:relative;overflow:clip;padding:12px 0 15px;touch-action:pan-y}
 .welcome-rail{--welcome-card-size:62.5%;--welcome-card-inset:18.75%;--welcome-align:var(--welcome-card-inset);--welcome-gap:12px;display:flex;align-items:stretch;gap:var(--welcome-gap);width:100%;direction:ltr;transform:translateX(calc(var(--welcome-align) - var(--welcome-index,0) * (var(--welcome-card-size) + var(--welcome-gap))));transition:transform .35s cubic-bezier(.2,.7,.2,1);will-change:transform}
