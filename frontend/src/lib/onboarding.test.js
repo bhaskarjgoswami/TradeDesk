@@ -14,7 +14,7 @@ test('existing accounts and completed onboarding do not get a signup modal',()=>
 test('single-question cards retain choices and save every answer to the existing profile',async()=>{
  const {dom,w,writes}=setup();try{
   const d=w.document.querySelector('#welcomeDialog');assert.ok(d.open);
-  const active=()=>d.querySelector('[data-welcome-step]:not([hidden])').dataset.question;
+  const active=()=>d.querySelector('[data-welcome-step][data-active="true"]').dataset.question;
   assert.equal(active(),'country');d.querySelector('input[name=countryChoice][value=IN]').click();
   d.querySelector('#welcomeNext').click();assert.equal(active(),'language');d.querySelector('input[name=language][value=hi]').click();await tick();
   d.querySelector('#welcomeNext').click();assert.equal(active(),'tradingLevel');d.querySelector('input[name=tradingLevel][value=professional]').click();
@@ -52,5 +52,24 @@ test('country search accepts English country names while the interface is locali
   w.pfCountries=()=>[['GB','यूनाइटेड किंगडम'],['IN','भारत']];
   const search=w.document.querySelector('#welcomeCountrySearch');search.value='India';search.dispatchEvent(new w.Event('input'));
   assert.equal(w.document.querySelectorAll('[name=countryChoice]').length,1);assert.equal(w.document.querySelector('[name=countryChoice]').value,'IN');
+ }finally{dom.window.close();}
+});
+
+test('carousel has no visible top bar and exposes only the active card to keyboard navigation',()=>{
+ const {dom,w,writes}=setup();try{
+  const d=w.document.querySelector('#welcomeDialog');
+  assert.equal(d.querySelector('.welcome-head'),null);assert.equal(d.querySelector('.welcome-brand'),null);assert.equal(d.querySelector('.welcome-close'),null);
+  assert.equal(d.querySelectorAll('.welcome-slide').length,5);assert.equal(d.querySelector('#welcomeBack').disabled,true);assert.equal(d.dataset.edge,'start');
+  d.querySelector('#welcomeAdvance').click();assert.equal(d.querySelector('[data-active="true"]').dataset.question,'language');
+  assert.equal(d.querySelector('[data-question="country"]').inert,true);assert.equal(d.querySelector('[data-question="language"]').inert,false);
+  d.querySelector('[data-welcome-peek="4"]').click();assert.equal(d.querySelector('[data-active="true"]').dataset.question,'gender');assert.equal(d.querySelector('#welcomeAdvance').disabled,true);assert.equal(d.dataset.edge,'end');assert.equal(writes.length,0);
+ }finally{dom.window.close();}
+});
+test('carousel arrow keys navigate cards without taking over text-input arrow keys',()=>{
+ const {dom,w}=setup();try{
+  const d=w.document.querySelector('#welcomeDialog'),search=d.querySelector('#welcomeCountrySearch');
+  search.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));assert.equal(d.querySelector('[data-active="true"]').dataset.question,'country');
+  d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));assert.equal(d.querySelector('[data-active="true"]').dataset.question,'language');
+  w.document.documentElement.dir='rtl';d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true,cancelable:true}));assert.equal(d.querySelector('[data-active="true"]').dataset.question,'tradingLevel');
  }finally{dom.window.close();}
 });

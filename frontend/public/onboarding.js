@@ -18,9 +18,9 @@ window.maybeOnboarding = function () {
     {key:'ageGroup',title:'What’s your age group?',copy:'A little more about you. Only if you’d like.',content:`<fieldset class="welcome-choices welcome-age-choices"><legend class="sr-only">Age group</legend>${[['under18','Under 18'],['18-24','18–24'],['25-34','25–34'],['35-44','35–44'],['45-54','45–54'],['55-64','55–64'],['65+','65+'],['','Prefer not to say']].map(([value,title])=>radio('ageGroup',value,title)).join('')}</fieldset>`},
     {key:'gender',title:'How do you identify?',copy:'Share what feels right for you.',content:`<fieldset class="welcome-choices"><legend class="sr-only">Gender</legend>${radio('gender','man','Man','','person')}${radio('gender','woman','Woman','','person')}${radio('gender','non-binary','Non-binary','','orbit')}${radio('gender','prefer-not-to-say','Prefer not to say','','dash')}</fieldset>`}
   ];
-  dialog.innerHTML=`<form id="welcomeForm"><header class="welcome-head"><span class="welcome-brand">TradeDesk</span><div class="welcome-progress" role="progressbar" aria-label="Profile setup progress" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1">${steps.map((_,i)=>`<span class="${i===0?'on':''}"></span>`).join('')}</div><span id="welcomeStepCount" class="welcome-step-count" aria-live="polite">1 / 5</span><button type="button" class="welcome-close" aria-label="Close" data-welcome-skip>×</button></header>
-    <div class="welcome-scroll">${steps.map((item,i)=>`<section class="welcome-question" data-welcome-step="${i}" data-question="${item.key}" ${i?'hidden':''} aria-labelledby="welcomeQuestion${i}"><div class="welcome-art">${face(item.key)}</div><h2 id="${i?'welcomeQuestion'+i:'welcomeTitle'}" class="welcome-question-title" tabindex="-1">${item.title}</h2><p class="welcome-question-copy">${item.copy}</p>${item.content}</section>`).join('')}<p id="welcomeStatus" class="ws-form-status" role="status" aria-live="polite"></p></div>
-    <footer class="welcome-footer"><div class="welcome-footer-note"><button type="button" class="welcome-skip" data-welcome-skip>Skip for now</button><span>Optional · edit anytime in Settings</span></div><div class="welcome-footer-actions"><button type="button" class="welcome-back" id="welcomeBack" hidden aria-label="Back">←</button><button type="button" class="btn" id="welcomeNext"><span>Continue</span><span aria-hidden="true">→</span></button><button type="submit" class="btn" id="welcomeFinish" hidden>Finish setup</button></div></footer></form>`;
+  dialog.innerHTML=`<form id="welcomeForm"><div class="sr-only welcome-progress" role="progressbar" aria-label="Profile setup progress" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1"><span id="welcomeStepCount" aria-live="polite">1 / 5</span></div>
+    <div class="welcome-scroll"><div class="welcome-carousel" aria-roledescription="carousel"><div class="welcome-rail">${steps.map((item,i)=>`<div class="welcome-slide"><section class="welcome-question" data-welcome-step="${i}" data-question="${item.key}" aria-labelledby="${i?'welcomeQuestion'+i:'welcomeTitle'}"><div class="welcome-art">${face(item.key)}</div><h2 id="${i?'welcomeQuestion'+i:'welcomeTitle'}" class="welcome-question-title" tabindex="-1">${item.title}</h2><p class="welcome-question-copy">${item.copy}</p>${item.content}</section><button class="welcome-peek" type="button" data-welcome-peek="${i}" tabindex="-1" aria-hidden="true"></button></div>`).join('')}</div><button type="button" class="welcome-carousel-arrow welcome-carousel-prev" id="welcomeBack" aria-label="Previous"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg></button><button type="button" class="welcome-carousel-arrow welcome-carousel-next" id="welcomeAdvance" aria-label="Next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button></div><p id="welcomeStatus" class="ws-form-status" role="status" aria-live="polite"></p></div>
+    <footer class="welcome-footer"><div class="welcome-footer-note"><button type="button" class="welcome-skip" data-welcome-skip>Skip for now</button><span>Optional · edit anytime in Settings</span></div><div class="welcome-footer-actions"><button type="button" class="btn" id="welcomeNext"><span>Continue</span><span aria-hidden="true">→</span></button><button type="submit" class="btn" id="welcomeFinish" hidden>Finish setup</button></div></footer></form>`;
   // The first title also labels the dialog; all later steps retain its accessible name.
   dialog.querySelector('[data-welcome-step="0"]').setAttribute('aria-labelledby','welcomeTitle');
   document.body.append(dialog);
@@ -40,17 +40,25 @@ window.maybeOnboarding = function () {
     TDLocale.apply(list);
   }
   function showStep(next){
+    if(busy)return;
     step=Math.max(0,Math.min(steps.length-1,next));
     dialog.dataset.question=steps[step].key;
-    dialog.querySelectorAll('[data-welcome-step]').forEach(card=>{card.hidden=Number(card.dataset.welcomeStep)!==step;});
-    dialog.querySelectorAll('.welcome-progress span').forEach((part,index)=>part.classList.toggle('on',index<=step));
+    dialog.dataset.edge=step===0?'start':step===steps.length-1?'end':'middle';
+    dialog.querySelector('.welcome-rail').style.setProperty('--welcome-index',String(step));
+    dialog.querySelectorAll('[data-welcome-step]').forEach(card=>{
+      const active=Number(card.dataset.welcomeStep)===step;
+      card.dataset.active=String(active);card.inert=!active;card.setAttribute('aria-hidden',String(!active));card.scrollTop=0;
+      card.parentElement.classList.toggle('is-active',active);
+      card.parentElement.querySelector('.welcome-peek').hidden=active;
+    });
     dialog.querySelector('.welcome-progress').setAttribute('aria-valuenow',String(step+1));
     dialog.querySelector('#welcomeStepCount').textContent=(step+1)+' / '+steps.length;
-    dialog.querySelector('#welcomeBack').hidden=step===0;
+    dialog.querySelector('#welcomeBack').disabled=step===0;
+    dialog.querySelector('#welcomeAdvance').disabled=step===steps.length-1;
     dialog.querySelector('#welcomeNext').hidden=step===steps.length-1;
     dialog.querySelector('#welcomeFinish').hidden=step!==steps.length-1;
     const heading=dialog.querySelector(step?'#welcomeQuestion'+step:'#welcomeTitle');
-    dialog.setAttribute('aria-labelledby',heading.id);heading.focus();
+    dialog.setAttribute('aria-labelledby',heading.id);heading.focus({preventScroll:true});
     dialog.querySelector('.welcome-scroll').scrollTop=0;
     if(step===0)renderCountries();
   }
@@ -63,7 +71,7 @@ window.maybeOnboarding = function () {
     dialog.querySelectorAll('button,input,select').forEach(control=>control.disabled=true);
     dialog.querySelector('#welcomeStatus').textContent='Saving…';
     try{PF.data=await wsApi('profile','PUT',{settings,revision:PF.data.revision});window.tdNewAccount=false;pfPaintAvatar();await TDLocale.setLanguage(PF.data.settings.language||TDLocale.language);dialog.close();}
-    catch(error){dialog.querySelector('#welcomeStatus').textContent=error.message||'Could not save your profile. Please try again.';dialog.querySelectorAll('button,input,select').forEach(control=>control.disabled=false);busy=false;}
+    catch(error){dialog.querySelector('#welcomeStatus').textContent=error.message||'Could not save your profile. Please try again.';dialog.querySelectorAll('button,input,select').forEach(control=>control.disabled=false);busy=false;dialog.querySelector('#welcomeBack').disabled=step===0;dialog.querySelector('#welcomeAdvance').disabled=step===steps.length-1;}
   }
   form.addEventListener('change',async event=>{
     if(event.target.name==='countryChoice')form.elements.country.value=event.target.value;
@@ -75,6 +83,26 @@ window.maybeOnboarding = function () {
   dialog.querySelector('#welcomeCountrySearch').oninput=renderCountries;
   dialog.querySelector('#welcomeNext').onclick=()=>showStep(step+1);
   dialog.querySelector('#welcomeBack').onclick=()=>showStep(step-1);
+  dialog.querySelector('#welcomeAdvance').onclick=()=>showStep(step+1);
+  dialog.querySelectorAll('[data-welcome-peek]').forEach(button=>button.onclick=()=>showStep(Number(button.dataset.welcomePeek)));
+  dialog.addEventListener('keydown',event=>{
+    if(event.altKey||event.ctrlKey||event.metaKey||event.target.closest('input,select,textarea'))return;
+    if(event.key==='ArrowLeft'||event.key==='ArrowRight'){
+      event.preventDefault();const direction=document.documentElement.dir==='rtl'?-1:1;
+      showStep(step+(event.key==='ArrowRight'?direction:-direction));
+    }
+  });
+  let swipe=null;
+  const carousel=dialog.querySelector('.welcome-carousel');
+  carousel.addEventListener('pointerdown',event=>{
+    if(event.pointerType!=='touch'||event.target.closest('input,button,label'))return;
+    swipe={x:event.clientX,y:event.clientY};
+  },{passive:true});
+  carousel.addEventListener('pointerup',event=>{
+    if(!swipe)return;const x=event.clientX-swipe.x,y=event.clientY-swipe.y;swipe=null;
+    if(Math.abs(x)>40&&Math.abs(x)>Math.abs(y)*1.4){const direction=document.documentElement.dir==='rtl'?-1:1;showStep(step+(x<0?direction:-direction));}
+  },{passive:true});
+  carousel.addEventListener('pointercancel',()=>{swipe=null;},{passive:true});
   dialog.querySelectorAll('[data-welcome-skip]').forEach(button=>button.onclick=finish);
   form.onsubmit=event=>{event.preventDefault();if(step<steps.length-1)showStep(step+1);else finish();};
   dialog.addEventListener('cancel',event=>{event.preventDefault();finish();});
