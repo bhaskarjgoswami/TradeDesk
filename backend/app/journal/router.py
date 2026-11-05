@@ -140,6 +140,8 @@ def post_trade(request: Request, user=Depends(get_current_user)):
     with scoped(user):
         try:
             return ok(core.create_trade(data), 201)
+        except workspace.Conflict as e:
+            return err(str(e),409)
         except ValueError as e:
             return err(str(e), 400)
 
@@ -150,6 +152,8 @@ def put_trade(trade_id: int, request: Request, user=Depends(get_current_user)):
     with scoped(user):
         try:
             res = core.update_trade(trade_id, data)
+        except workspace.Conflict as e:
+            return err(str(e),409)
         except ValueError as e:
             return err(str(e), 400)
         return ok(res) if res else err("not found", 404)

@@ -230,3 +230,25 @@ def test_trade_cursor_pages_do_not_duplicate_or_drop_rows(database):
         second=core.list_trades({"limit":[2],"before_id":[first[-1]["id"]]})
     assert len(first)==2 and len(second)==1
     assert len({row["id"] for row in first+second})==3
+
+
+def test_manual_save_intent_and_stale_edit_are_atomic_on_postgres(database):
+    from concurrent.futures import ThreadPoolExecutor
+    from app.journal import router,core,workspace
+    public_connect,(schema,_) = database
+    with public_connect() as conn:
+        with conn.cursor() as cur:cur.execute(f'DROP SCHEMA "{schema}" CASCADE')
+    pgcompat.forget_schema(schema)
+    user={"user_id":UIDS[0]}
+    with router.scoped(user):pass
+    payload={"date":"2026-11-05","symbol":"EURUSD","direction":"Long","pnl":100,"clientId":"one-save-intent"}
+    def save(_):
+        with router.scoped(user):return core.create_trade(payload)
+    with ThreadPoolExecutor(max_workers=2) as pool:rows=list(pool.map(save,range(2)))
+    assert rows[0]['id']==rows[1]['id']
+    def edit(note):
+        try:
+            with router.scoped(user):return core.update_trade(rows[0]['id'],{**rows[0],"notes":note,"expectedRevision":1})
+        except workspace.Conflict:return None
+    with ThreadPoolExecutor(max_workers=2) as pool:edited=list(pool.map(edit,['tab-one','tab-two']))
+    assert sum(row is not None for row in edited)==1

@@ -36,9 +36,11 @@ def init(connect):
         columns={row[1] for row in conn.execute('PRAGMA table_info(trades)')}
         for name,sqltype in [('review','TEXT'),('strategy_id','INTEGER'),('entry_time','TEXT'),
                              ('exit_time','TEXT'),('contract_value','REAL'),('source_id','TEXT'),
-                             ('target','REAL'),('swap','REAL')]:
+                             ('target','REAL'),('swap','REAL'),('revision','INTEGER NOT NULL DEFAULT 1'),
+                             ('client_id','TEXT'),('request_hash','TEXT')]:
             if name not in columns:
                 conn.execute('ALTER TABLE trades ADD COLUMN '+name+' '+sqltype)
+        conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS trade_request_id ON trades(client_id) WHERE client_id IS NOT NULL')
         conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS trade_source_id ON trades(source_id) WHERE source_id IS NOT NULL')
 
 
@@ -311,7 +313,7 @@ def save_review(connect,ident,data):
         if not row:return dict(error='Trade not found'),404
         if (row['review'] or None)!=(data.get('expectedReview') or None) or (row['notes'] or None)!=(data.get('expectedNotes') or None):
             raise Conflict('This trade review changed in another tab. Reload it before saving.')
-        conn.execute('UPDATE trades SET review=?,notes=? WHERE id=?',(json.dumps(clean),notes,ident))
+        conn.execute('UPDATE trades SET review=?,notes=?,revision=revision+1 WHERE id=?',(json.dumps(clean),notes,ident))
     return dict(ok=True),200
 
 
@@ -375,3 +377,40 @@ def backup(connect, images_dir=None):
                          'routine progress) as JSON. Chart images are referenced by path. Contains no passwords or '
                          'broker credentials. Keep this file private.\n')
     return result.getvalue()
+
+
+def create_trade_record(connect,fields,data,client_id,prepare):
+    """Serialize a user write and make a repeated save intent return its record."""
+    if client_id is not None and (not isinstance(client_id,str) or not re.fullmatch(r'[a-zA-Z0-9_-]{1,80}',client_id)):
+        raise ValueError('Invalid save request ID')
+    fingerprint=hashlib.sha256(json.dumps({key:data.get(key) for key in fields},sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+    with connect() as conn:
+        conn.execute('BEGIN IMMEDIATE')
+        if client_id:
+            previous=conn.execute('SELECT * FROM trades WHERE client_id=?',(client_id,)).fetchone()
+            if previous:
+                if previous['request_hash']!=fingerprint:
+                    raise Conflict('This save already completed with different values. Reload the saved trade before changing it.')
+                return dict(previous)
+        prepare(conn,data)
+        cols=list(fields)+['created_at','client_id','request_hash']
+        values=[data.get(key) for key in fields]+[stamp(),client_id,fingerprint if client_id else None]
+        result=conn.execute('INSERT INTO trades ('+','.join(cols)+') VALUES ('+','.join('?' for _ in cols)+')',values)
+        return dict(conn.execute('SELECT * FROM trades WHERE id=?',(result.lastrowid,)).fetchone())
+
+
+def update_trade_record(connect,fields,ident,data,expected):
+    """A full editor save must be based on the current revision."""
+    with connect() as conn:
+        conn.execute('BEGIN IMMEDIATE')
+        previous=conn.execute('SELECT * FROM trades WHERE id=?',(ident,)).fetchone()
+        if not previous:return None
+        if type(expected) is not int or expected<1:
+            raise Conflict('Reload this trade before saving. Its saved version is required.')
+        if previous['revision']!=expected:
+            # A response-lost update can be acknowledged without writing twice.
+            if previous['revision']==expected+1 and all(previous[key]==data.get(key) for key in fields):
+                return dict(previous)
+            raise Conflict('This trade changed in another tab. Your edits are still here. Reload the saved trade before saving again.')
+        conn.execute('UPDATE trades SET '+','.join(key+'=?' for key in fields)+',revision=revision+1 WHERE id=?',[data.get(key) for key in fields]+[ident])
+        return dict(conn.execute('SELECT * FROM trades WHERE id=?',(ident,)).fetchone())

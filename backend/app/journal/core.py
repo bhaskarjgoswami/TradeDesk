@@ -500,35 +500,15 @@ def validate_trade(data):
 
 
 def create_trade(data):
-    data = validate_trade(data)
-    with db() as conn:
-        apply_pending_checklist(conn, data)
-        conn.commit()
-    cols = [f for f in FIELDS]
-    vals = [data.get(f) for f in cols]
-    cols.append("created_at")
-    vals.append(time.strftime("%Y-%m-%d %H:%M:%S"))
-    placeholders = ",".join("?" for _ in cols)
-    with db() as conn:
-        cur = conn.execute(
-            f"INSERT INTO trades ({','.join(cols)}) VALUES ({placeholders})", vals
-        )
-        conn.commit()
-        new_id = cur.lastrowid
-        row = conn.execute("SELECT * FROM trades WHERE id=?", (new_id,)).fetchone()
-    return row_to_dict(row)
+    client_id=data.get('clientId') if isinstance(data,dict) else None
+    clean=validate_trade(data)
+    return workspace.create_trade_record(db,FIELDS,clean,client_id,apply_pending_checklist)
 
 
 def update_trade(trade_id, data):
-    data = validate_trade(data)
-    sets = ",".join(f"{f}=?" for f in FIELDS)
-    vals = [data.get(f) for f in FIELDS]
-    vals.append(trade_id)
-    with db() as conn:
-        conn.execute(f"UPDATE trades SET {sets} WHERE id=?", vals)
-        conn.commit()
-        row = conn.execute("SELECT * FROM trades WHERE id=?", (trade_id,)).fetchone()
-    return row_to_dict(row) if row else None
+    expected=data.get('expectedRevision') if isinstance(data,dict) else None
+    clean=validate_trade(data)
+    return workspace.update_trade_record(db,FIELDS,trade_id,clean,expected)
 
 
 def delete_trade(trade_id):

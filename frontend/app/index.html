@@ -1181,7 +1181,7 @@ function chkBadge(json,planJson){let a=[],plan={};try{a=json?JSON.parse(json):[]
 
 
 // ---------- all trades table ----------
-async function loadAll(){allTrades=await (await fetch('/api/trades')).json();window.TDLocale?.protect(allTrades);renderTags();}
+async function loadAll(){const response=await fetch('/api/trades');const rows=await response.json().catch(()=>null);if(!response.ok||!Array.isArray(rows))throw Error(rows?.error||'Could not load your journal. Please try again.');allTrades=rows;window.TDLocale?.protect(allTrades);renderTags();return rows;}
 let searchTerm='';
 function renderAllTable(){
   const list=searchTerm?allTrades.filter(t=>[t.symbol,t.setup,t.notes,t.logic,t.tags,t.direction,t.outcome].some(v=>String(v||'').toLowerCase().includes(searchTerm))):allTrades;
@@ -1621,7 +1621,8 @@ async function boot(){
   selectedDate=TODAY();
   $('#dvTitle').textContent=fmtDateLong(selectedDate);
   setView(['#feedback','#billing'].includes(location.hash)?location.hash.slice(1):'month');
-  await loadPlanSettings();await loadRoutine();await loadWorkspace();await loadAll();await loadDays(false);
+  try{await loadPlanSettings();await loadRoutine();await loadWorkspace();await loadAll();await loadDays(false);}
+  catch(error){booted=false;toast(error.message||'Could not load your journal. Please try again.');return;}
   if(view==='month')renderMonth();
   routineQuietSync();
   window.maybeOnboarding?.();

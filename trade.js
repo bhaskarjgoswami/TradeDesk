@@ -1,7 +1,7 @@
 'use strict';
 // Add / edit trade page: the journal entry written (or pulled from Delta) after a trade is exited.
 // The pre-trade checklist lives in the Playbook and is kept off this page on purpose.
-const TF={trade:null,draft:null,queue:[],queueIdx:0,date:null,charts:{htf:'',mtf:'',ltf:''},uploads:0,back:'month',autoPnl:true,autoRisk:true,autoR:true,busy:false};
+const TF={trade:null,draft:null,queue:[],queueIdx:0,date:null,charts:{htf:'',mtf:'',ltf:''},uploads:0,back:'month',autoPnl:true,autoRisk:true,autoR:true,busy:false,clientId:null,dirty:false,contractEdited:false};
 const TF_CHARTS=[['htf','HTF','Higher timeframe: bias, range and key levels'],['mtf','MTF','Middle timeframe: structure and the setup forming'],['ltf','LTF','Lower timeframe: the entry trigger and execution']];
 const TF_EMOTION_IN=['Calm','Confident','Anxious','FOMO','Frustrated','Tired'],TF_EMOTION_OUT=['Satisfied','Calm','Relieved','Frustrated','Regretful'];
 const TF_MISTAKES=['Entered before confirmation','Chased the entry','Moved stop wider','Exited too early','Oversized position','Traded outside my session','Revenge trade','No stop loss'];
@@ -10,12 +10,12 @@ const tfSplit=value=>value?String(value).split('T'):['',''];
 const tfPlans=()=>WS.items.strategy.filter(i=>i.body.active||i.id===Number(TF.trade?.strategy_id));
 function tfTemplate(id){const item=WS.items.strategy.find(i=>i.id===Number(id));if(item)return{...clonePlan(item.body),name:item.title};const base=PLAN_SETTINGS.templates[PLAN_SETTINGS.defaultType];return base?clonePlan(base):{name:'Default checklist',criteria:[]};}
 // Contract size from the last trade on the same symbol (Delta lots are fractions of a coin).
-function tfContract(symbol){const own=(TF.trade||TF.draft)?.contract_value;if(own)return Number(own);const prior=allTrades.find(t=>t.symbol===symbol&&Number(t.contract_value)>0);return prior?Number(prior.contract_value):1;}
+function tfContract(symbol){const key=String(symbol||'').trim().toUpperCase(),seed=TF.trade||TF.draft;if(seed&&String(seed.symbol||'').trim().toUpperCase()===key&&Number(seed.contract_value)>0)return Number(seed.contract_value);const prior=allTrades.find(t=>String(t.symbol||'').trim().toUpperCase()===key&&Number(t.contract_value)>0);return prior?Number(prior.contract_value):null;}
 
 window.openTradePage=async function(trade=null,date=null,strategyId=null,draft=null){if(!settingsLoaded&&!await loadPlanSettings())return;
   if(!draft){TF.queue=[];TF.queueIdx=0;}TF.back=view==='trade'?TF.back:view;TF.trade=trade;TF.draft=draft;TF.date=trade?.date||draft?.date||date||wsLocalDate();const plan=wsJson(trade?.plan),charts=plan.charts||{},images=wsJson(trade?.images,[]);
   TF.charts={htf:charts.htf||(!plan.charts&&images[0])||'',mtf:charts.mtf||(!plan.charts&&images[1])||'',ltf:charts.ltf||(!plan.charts&&images[2])||''};
-  const seed=trade||draft;TF.autoPnl=seed?.pnl==null;TF.autoRisk=seed?.risk==null;TF.autoR=seed?.r_multiple==null;TF.uploads=0;TF.busy=false;
+  const seed=trade||draft;TF.autoPnl=seed?.pnl==null;TF.autoRisk=seed?.risk==null;TF.autoR=seed?.r_multiple==null;TF.uploads=0;TF.busy=false;TF.dirty=false;TF.contractEdited=false;TF.clientId=trade?null:crypto.randomUUID();
   TF.strategy=strategyId??trade?.strategy_id??(trade?'':(WS.items.strategy.find(i=>i.body.primary&&i.body.active)?.id??''));setView('trade');};
 
 function renderTradePage(){const t=TF.trade||TF.draft||{},review=wsReview(t),[entryDate,entryTime]=tfSplit(t.entry_time),[exitDate,exitTime]=tfSplit(t.exit_time),swap=Number(t.swap)||0,commission=t.fee==null?'':Math.max(0,Number(t.fee)-swap);
@@ -30,7 +30,7 @@ function renderTradePage(){const t=TF.trade||TF.draft||{},review=wsReview(t),[en
     <div class="tf-row">${f('Entry Date','date',TF.date,'date','required')}${f('Entry Time','entry_clock',entryTime||'','time')}</div>
     <div class="tf-row">${f('Exit Date','exit_date',exitDate||'','date')}${f('Exit Time','exit_clock',exitTime||'','time')}</div>
     <div class="tf-row"><label class="tf-field">Instrument<input name="symbol" list="tfSymbols" value="${esc(t.symbol||'')}" placeholder="Search for a symbol" autocomplete="off" required><datalist id="tfSymbols">${symbols.map(s=>`<option value="${esc(s)}">`).join('')}</datalist></label>${sel('Direction','direction',['Long','Short'],t.direction)}</div>
-    ${f('Lots','qty',t.qty,'number','min="0" placeholder="0.00"')}
+    <div class="tf-row">${f('Quantity / lots','qty',t.qty,'number','min="0" placeholder="0.00"')}${f('Units per lot / contract','contract_value',tfContract(t.symbol),'number','min="0.00000001" placeholder="e.g. 1 or 100000"')}</div><p class="tf-hint">Use 1 for shares or units. For contracts, enter the instrument’s units per lot.</p>
     <h3>Execution</h3>
     <div class="tf-row">${f('Entry Price','entry',t.entry,'number','placeholder="0.00000"')}${f('Exit Price','exit',t.exit,'number','placeholder="0.00000"')}</div>
     <div class="tf-row">${f('Stop Loss','stop',t.stop,'number','placeholder="0.00000"')}${f('Take Profit','target',t.target,'number','placeholder="0.00000"')}</div>
@@ -38,7 +38,7 @@ function renderTradePage(){const t=TF.trade||TF.draft||{},review=wsReview(t),[en
     <h3>Performance</h3>
     <div class="tf-row">${f('Risk ('+esc(WS.prefs.settings.currency)+')','risk',t.risk,'number','min="0" placeholder="0.00"')}${f('Return (R)','r_multiple',t.r_multiple,'number','placeholder="0.0R"')}</div>
     <h3>Costs</h3>
-    <div class="tf-row">${f('Swap','swap',t.swap??'','number','min="0" placeholder="0.00"')}${f('Commission','commission',commission,'number','min="0" placeholder="0.00"')}</div>
+    <div class="tf-row">${f('Swap','swap',t.swap??'','number','placeholder="0.00"')}${f('Commission','commission',commission,'number','min="0" placeholder="0.00"')}</div>
     <div class="tf-foot">${TF.trade?'<button type="button" class="tf-delete" id="tfDelete">Delete</button>':''}<button type="button" class="btn ghost" id="tfCancel">Cancel</button><button type="submit" class="btn" id="tfSave">${TF.trade?'Save Changes':'Save Manual Trade'}</button></div>
     <p class="tf-status" id="tfStatus" role="status" aria-live="polite"></p>
    </section>
@@ -56,7 +56,7 @@ function renderTradePage(){const t=TF.trade||TF.draft||{},review=wsReview(t),[en
     </section></div></form>`;
   TF_CHARTS.forEach(([key])=>tfRenderChart(key));tfRecalc();
   const form=$('#tfForm');
-  form.oninput=event=>{const name=event.target.name;if(name==='pnl')TF.autoPnl=event.target.value==='';if(name==='risk')TF.autoRisk=event.target.value==='';if(name==='r_multiple')TF.autoR=event.target.value==='';if(name==='date'&&!form.exit_date.value)form.exit_date.placeholder=form.date.value;tfRecalc();};
+  form.oninput=event=>{TF.dirty=true;const name=event.target.name;if(name==='symbol'){form.elements.contract_value.value=tfContract(event.target.value)??'';TF.contractEdited=false;}if(name==='contract_value')TF.contractEdited=true;if(name==='pnl')TF.autoPnl=event.target.value==='';if(name==='risk')TF.autoRisk=event.target.value==='';if(name==='r_multiple')TF.autoR=event.target.value==='';if(name==='date'&&!form.exit_date.value)form.exit_date.placeholder=form.date.value;tfRecalc();};
   form.strategy.onchange=()=>{TF.strategy=form.strategy.value;};
   if($('#tfPull'))$('#tfPull').onclick=tfPull;if($('#tfSkip'))$('#tfSkip').onclick=tfNextImport;
   form.onsubmit=event=>{event.preventDefault();tfSave();};
@@ -80,14 +80,15 @@ async function tfUpload(file,key){if(!file||!file.type.startsWith('image/'))retu
 document.addEventListener('paste',event=>{if(view!=='trade')return;const item=[...(event.clipboardData?.items||[])].find(it=>it.type.startsWith('image/'));if(!item)return;event.preventDefault();const key=TF.target||TF_CHARTS.map(c=>c[0]).find(k=>!TF.charts[k])||'htf';tfUpload(item.getAsFile(),key);});
 
 // P&L, risk and R fill themselves from prices until the user types a value.
-function tfRecalc(){const form=$('#tfForm');if(!form)return;const entry=tfNum('entry'),exit=tfNum('exit'),stop=tfNum('stop'),qty=tfNum('qty'),sign=form.direction.value==='Short'?-1:1,cv=tfContract(form.symbol.value.trim());
-  if(TF.autoPnl){const pnl=entry!=null&&exit!=null&&qty?Math.round((exit-entry)*sign*qty*cv*100)/100:null;form.pnl.value=pnl??'';}
-  if(TF.autoRisk){const risk=entry!=null&&stop!=null&&qty?Math.round(Math.abs(entry-stop)*qty*cv*100)/100:null;form.risk.value=risk||'';}
+function tfRecalc(){const form=$('#tfForm');if(!form)return;const entry=tfNum('entry'),exit=tfNum('exit'),stop=tfNum('stop'),qty=tfNum('qty'),sign=form.direction.value==='Short'?-1:1,cv=tfNum('contract_value');
+  if(TF.autoPnl){const pnl=entry!=null&&exit!=null&&qty&&cv>0?Math.round((exit-entry)*sign*qty*cv*100)/100:null;form.pnl.value=pnl??'';}
+  if(TF.autoRisk){const risk=entry!=null&&stop!=null&&qty&&cv>0?Math.round(Math.abs(entry-stop)*qty*cv*100)/100:null;form.risk.value=risk||'';}
   if(TF.autoR){const pnl=tfNum('pnl'),risk=tfNum('risk');let r=null;if(entry!=null&&stop!=null&&exit!=null&&entry!==stop)r=(exit-entry)*sign/Math.abs(entry-stop);else if(pnl!=null&&risk>0)r=pnl/risk;form.r_multiple.value=r==null?'':Math.round(r*100)/100;}
-  $('#tfPnlHint').textContent=TF.autoPnl&&entry!=null&&exit!=null&&qty?`Calculated: (exit − entry) × lots × contract size ${cv}. Type a value to override.`:'';}
+  $('#tfPnlHint').textContent=cv==null||cv<=0?'Enter units per lot / contract to calculate P&L and risk, or type your broker’s values.':TF.autoPnl&&entry!=null&&exit!=null&&qty?`Calculated: (exit − entry) × lots × contract size ${cv}. Type a value to override.`:'';}
 
 async function tfSave(){if(TF.busy||TF.uploads)return;const form=$('#tfForm'),status=$('#tfStatus');
   if(!form.date.value||!form.symbol.value.trim()||!form.direction.value){status.textContent='Entry date, instrument and direction are required.';(!form.date.value?form.date:!form.symbol.value.trim()?form.symbol:form.direction).focus();return;}
+  const contract=tfNum('contract_value');if(contract!==null&&(!Number.isFinite(contract)||contract<=0)){status.textContent='Enter a positive number of units per lot / contract.';return;}if(TF.autoPnl&&tfNum('entry')!==null&&tfNum('exit')!==null&&tfNum('qty')>0&&!contract){status.textContent='Enter units per lot / contract, or enter your broker’s P&L.';form.elements.contract_value.focus();return;}
   const t=TF.trade||{},old=wsReview(t),pnl=tfNum('pnl'),swap=tfNum('swap')||0,commission=tfNum('commission')||0,stamp=(d,clock)=>d?`${d}T${clock||'00:00'}`:null;
   const template=tfTemplate(TF.strategy),charts={...TF.charts},images=TF_CHARTS.map(([k])=>charts[k]).filter(Boolean),hasReview=Boolean(form.emotionIn.value||form.emotionOut.value||form.mistakes.value.trim()||form.management.value.trim()||form.followed.checked);
   const body={date:form.date.value,symbol:form.symbol.value.trim().toUpperCase(),direction:form.direction.value,setup:t.setup||template.name||'',tf_bias:t.tf_bias||'',logic:t.logic||'',
@@ -96,19 +97,34 @@ async function tfSave(){if(TF.busy||TF.uploads)return;const form=$('#tfForm'),st
     checklist:t.checklist||null,fee:swap+commission||null,swap:swap||null,
     plan:JSON.stringify({...wsJson(t.plan),version:2,template,type:'custom',active:true,exitRules:template.exitRules||'',charts}),
     review:JSON.stringify({version:1,followedPlan:hasReview?form.followed.checked:(old.followedPlan??null),quality:old.quality||'',execution:old.execution||'',emotionIn:form.emotionIn.value,emotionOut:form.emotionOut.value,management:form.management.value.trim(),mistakes:form.mistakes.value.trim(),reviewed:hasReview||old.reviewed===true,reviewedAt:hasReview?(old.reviewedAt||new Date().toISOString()):(old.reviewedAt||null)}),
-    strategy_id:TF.strategy?Number(TF.strategy):null,entry_time:stamp(form.date.value,form.entry_clock.value),exit_time:stamp(form.exit_date.value||(form.exit_clock.value?form.date.value:''),form.exit_clock.value),contract_value:tfContract(form.symbol.value.trim())};
+    strategy_id:TF.strategy?Number(TF.strategy):null,entry_time:stamp(form.date.value,form.entry_clock.value),exit_time:stamp(form.exit_date.value||(form.exit_clock.value?form.date.value:''),form.exit_clock.value),contract_value:contract,clientId:TF.clientId,expectedRevision:TF.trade?.revision};
   TF.busy=true;$('#tfSave').disabled=true;status.textContent='Saving…';
-  try{const response=await fetch(TF.trade?'/api/trades/'+TF.trade.id:'/api/trades',{method:TF.trade?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!response.ok)throw Error('Could not save. Your entries are still here.');
-    toast(TF.trade?'Trade updated':'Trade saved ✓');TF.busy=false;await loadAll();if(TF.queue.length){tfNextImport();return;}if(TF.trade&&TF.back==='tradeview'){openTradeDetail(TF.trade.id);return;}calShowDay(body.date);}
-  catch(error){status.textContent=error.message;TF.busy=false;$('#tfSave').disabled=false;}}
+  let saved;
+  try{
+    const response=await fetch(TF.trade?'/api/trades/'+TF.trade.id:'/api/trades',{method:TF.trade?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const result=await response.json().catch(()=>null);
+    if(!response.ok){
+      if(response.status===402){status.textContent='Your Free plan allows 2 trades per day. Your draft is kept. ';const link=document.createElement('a');link.href='#billing';link.textContent='View plans';link.onclick=event=>{event.preventDefault();setView('billing');};status.append(link);return;}
+      throw Error(result?.error||result?.detail||'Could not save. Your entries are still here.');
+    }
+    if(!result||!Number.isInteger(result.id))throw Error('Could not confirm the save. Retry to check this same save request.');
+    saved=result;
+  }catch(error){status.textContent=error.message||'Could not confirm the save. Retry safely; your entries are still here.';return;}
+  finally{TF.busy=false;if($('#tfSave'))$('#tfSave').disabled=false;}
+  TF.trade=saved;TF.clientId=null;TF.dirty=false;
+  // The write is complete. A failed refresh must never turn this into a new POST.
+  const index=allTrades.findIndex(trade=>trade.id===saved.id);if(index<0)allTrades.unshift(saved);else allTrades[index]=saved;
+  try{await loadAll();}catch{toast('Trade saved. Could not refresh the journal; try again shortly.');status.textContent='Trade saved. Could not refresh the journal; try again shortly.';$('#tfSave').textContent='Save Changes';return;}
+  toast(t.id?'Trade updated':'Trade saved ✓');if(TF.queue.length){tfNextImport();return;}if(t.id&&TF.back==='tradeview'){openTradeDetail(saved.id);return;}calShowDay(body.date);
+}
 // Delta: pull today's fills, then journal them one at a time on this page.
 async function tfPull(){const button=$('#tfPull');button.disabled=true;try{const r=await(await fetch('/api/delta/today')).json();
-    if(r.error==='no-credentials'){toast('No Delta API keys. Add DELTA_API_KEY and DELTA_API_SECRET to .env and restart.');return;}if(r.error){toast('Delta: '+r.error);return;}
+    if(r.error==='no-credentials'){toast('No Delta API keys. Add your read-only keys in Settings → Integrations.');return;}if(r.error){toast('Delta: '+r.error);return;}
     if(!r.trades?.length){toast('No Delta trades for today');return;}TF.queue=r.trades;TF.queueIdx=-1;tfNextImport();}
   catch(error){toast('Could not reach Delta');}finally{if(button.isConnected)button.disabled=false;}}
 function tfNextImport(){TF.queueIdx++;const c=TF.queue[TF.queueIdx];if(!c){TF.queue=[];toast('All Delta trades reviewed ✓');const date=TF.date;loadAll().then(()=>calShowDay(date));return;}
   const back=TF.back;openTradePage(null,c.date,null,{date:c.date,symbol:c.symbol,direction:c.direction,entry:c.entry,exit:c.exit,stop:c.stop,qty:c.qty,risk:c.risk,pnl:c.pnl,fee:c.fee,contract_value:c.cv||1}).then(()=>{TF.back=back;});}
-async function tfDelete(){if(!TF.trade||!confirm('Delete this trade permanently?'))return;await fetch('/api/trades/'+TF.trade.id,{method:'DELETE'});toast('Trade deleted');const date=TF.trade.date;await loadAll();calShowDay(date);}
+async function tfDelete(){if(!TF.trade||!confirm('Delete this trade permanently?'))return;try{const response=await fetch('/api/trades/'+TF.trade.id,{method:'DELETE'});if(!response.ok)throw Error('Could not delete this trade. Please try again.');TF.dirty=false;allTrades=allTrades.filter(t=>t.id!==TF.trade.id);toast('Trade deleted');const date=TF.trade.date;try{await loadAll();}catch{toast('Trade deleted. Refresh the journal when your connection returns.');}calShowDay(date);}catch(error){toast(error.message);}}
 async function tfLeave(){if(TF.trade&&TF.back==='tradeview'){openTradeDetail(TF.trade.id);return;}if(TF.back==='month'||TF.back==='journal'||!TF.back||TF.back==='trade'){calShowDay(TF.date);return;}setView(TF.back);}
 
 

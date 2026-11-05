@@ -95,3 +95,9 @@ TradeDesk is a journal for traders worldwide. Billing and new journal currency s
 Use Settings → Data → Import broker CSV for exports from other brokers. Map the broker's columns, explicitly choose the date and decimal format, review position direction, select gross/net P&L and fee conventions, then review the preview before importing. Comma, semicolon and tab separators are supported. Buy/Sell direction conversion is opt-in. Net P&L is normalized to gross with fees recorded separately, preserving the original net result. Broker labels are saved in tags. Files must contain trade/position records; individual fills need to be combined first. Imports retain existing validation, duplicate detection and Free daily quotas.
 
 New journals can choose their base currency before recording trades. Existing trade amounts are never relabeled by changing base currency; display currency converts for viewing. Older saved currencies remain readable. Delta is the optional direct API connector currently implemented; other brokers use the CSV mapping flow or manual entry. International card acceptance requires the merchant's payment-provider international-payments activation before going live.
+
+## Trade save contract
+
+The journal editor requires an explicit units-per-lot/contract value for automatic P&L and risk calculations on an unknown instrument. Use 1 for actual shares/units; use the instrument contract size when quantity is entered as lots. Broker-entered P&L can be recorded directly.
+
+Manual creates send a stable `clientId` for the save intent. A replay returns the original trade; reusing that ID with changed fields is rejected. Full edits send `expectedRevision`; conflicting edits return 409 and retain the editor values. Review edits also increment the trade revision. Additive per-journal columns and indexes are provisioned by `workspace.init`; existing data is retained. A completed write remains saved if a later list refresh fails.

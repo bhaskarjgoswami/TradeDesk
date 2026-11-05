@@ -487,34 +487,15 @@ def list_trades(params):
 
 
 def create_trade(data):
-    data = dict(data)
-    with db() as conn:
-        apply_pending_checklist(conn, data)
-        conn.commit()
-    cols = [f for f in FIELDS]
-    vals = [data.get(f) for f in cols]
-    cols.append("created_at")
-    vals.append(time.strftime("%Y-%m-%d %H:%M:%S"))
-    placeholders = ",".join("?" for _ in cols)
-    with db() as conn:
-        cur = conn.execute(
-            f"INSERT INTO trades ({','.join(cols)}) VALUES ({placeholders})", vals
-        )
-        conn.commit()
-        new_id = cur.lastrowid
-        row = conn.execute("SELECT * FROM trades WHERE id=?", (new_id,)).fetchone()
-    return row_to_dict(row)
+    client_id=data.get('clientId') if isinstance(data,dict) else None
+    clean=dict(data)
+    return workspace.create_trade_record(db,FIELDS,clean,client_id,apply_pending_checklist)
 
 
 def update_trade(trade_id, data):
-    sets = ",".join(f"{f}=?" for f in FIELDS)
-    vals = [data.get(f) for f in FIELDS]
-    vals.append(trade_id)
-    with db() as conn:
-        conn.execute(f"UPDATE trades SET {sets} WHERE id=?", vals)
-        conn.commit()
-        row = conn.execute("SELECT * FROM trades WHERE id=?", (trade_id,)).fetchone()
-    return row_to_dict(row) if row else None
+    expected=data.get('expectedRevision') if isinstance(data,dict) else None
+    clean=dict(data)
+    return workspace.update_trade_record(db,FIELDS,trade_id,clean,expected)
 
 
 def delete_trade(trade_id):
@@ -1275,7 +1256,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path == "/api/trades":
             data = self._read_body()
-            self._send_json(create_trade(data), 201)
+            try:self._send_json(create_trade(data), 201)
+            except workspace.Conflict as error:self._send_json({"error":str(error)},409)
+            except ValueError as error:self._send_json({"error":str(error)},400)
             return
         if self.path == "/api/delta/sync":
             try:
@@ -1333,8 +1316,11 @@ class Handler(BaseHTTPRequestHandler):
         parts = self.path.strip("/").split("/")
         if len(parts) == 3 and parts[0] == "api" and parts[1] == "trades":
             data = self._read_body()
-            res = update_trade(int(parts[2]), data)
-            self._send_json(res or {"error": "not found"}, 200 if res else 404)
+            try:
+                res = update_trade(int(parts[2]), data)
+                self._send_json(res or {"error": "not found"}, 200 if res else 404)
+            except workspace.Conflict as error:self._send_json({"error":str(error)},409)
+            except ValueError as error:self._send_json({"error":str(error)},400)
             return
         self._send_json({"error": "not found"}, 404)
 
