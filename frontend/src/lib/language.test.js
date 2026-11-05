@@ -33,3 +33,8 @@ test('user content, identifiers, native language names and financial values rema
 test('a failed locale download keeps the prior language and saved preference',async()=>{
  const dom=await setup('<button>Save</button>');try{const w=dom.window;await w.TDLocale.setLanguage('es');w.fetch=async()=>{throw Error('offline');};assert.equal(await w.TDLocale.setLanguage('ar'),false);assert.equal(w.TDLocale.language,'es');assert.equal(w.localStorage.getItem('td_language'),'es');assert.equal(w.document.documentElement.dir,'ltr');}finally{dom.window.close();}
 });
+
+test('translated option labels keep canonical trading values in FormData',async()=>{
+ const dom=await setup('<form><select name="direction"><option>Long</option><option>Short</option></select><select name="outcome"><option>Win</option><option>Loss</option></select></form>');
+ try{const w=dom.window;for(const code of codes){await w.TDLocale.setLanguage(code);const data=new w.FormData(w.document.querySelector('form'));assert.equal(data.get('direction'),'Long');assert.equal(data.get('outcome'),'Win');w.document.querySelector('[name=direction]').value='Short';assert.equal(new w.FormData(w.document.querySelector('form')).get('direction'),'Short');w.document.querySelector('[name=direction]').value='Long';}}finally{dom.window.close();}
+});

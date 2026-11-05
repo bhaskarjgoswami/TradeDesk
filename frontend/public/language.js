@@ -77,6 +77,9 @@
     if (!scope || !root.document) return;
     observer?.disconnect();
     try {
+      // A native option without a value uses its label as its submitted value.
+      // Freeze that original value before translating the visible label.
+      scope.querySelectorAll('option:not([value])').forEach(option=>{option.value=option.textContent;});
       const walker = root.document.createTreeWalker(scope, 4);
       let node;
       while ((node = walker.nextNode())) {
