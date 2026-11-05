@@ -28,10 +28,6 @@ function renderProfileEditor(){const host=$('#profileEditor');if(!host)return;co
     ${f('Zip / postal code','zip',p.zip,'autocomplete="postal-code" maxlength="12" placeholder="e.g. 560001"')}
     ${sel('Time zone','timezone',pfZones().map(z=>[z,z.replace(/_/g,' ')]),zone,'Select time zone')}
     <label class="tf-field pf-full">Language<select name="language" data-language-selector translate="no">${TDLocale.languages.map(([code,name])=>`<option value="${code}" ${code===(p.language||TDLocale.language)?'selected':''}>${name}</option>`).join('')}</select></label>
-    ${sel('Years trading','experience',['Under 1 year','1-3 years','3-5 years','5+ years'].map(x=>[x,x]),p.experience,'Select')}
-    ${f('Markets traded','markets',p.markets,'maxlength="200" placeholder="e.g. BTC perps, Bank Nifty options"')}
-    ${sel('Trading experience','tradingLevel',[['beginner','Beginner'],['intermediate','Intermediate'],['experienced','Experienced'],['professional','Professional']],p.tradingLevel,'Select')}
-    ${sel('Age group','ageGroup',[['under18','Under 18'],['18-24','18–24'],['25-34','25–34'],['35-44','35–44'],['45-54','45–54'],['55-64','55–64'],['65+','65+']],p.ageGroup,'Prefer not to say')}
     ${sel('Gender','gender',[['man','Man'],['woman','Woman'],['non-binary','Non-binary']],p.gender,'Prefer not to say')}
     <label class="tf-field pf-full">Bio<textarea name="bio" rows="3" maxlength="500" placeholder="A line about your trading style">${esc(p.bio||'')}</textarea></label>
    </div>
@@ -44,7 +40,7 @@ function renderProfileEditor(){const host=$('#profileEditor');if(!host)return;co
     PF.uploading=true;$('#pfSave').disabled=true;$('#pfStatus').textContent='Uploading photo…';
     try{const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});const response=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})});const result=await response.json();if(!response.ok||!result.path)throw Error(result.error||'Upload failed');PF.dirty=true;PF.photo=result.path;$('#pfStatus').textContent='Photo ready. Save to keep it.';$('#pfPhotoBtn').textContent='Change photo';pfPaintPreview();}
     catch(error){$('#pfStatus').textContent=error.message||'Upload failed';}finally{PF.uploading=false;$('#pfSave').disabled=false;}};
-  form.onsubmit=async event=>{event.preventDefault();if(PF.busy||PF.uploading)return;const values=Object.fromEntries(new FormData(form));const settings={...PF.data.settings,language:values.language,gender:values.gender,ageGroup:values.ageGroup,tradingLevel:values.tradingLevel,firstName:values.firstName.trim(),lastName:values.lastName.trim(),displayName:values.displayName.trim(),mobile:values.mobile.trim(),country:values.country,zip:values.zip.trim(),timezone:values.timezone,experience:values.experience,markets:values.markets.trim(),bio:values.bio.trim(),photo:PF.photo};
+  form.onsubmit=async event=>{event.preventDefault();if(PF.busy||PF.uploading)return;const values=Object.fromEntries(new FormData(form));const settings={...PF.data.settings,language:values.language,gender:values.gender,firstName:values.firstName.trim(),lastName:values.lastName.trim(),displayName:values.displayName.trim(),mobile:values.mobile.trim(),country:values.country,zip:values.zip.trim(),timezone:values.timezone,bio:values.bio.trim(),photo:PF.photo};
     PF.busy=true;$('#pfSave').disabled=true;$('#pfStatus').textContent='Saving…';
     try{PF.data=await wsApi('profile','PUT',{settings,revision:PF.data.revision});PF.dirty=false;await TDLocale.setLanguage(PF.data.settings.language);$('#pfStatus').textContent='Profile saved.';pfPaintAvatar();}
     catch(error){$('#pfStatus').textContent=error.message;}finally{PF.busy=false;$('#pfSave').disabled=false;}};}

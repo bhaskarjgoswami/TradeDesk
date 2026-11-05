@@ -22,8 +22,9 @@ test('single-question cards retain choices and save every answer to the existing
   d.querySelector('#welcomeNext').click();assert.equal(active(),'gender');d.querySelector('input[name=gender][value=woman]').click();
   d.querySelector('#welcomeBack').click();assert.equal(active(),'ageGroup');assert.equal(d.querySelector('input[name=ageGroup]:checked').value,'25-34');
   d.querySelector('#welcomeNext').click();assert.equal(d.querySelector('input[name=gender]:checked').value,'woman');assert.equal(d.querySelector('.welcome-progress').getAttribute('aria-valuenow'),'5');
+  d.querySelector('#welcomeNext').click();assert.equal(active(),'name');d.querySelector('[name=displayName]').value='Alex T';
   d.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));await tick();assert.equal(writes.length,1);
-  const {body}=writes[0];assert.equal(body.revision,4);assert.equal(body.settings.bio,'My strategy');assert.equal(body.settings.country,'IN');assert.equal(body.settings.language,'hi');assert.equal(body.settings.tradingLevel,'professional');assert.equal(body.settings.gender,'woman');assert.equal(body.settings.ageGroup,'25-34');assert.equal(body.settings.onboardingCompleted,true);assert.equal('countryChoice' in body.settings,false);assert.equal(w.document.querySelector('#welcomeDialog'),null);w.maybeOnboarding();assert.equal(w.document.querySelector('#welcomeDialog'),null);
+  const {body}=writes[0];assert.equal(body.revision,4);assert.equal(body.settings.bio,'My strategy');assert.equal(body.settings.displayName,'Alex T');assert.equal(body.settings.lastName,'Trader');assert.equal(body.settings.country,'IN');assert.equal(body.settings.language,'hi');assert.equal(body.settings.tradingLevel,'professional');assert.equal(body.settings.gender,'woman');assert.equal(body.settings.ageGroup,'25-34');assert.equal(body.settings.onboardingCompleted,true);assert.equal('countryChoice' in body.settings,false);assert.equal(w.document.querySelector('#welcomeDialog'),null);w.maybeOnboarding();assert.equal(w.document.querySelector('#welcomeDialog'),null);
  }finally{dom.window.close();}
 });
 test('searching countries preserves the selected country when its row is filtered out',async()=>{
@@ -59,10 +60,10 @@ test('carousel has no visible top bar and exposes only the active card to keyboa
  const {dom,w,writes}=setup();try{
   const d=w.document.querySelector('#welcomeDialog');
   assert.equal(d.querySelector('.welcome-head'),null);assert.equal(d.querySelector('.welcome-brand'),null);assert.equal(d.querySelector('.welcome-close'),null);
-  assert.equal(d.querySelectorAll('.welcome-slide').length,5);assert.equal(d.querySelector('#welcomeBack').disabled,true);assert.equal(d.dataset.edge,'start');
+  assert.equal(d.querySelectorAll('.welcome-slide').length,6);assert.equal(d.querySelector('#welcomeBack').disabled,true);assert.equal(d.dataset.edge,'start');
   d.querySelector('#welcomeAdvance').click();assert.equal(d.querySelector('[data-active="true"]').dataset.question,'language');
   assert.equal(d.querySelector('[data-question="country"]').inert,true);assert.equal(d.querySelector('[data-question="language"]').inert,false);
-  d.querySelector('[data-welcome-peek="4"]').click();assert.equal(d.querySelector('[data-active="true"]').dataset.question,'gender');assert.equal(d.querySelector('#welcomeAdvance').disabled,true);assert.equal(d.dataset.edge,'end');assert.equal(writes.length,0);
+  d.querySelector('[data-welcome-peek="5"]').click();assert.equal(d.querySelector('[data-active="true"]').dataset.question,'name');assert.equal(d.querySelector('#welcomeAdvance').disabled,true);assert.equal(d.dataset.edge,'end');assert.equal(writes.length,0);
  }finally{dom.window.close();}
 });
 test('carousel arrow keys navigate cards without taking over text-input arrow keys',()=>{
