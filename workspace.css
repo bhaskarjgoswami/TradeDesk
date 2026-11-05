@@ -648,3 +648,20 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 
 .welcome-dialog[data-edge="start"] .welcome-rail{--welcome-align:6%}
 .welcome-dialog[data-edge="end"] .welcome-rail{--welcome-align:calc(94% - var(--welcome-card-size))}
+
+/* Keep question announcements focused without drawing the global tab outline. */
+.welcome-dialog .welcome-question-title:focus{outline:none!important}
+.welcome-dialog{width:min(1060px,calc(100vw - 24px))}
+.welcome-question-content{min-width:0}
+.welcome-footer .welcome-skip,.welcome-footer-note>span{color:#fff}
+@media(min-width:701px){
+.welcome-rail{--welcome-card-size:76%;--welcome-card-inset:12%}
+.welcome-question{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.6fr);align-items:center;gap:24px;padding:26px 28px;height:400px;text-align:start}
+.welcome-art{height:210px;align-items:center;overflow:visible}
+.welcome-mascot{width:210px;max-width:100%;height:210px}
+.welcome-question-title{max-width:none;margin:0 0 10px;font-size:28px;text-wrap:balance}
+.welcome-question-copy{max-width:none;margin:0 0 22px;font-size:12px}
+.welcome-country-list{max-height:180px}
+.welcome-languages .welcome-choice-inner{min-height:47px}
+.welcome-question[data-question=ageGroup] .welcome-choice-inner{min-height:46px}
+}
