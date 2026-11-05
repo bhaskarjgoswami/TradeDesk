@@ -665,3 +665,6 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 .welcome-languages .welcome-choice-inner{min-height:47px}
 .welcome-question[data-question=ageGroup] .welcome-choice-inner{min-height:46px}
 }
+
+/* The search wrapper supplies the visible keyboard focus indicator. */
+.welcome-dialog .welcome-search input:focus{outline:none!important;box-shadow:none}
