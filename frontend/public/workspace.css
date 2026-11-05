@@ -674,3 +674,8 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 .welcome-slide{visibility:hidden;transition:transform .3s ease,opacity .3s ease}
 .welcome-slide.is-active{visibility:visible}
 .welcome-dialog[data-edge] .welcome-rail{--welcome-align:var(--welcome-card-inset)}
+
+/* Match the footer to the centered question card at each breakpoint. */
+.welcome-footer{width:62.5%;margin-inline:auto;padding:7px 0 18px;box-sizing:border-box}
+@media(min-width:701px){.welcome-footer{width:76%}}
+@media(max-width:520px){.welcome-footer{width:82%;padding:7px 0 16px}}
