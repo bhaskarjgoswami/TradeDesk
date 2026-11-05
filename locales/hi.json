@@ -587,5 +587,21 @@
   "Annual: ₹699 / $90 (USD: 2 months free)": "वार्षिक: ₹699 / $90 (USD: 2 महीने निःशुल्क)",
   "One-time payment, no auto-renew": "एकमुश्त भुगतान, स्वतः नवीनीकरण नहीं",
   "Privacy": "गोपनीयता",
-  "Language changed on this device. Save it in Settings to sync your account.": "इस डिवाइस पर भाषा बदल गई। खाते से सिंक करने के लिए सेटिंग्स में सहेजें।"
+  "Language changed on this device. Save it in Settings to sync your account.": "इस डिवाइस पर भाषा बदल गई। खाते से सिंक करने के लिए सेटिंग्स में सहेजें।",
+  "Check your email!": "अपना ईमेल जाँचें!",
+  "We’ve sent a verification link to": "हमने इस पते पर सत्यापन लिंक भेजा है:",
+  ". Open the email and confirm your account.": "। ईमेल खोलकर अपने खाते की पुष्टि करें।",
+  "Didn’t receive an email? Resend": "ईमेल नहीं मिला? फिर भेजें",
+  "Open mail app": "मेल ऐप खोलें",
+  "Back to sign in": "साइन इन पर लौटें",
+  "Use a different email": "दूसरा ईमेल उपयोग करें",
+  "Resend confirmation email": "पुष्टि ईमेल फिर भेजें",
+  "Enter your email address first.": "पहले अपना ईमेल पता दर्ज करें।",
+  "Please wait a minute before requesting another email.": "दूसरा ईमेल माँगने से पहले एक मिनट प्रतीक्षा करें।",
+  "Sending a new confirmation link…": "नया पुष्टि लिंक भेजा जा रहा है…",
+  "If this address needs confirmation, a new link has been sent. Check your inbox and spam folder.": "यदि इस पते की पुष्टि ज़रूरी है, तो नया लिंक भेजा गया है। इनबॉक्स और स्पैम फ़ोल्डर जाँचें।",
+  "Could not send a new confirmation link. Please wait and try again.": "नया पुष्टि लिंक नहीं भेजा जा सका। थोड़ी देर बाद फिर प्रयास करें।",
+  "Email confirmed. Sign in to continue to TradeDesk.": "ईमेल की पुष्टि हो गई। TradeDesk जारी रखने के लिए साइन इन करें।",
+  "This verification link has expired or is invalid. Enter your email to request a new link, or sign in if you already verified it.": "यह सत्यापन लिंक समाप्त या अमान्य है। नया लिंक माँगने के लिए ईमेल दर्ज करें, या पुष्टि हो चुकी है तो साइन इन करें।",
+  "Confirming your email…": "ईमेल की पुष्टि हो रही है…"
 }

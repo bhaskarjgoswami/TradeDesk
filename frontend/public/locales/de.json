@@ -587,5 +587,21 @@
   "Annual: ₹699 / $90 (USD: 2 months free)": "Jährlich: ₹699 / $90 (USD: 2 Monate gratis)",
   "One-time payment, no auto-renew": "Einmalzahlung, keine automatische Verlängerung",
   "Privacy": "Datenschutz",
-  "Language changed on this device. Save it in Settings to sync your account.": "Sprache auf diesem Gerät geändert. Speichere sie in den Einstellungen, um dein Konto zu synchronisieren."
+  "Language changed on this device. Save it in Settings to sync your account.": "Sprache auf diesem Gerät geändert. Speichere sie in den Einstellungen, um dein Konto zu synchronisieren.",
+  "Check your email!": "Prüfe deine E-Mails!",
+  "We’ve sent a verification link to": "Wir haben einen Bestätigungslink gesendet an",
+  ". Open the email and confirm your account.": ". Öffne die E-Mail und bestätige dein Konto.",
+  "Didn’t receive an email? Resend": "Keine E-Mail erhalten? Erneut senden",
+  "Open mail app": "E-Mail-App öffnen",
+  "Back to sign in": "Zurück zur Anmeldung",
+  "Use a different email": "Andere E-Mail verwenden",
+  "Resend confirmation email": "Bestätigungs-E-Mail erneut senden",
+  "Enter your email address first.": "Gib zuerst deine E-Mail-Adresse ein.",
+  "Please wait a minute before requesting another email.": "Warte eine Minute, bevor du eine weitere E-Mail anforderst.",
+  "Sending a new confirmation link…": "Neuer Bestätigungslink wird gesendet…",
+  "If this address needs confirmation, a new link has been sent. Check your inbox and spam folder.": "Falls diese Adresse bestätigt werden muss, wurde ein neuer Link gesendet. Prüfe Posteingang und Spamordner.",
+  "Could not send a new confirmation link. Please wait and try again.": "Bestätigungslink konnte nicht gesendet werden. Bitte später erneut versuchen.",
+  "Email confirmed. Sign in to continue to TradeDesk.": "E-Mail bestätigt. Melde dich an, um TradeDesk zu nutzen.",
+  "This verification link has expired or is invalid. Enter your email to request a new link, or sign in if you already verified it.": "Dieser Link ist abgelaufen oder ungültig. Gib deine E-Mail für einen neuen Link ein oder melde dich an, wenn sie bereits bestätigt ist.",
+  "Confirming your email…": "E-Mail wird bestätigt…"
 }

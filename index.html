@@ -925,7 +925,7 @@ $('#loginForm').addEventListener('submit',async e=>{
   if(!email||!secret){$('#loginErr').textContent='Enter your email and password.';return;}
   try{
     const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:secret,name:$('#loginName').value.trim()})});
-    if(r.ok){const data=await r.json().catch(()=>({}));if(data.confirmation_required){$('#loginErr').textContent=data.message;$('#loginErr').style.color='var(--accent)';return;}if(userEmail&&userEmail.toLowerCase()!==email.toLowerCase()){location.reload();return;}setAvatar(email);hideLogin();boot();}
+    if(r.ok){const data=await r.json().catch(()=>({}));if(data.confirmation_required){if(window.showCheckEmail)window.showCheckEmail(email);else{$('#loginErr').textContent=data.message;$('#loginErr').style.color='var(--accent)';}return;}if(userEmail&&userEmail.toLowerCase()!==email.toLowerCase()){location.reload();return;}setAvatar(email);hideLogin();boot();}
     else{const d=await r.json().catch(()=>({}));$('#loginErr').textContent=d.error||'Login failed';}
   }catch{$('#loginErr').textContent='Could not reach the server.';}
 });

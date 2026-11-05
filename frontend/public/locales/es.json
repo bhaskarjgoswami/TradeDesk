@@ -587,5 +587,21 @@
   "Annual: ₹699 / $90 (USD: 2 months free)": "Anual: ₹699 / $90 (USD: 2 meses gratis)",
   "One-time payment, no auto-renew": "Pago único, sin renovación automática",
   "Privacy": "Privacidad",
-  "Language changed on this device. Save it in Settings to sync your account.": "Idioma cambiado en este dispositivo. Guárdalo en Configuración para sincronizar tu cuenta."
+  "Language changed on this device. Save it in Settings to sync your account.": "Idioma cambiado en este dispositivo. Guárdalo en Configuración para sincronizar tu cuenta.",
+  "Check your email!": "¡Revisa tu correo!",
+  "We’ve sent a verification link to": "Hemos enviado un enlace de verificación a",
+  ". Open the email and confirm your account.": ". Abre el correo y confirma tu cuenta.",
+  "Didn’t receive an email? Resend": "¿No recibiste el correo? Reenviar",
+  "Open mail app": "Abrir correo",
+  "Back to sign in": "Volver a iniciar sesión",
+  "Use a different email": "Usar otro correo",
+  "Resend confirmation email": "Reenviar confirmación",
+  "Enter your email address first.": "Introduce primero tu correo.",
+  "Please wait a minute before requesting another email.": "Espera un minuto antes de pedir otro correo.",
+  "Sending a new confirmation link…": "Enviando nuevo enlace…",
+  "If this address needs confirmation, a new link has been sent. Check your inbox and spam folder.": "Si esta dirección necesita confirmación, se ha enviado un nuevo enlace. Revisa la bandeja de entrada y spam.",
+  "Could not send a new confirmation link. Please wait and try again.": "No se pudo enviar el enlace. Espera e inténtalo de nuevo.",
+  "Email confirmed. Sign in to continue to TradeDesk.": "Correo confirmado. Inicia sesión para continuar en TradeDesk.",
+  "This verification link has expired or is invalid. Enter your email to request a new link, or sign in if you already verified it.": "Este enlace ha caducado o no es válido. Introduce tu correo para pedir otro, o inicia sesión si ya lo verificaste.",
+  "Confirming your email…": "Confirmando tu correo…"
 }

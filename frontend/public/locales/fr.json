@@ -587,5 +587,21 @@
   "Annual: ₹699 / $90 (USD: 2 months free)": "Annuel : ₹699 / $90 (USD : 2 mois offerts)",
   "One-time payment, no auto-renew": "Paiement unique, sans renouvellement automatique",
   "Privacy": "Confidentialité",
-  "Language changed on this device. Save it in Settings to sync your account.": "Langue modifiée sur cet appareil. Enregistrez-la dans les paramètres pour synchroniser le compte."
+  "Language changed on this device. Save it in Settings to sync your account.": "Langue modifiée sur cet appareil. Enregistrez-la dans les paramètres pour synchroniser le compte.",
+  "Check your email!": "Consultez vos e-mails !",
+  "We’ve sent a verification link to": "Nous avons envoyé un lien de vérification à",
+  ". Open the email and confirm your account.": ". Ouvrez l’e-mail et confirmez votre compte.",
+  "Didn’t receive an email? Resend": "Pas d’e-mail reçu ? Renvoyer",
+  "Open mail app": "Ouvrir la messagerie",
+  "Back to sign in": "Retour à la connexion",
+  "Use a different email": "Utiliser un autre e-mail",
+  "Resend confirmation email": "Renvoyer l’e-mail de confirmation",
+  "Enter your email address first.": "Saisissez d’abord votre e-mail.",
+  "Please wait a minute before requesting another email.": "Attendez une minute avant de demander un autre e-mail.",
+  "Sending a new confirmation link…": "Envoi d’un nouveau lien…",
+  "If this address needs confirmation, a new link has been sent. Check your inbox and spam folder.": "Si cette adresse doit être confirmée, un nouveau lien a été envoyé. Vérifiez la boîte de réception et les spams.",
+  "Could not send a new confirmation link. Please wait and try again.": "Impossible d’envoyer le lien. Patientez puis réessayez.",
+  "Email confirmed. Sign in to continue to TradeDesk.": "E-mail confirmé. Connectez-vous pour continuer sur TradeDesk.",
+  "This verification link has expired or is invalid. Enter your email to request a new link, or sign in if you already verified it.": "Ce lien a expiré ou n’est pas valide. Saisissez votre e-mail pour en demander un autre, ou connectez-vous si vous l’avez déjà confirmé.",
+  "Confirming your email…": "Confirmation de votre e-mail…"
 }

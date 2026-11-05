@@ -1,3 +1,4 @@
+import "./authReturn";
 import { createClient } from "@supabase/supabase-js";
 
 import { config } from "./config";

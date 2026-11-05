@@ -58,3 +58,6 @@ npm-debug.log*
 /images/
 /backups/
 .vercel
+
+# Private backup of hosted authentication email configuration
+backend/.auth-email-branding-backup.json

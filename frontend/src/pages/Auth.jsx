@@ -1,3 +1,4 @@
+import { confirmationRedirect } from "../lib/authReturn";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -24,7 +25,7 @@ export default function Auth() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({ email, password, options: {data: {tradedesk_onboarding_version:1,preferred_language:window.TDLocale?.language||"en"}} });
+        const { error } = await supabase.auth.signUp({ email, password, options: {emailRedirectTo:confirmationRedirect(location.origin),data: {tradedesk_onboarding_version:1,preferred_language:window.TDLocale?.language||"en"}} });
         if (error) throw error;
         setMsg("Account created. If email confirmation is on, check your inbox — otherwise you're in.");
       } else {
@@ -38,7 +39,7 @@ export default function Auth() {
   async function reset() {
     if (!email) return setErr("Enter your email first");
     setErr(""); setMsg(""); setBusy(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    const { error } = await supabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+"/app"});
     setBusy(false);
     error ? setErr(error.message) : setMsg("Password reset link sent to your email.");
   }

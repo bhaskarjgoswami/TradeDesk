@@ -587,5 +587,21 @@
   "Annual: ₹699 / $90 (USD: 2 months free)": "年付：₹699 / $90（USD：赠送 2 个月）",
   "One-time payment, no auto-renew": "一次性付款，不自动续费",
   "Privacy": "隐私",
-  "Language changed on this device. Save it in Settings to sync your account.": "已更改此设备的语言。请在设置中保存以同步账户。"
+  "Language changed on this device. Save it in Settings to sync your account.": "已更改此设备的语言。请在设置中保存以同步账户。",
+  "Check your email!": "请查收邮件！",
+  "We’ve sent a verification link to": "验证链接已发送至",
+  ". Open the email and confirm your account.": "。请打开邮件并确认账户。",
+  "Didn’t receive an email? Resend": "未收到邮件？重新发送",
+  "Open mail app": "打开邮箱",
+  "Back to sign in": "返回登录",
+  "Use a different email": "使用其他邮箱",
+  "Resend confirmation email": "重新发送确认邮件",
+  "Enter your email address first.": "请先输入邮箱地址。",
+  "Please wait a minute before requesting another email.": "请等待一分钟后再申请邮件。",
+  "Sending a new confirmation link…": "正在发送新的确认链接…",
+  "If this address needs confirmation, a new link has been sent. Check your inbox and spam folder.": "如果此邮箱需要确认，新的链接已发送。请检查收件箱及垃圾邮件。",
+  "Could not send a new confirmation link. Please wait and try again.": "无法发送新的确认链接，请稍后重试。",
+  "Email confirmed. Sign in to continue to TradeDesk.": "邮箱已确认，请登录 TradeDesk。",
+  "This verification link has expired or is invalid. Enter your email to request a new link, or sign in if you already verified it.": "此验证链接已过期或无效。请输入邮箱申请新链接，若已确认则直接登录。",
+  "Confirming your email…": "正在确认邮箱…"
 }

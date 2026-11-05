@@ -587,5 +587,21 @@
   "Annual: ₹699 / $90 (USD: 2 months free)": "سنوي: ₹699 / $90 (USD: شهران مجانًا)",
   "One-time payment, no auto-renew": "دفعة واحدة دون تجديد تلقائي",
   "Privacy": "الخصوصية",
-  "Language changed on this device. Save it in Settings to sync your account.": "تم تغيير اللغة على هذا الجهاز. احفظها في الإعدادات لمزامنة حسابك."
+  "Language changed on this device. Save it in Settings to sync your account.": "تم تغيير اللغة على هذا الجهاز. احفظها في الإعدادات لمزامنة حسابك.",
+  "Check your email!": "تحقق من بريدك الإلكتروني!",
+  "We’ve sent a verification link to": "أرسلنا رابط التحقق إلى",
+  ". Open the email and confirm your account.": ". افتح الرسالة وأكّد حسابك.",
+  "Didn’t receive an email? Resend": "لم يصلك البريد؟ أعد الإرسال",
+  "Open mail app": "افتح تطبيق البريد",
+  "Back to sign in": "العودة لتسجيل الدخول",
+  "Use a different email": "استخدام بريد آخر",
+  "Resend confirmation email": "إعادة إرسال رسالة التأكيد",
+  "Enter your email address first.": "أدخل بريدك الإلكتروني أولًا.",
+  "Please wait a minute before requesting another email.": "انتظر دقيقة قبل طلب رسالة أخرى.",
+  "Sending a new confirmation link…": "جارٍ إرسال رابط تأكيد جديد…",
+  "If this address needs confirmation, a new link has been sent. Check your inbox and spam folder.": "إذا كان هذا البريد يحتاج إلى تأكيد فقد أُرسل رابط جديد. تحقق من الوارد والبريد غير المرغوب.",
+  "Could not send a new confirmation link. Please wait and try again.": "تعذر إرسال رابط جديد. انتظر وحاول مجددًا.",
+  "Email confirmed. Sign in to continue to TradeDesk.": "تم تأكيد البريد. سجّل الدخول لمتابعة TradeDesk.",
+  "This verification link has expired or is invalid. Enter your email to request a new link, or sign in if you already verified it.": "انتهت صلاحية الرابط أو أنه غير صالح. أدخل بريدك لطلب رابط جديد أو سجّل الدخول إذا أكدته بالفعل.",
+  "Confirming your email…": "جارٍ تأكيد بريدك…"
 }

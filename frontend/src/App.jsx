@@ -7,6 +7,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 
 // Pages load on demand: the landing page and login don't pay for the app,
 // and the charting library only loads with Performance.
+const AuthConfirm = lazy(() => import("./pages/AuthConfirm"));
 const Auth = lazy(() => import("./pages/Auth"));
 const DailyJournal = lazy(() => import("./pages/DailyJournal"));
 const AllTrades = lazy(() => import("./pages/AllTrades"));
@@ -191,6 +192,7 @@ function Shell() {
 export default function App() {
   const { session, loading } = useAuth();
   const loc = useLocation();
+  if(loc.pathname==="/auth/confirm")return <ErrorBoundary><Suspense fallback={<PageLoading />}><AuthConfirm /></Suspense></ErrorBoundary>;
   // Legal pages are public and render the same for signed-in users.
   const legal = LEGAL_PAGES.find((p) => loc.pathname === "/" + p);
   // The journal itself is the local app's UI at /app; old in-app routes go there.

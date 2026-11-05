@@ -1,3 +1,4 @@
+import { confirmationRedirect, initialAuthReturn } from "../lib/authReturn";
 // TradeDesk cloud shim for the journal UI at /app (see public/cloud-boot.js).
 // The UI is the local desktop app's own code. This module:
 //   - answers /api/session, /api/login, /api/logout with Supabase Auth
@@ -87,7 +88,7 @@ async function handle(url, init, nativeFetch) {
   if (path === "/api/login" && method === "POST") {
     const { email, password, name } = JSON.parse(init.body || "{}");
     if (mode === "signup") {
-      const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: String(name || "").trim().slice(0, 100), tradedesk_onboarding_version: 1, preferred_language: window.TDLocale?.language || "en" } } });
+      const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: confirmationRedirect(location.origin), data: { full_name: String(name || "").trim().slice(0, 100), tradedesk_onboarding_version: 1, preferred_language: window.TDLocale?.language || "en" } } });
       if (error) return json({ error: error.message }, 400);
       window.tdNewAccount=true;window.tdSignupName=String(name||"").trim();window.tdSignupLanguage=window.TDLocale?.language||"en";
       if (!data.session) return json({ ok:true, confirmation_required:true, message: "Account created. Check your email to confirm it, then sign in." });
@@ -97,6 +98,7 @@ async function handle(url, init, nativeFetch) {
     window.tdNewAccount=data?.user?.user_metadata?.tradedesk_onboarding_version===1;
     window.tdSignupName=data?.user?.user_metadata?.full_name||"";
     window.tdSignupLanguage=data?.user?.user_metadata?.preferred_language||"";
+    if(error?.code==="email_not_confirmed")window.showResendConfirmation?.();
     return error ? json({ error: error.message === "Invalid login credentials" ? "Invalid email or password" : error.message }, 401) : json({ ok: true });
   }
   if (path === "/api/logout") {
@@ -194,7 +196,53 @@ function decorate() {
       err.textContent = error ? error.message : "Password reset link sent. Check your email.";
     });
   }
+  const check=document.createElement("section");
+  check.className="auth-check";check.hidden=true;check.setAttribute("aria-labelledby","checkEmailTitle");
+  check.innerHTML=`<div class="auth-check-art" aria-hidden="true"><svg viewBox="0 0 360 250" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mailSky" x1="180" y1="0" x2="180" y2="250" gradientUnits="userSpaceOnUse"><stop stop-color="#dedbff"/><stop offset="1" stop-color="white"/></linearGradient><linearGradient id="mailPost" x1="215" y1="135" x2="215" y2="250" gradientUnits="userSpaceOnUse"><stop stop-color="#7d75bd"/><stop offset="1" stop-color="white"/></linearGradient></defs><rect width="360" height="250" rx="28" fill="url(#mailSky)"/><path d="M-20 83C-5 64 22 65 34 82C50 68 73 78 73 96H-20ZM283 45C287 23 315 21 324 39C342 25 368 38 370 58H283Z" fill="white" opacity=".7"/><path d="M65 127C45 98 92 93 96 116C100 138 49 124 67 150C76 162 96 166 128 169" stroke="#918ab8" stroke-width="3" stroke-dasharray="4 8" stroke-linecap="round"/><path d="M205 137H222V250H205Z" fill="url(#mailPost)"/><path d="M136 122C136 108 146 98 160 95L216 81C237 76 252 89 252 108V144L177 163V121C177 109 168 103 158 106L149 109C141 111 136 116 136 122Z" fill="#6d58a8"/><path d="M136 123C136 110 144 104 154 101C168 97 181 105 181 120V165C181 181 162 193 146 184C138 179 133 170 136 161Z" fill="#4d3a81"/><path d="M143 127L170 120V147L143 154Z" fill="white"/><path d="M145 135L168 129M145 141L161 137" stroke="#d8d4eb" stroke-width="2"/><path d="M218 88V118" stroke="#32244d" stroke-width="6" stroke-linecap="round"/><path d="M218 87V114" stroke="#cfc6ee" stroke-width="4" stroke-linecap="round"/><path d="M219 87H232C238 87 238 96 232 98H219" fill="#e1d9f6"/></svg></div><h2 id="checkEmailTitle" tabindex="-1">Check your email!</h2><p class="auth-check-copy">We’ve sent a verification link to <strong id="checkEmailAddress" translate="no"></strong>. Open the email and confirm your account.</p><p class="auth-check-status" id="checkEmailStatus" role="status" aria-live="polite"></p><button type="button" class="auth-check-resend" id="checkEmailResend">Didn’t receive an email? Resend</button><a class="login-btn auth-open-mail" id="checkEmailOpen" href="mailto:" target="_blank" rel="noopener noreferrer">Open mail app</a><button type="button" class="auth-check-back" id="checkEmailBack">Back to sign in</button><button type="button" class="auth-check-back" id="checkEmailDifferent">Use a different email</button>`;
+  card.append(check);
+  const languagePicker=card.querySelector(".auth-language");if(languagePicker)card.append(languagePicker);
+  let pendingEmail="",lastResend=0;
+  const mailboxes={"gmail.com":"https://mail.google.com/mail/u/0/#inbox","googlemail.com":"https://mail.google.com/mail/u/0/#inbox","outlook.com":"https://outlook.live.com/mail/0/inbox","hotmail.com":"https://outlook.live.com/mail/0/inbox","live.com":"https://outlook.live.com/mail/0/inbox","yahoo.com":"https://mail.yahoo.com/","icloud.com":"https://www.icloud.com/mail/"};
+  async function resend(email,status,button){
+    if(!email){status.textContent="Enter your email address first.";document.getElementById("loginEmail").focus();return;}
+    if(Date.now()-lastResend<60000){status.textContent="Please wait a minute before requesting another email.";return;}
+    button.disabled=true;status.textContent="Sending a new confirmation link…";
+    try{const {error}=await supabase.auth.resend({type:"signup",email,options:{emailRedirectTo:confirmationRedirect(location.origin)}});if(error)throw error;lastResend=Date.now();status.textContent="If this address needs confirmation, a new link has been sent. Check your inbox and spam folder.";}
+    catch{status.textContent="Could not send a new confirmation link. Please wait and try again.";}
+    finally{button.disabled=false;}
+  }
+  window.showCheckEmail=(email)=>{
+    pendingEmail=email;card.classList.add("show-check-email");check.hidden=false;
+    history.replaceState(null,"",location.pathname+"?check_email=1");
+    document.getElementById("checkEmailAddress").textContent=email;
+    document.getElementById("checkEmailStatus").textContent="";
+    document.getElementById("checkEmailOpen").href=mailboxes[email.split("@").at(-1)?.toLowerCase()]||"mailto:";
+    try{sessionStorage.setItem("td_confirmation_email",email);}catch{}
+    document.getElementById("loginPass").value="";
+    document.getElementById("checkEmailTitle").focus();
+  };
+  const leaveCheck=(signup)=>{check.hidden=true;card.classList.remove("show-check-email");mode=signup?"signup":"login";history.replaceState(null,"",location.pathname+(signup?"?signup=1":""));render();if(signup)document.getElementById("loginEmail").value="";document.getElementById("loginEmail").focus();};
+  check.querySelector("#checkEmailResend").onclick=()=>resend(pendingEmail,check.querySelector("#checkEmailStatus"),check.querySelector("#checkEmailResend"));
+  check.querySelector("#checkEmailBack").onclick=()=>leaveCheck(false);
+  check.querySelector("#checkEmailDifferent").onclick=()=>leaveCheck(true);
+  const resendButton=document.createElement("button");resendButton.hidden=true;window.showResendConfirmation=()=>{resendButton.hidden=false;};resendButton.type="button";resendButton.className="auth-check-resend auth-form-resend";resendButton.textContent="Resend confirmation email";
+  document.getElementById("loginErr").after(resendButton);
+  resendButton.onclick=()=>resend(document.getElementById("loginEmail").value.trim(),document.getElementById("loginErr"),resendButton);
   render();
+  const authParams=new URLSearchParams(location.search);
+  if(authParams.get("check_email")==="1"){
+    try{const saved=sessionStorage.getItem("td_confirmation_email");if(saved)window.showCheckEmail(saved);}catch{}
+  }
+  const returnError=authParams.get("auth_error")||new URLSearchParams(location.hash.slice(1)).get("error_code")||initialAuthReturn.error;
+  if(authParams.get("confirmed")==="1"||returnError){
+    mode="login";render();if(returnError)resendButton.hidden=false;
+    const notice=document.getElementById("loginErr");
+    notice.textContent=returnError?"This verification link has expired or is invalid. Enter your email to request a new link, or sign in if you already verified it.":"Email confirmed. Sign in to continue to TradeDesk.";
+    if(!returnError)notice.style.color="var(--accent)";
+    try{const saved=sessionStorage.getItem("td_confirmation_email");if(saved)document.getElementById("loginEmail").value=saved;}catch{}
+    history.replaceState(null,"",location.pathname);
+  }
+
 
 
 }

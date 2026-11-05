@@ -587,5 +587,21 @@
   "Annual: ₹699 / $90 (USD: 2 months free)": "Anual: ₹699 / $90 (USD: 2 meses grátis)",
   "One-time payment, no auto-renew": "Pagamento único, sem renovação automática",
   "Privacy": "Privacidade",
-  "Language changed on this device. Save it in Settings to sync your account.": "Idioma alterado neste dispositivo. Salve nas Configurações para sincronizar sua conta."
+  "Language changed on this device. Save it in Settings to sync your account.": "Idioma alterado neste dispositivo. Salve nas Configurações para sincronizar sua conta.",
+  "Check your email!": "Verifique seu e-mail!",
+  "We’ve sent a verification link to": "Enviamos um link de verificação para",
+  ". Open the email and confirm your account.": ". Abra o e-mail e confirme sua conta.",
+  "Didn’t receive an email? Resend": "Não recebeu o e-mail? Reenviar",
+  "Open mail app": "Abrir aplicativo de e-mail",
+  "Back to sign in": "Voltar para entrar",
+  "Use a different email": "Usar outro e-mail",
+  "Resend confirmation email": "Reenviar e-mail de confirmação",
+  "Enter your email address first.": "Digite primeiro seu endereço de e-mail.",
+  "Please wait a minute before requesting another email.": "Aguarde um minuto antes de solicitar outro e-mail.",
+  "Sending a new confirmation link…": "Enviando novo link…",
+  "If this address needs confirmation, a new link has been sent. Check your inbox and spam folder.": "Se este endereço precisar de confirmação, um novo link foi enviado. Verifique a caixa de entrada e spam.",
+  "Could not send a new confirmation link. Please wait and try again.": "Não foi possível enviar o link. Aguarde e tente novamente.",
+  "Email confirmed. Sign in to continue to TradeDesk.": "E-mail confirmado. Entre para continuar no TradeDesk.",
+  "This verification link has expired or is invalid. Enter your email to request a new link, or sign in if you already verified it.": "Este link expirou ou é inválido. Digite seu e-mail para pedir outro ou entre se já o confirmou.",
+  "Confirming your email…": "Confirmando seu e-mail…"
 }
