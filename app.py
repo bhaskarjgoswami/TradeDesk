@@ -456,7 +456,11 @@ def save_routine_progress(body):
 
 
 def row_to_dict(row):
-    return {k: row[k] for k in row.keys()}
+    result={k:row[k] for k in row.keys()}
+    if 'pnl' in result and result['pnl'] is not None:
+        net=result['pnl']-(result.get('fee') or 0)
+        result['outcome']='Win' if net>0 else 'Loss' if net<0 else 'BE'
+    return result
 
 
 def list_trades(params):
@@ -469,7 +473,7 @@ def list_trades(params):
         q += " AND setup = ?"
         args.append(params["setup"][0])
     if params.get("outcome"):
-        q += " AND outcome = ?"
+        q += " AND (CASE WHEN pnl IS NULL THEN outcome WHEN pnl-COALESCE(fee,0)>0 THEN 'Win' WHEN pnl-COALESCE(fee,0)<0 THEN 'Loss' ELSE 'BE' END) = ?"
         args.append(params["outcome"][0])
     if params.get("from"):
         q += " AND date >= ?"

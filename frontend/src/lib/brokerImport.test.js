@@ -41,3 +41,15 @@ test('supports fractional and signed trade amounts, rejecting non-finite values'
   const [row]=convert('date,symbol,direction,entry,qty,pnl\n2026-11-04,SPY,Long,.5,0.25,-2.5');assert.equal(row.entry,.5);assert.equal(row.qty,.25);assert.equal(row.pnl,-2.5);
   assert.throws(()=>convert('date,symbol,direction,pnl\n2026-11-04,SPY,Long,NaN'),/Invalid pnl/);
 });
+
+
+test('forex calculations need explicit units and the preview uses the same multiplier',()=>{
+ const csv='Date,Symbol,Direction,Entry,Exit,Qty\n2026-11-05,EURUSD,Long,1.1,1.101,1';
+ assert.throws(()=>convert(csv),/contract multiplier/);
+ const [row]=convert(csv,{contractValue:'100000'});assert.ok(Math.abs(row.pnl-100)<1e-8);
+});
+test('unique closed-trade IDs retain their broker namespace',()=>{
+ const csv='Date,Symbol,Direction,Pnl,Trade ID\n2026-11-05,SPY,Long,10,broker-123';
+ assert.throws(()=>convert(csv),/broker/);
+ const [row]=convert(csv,{brokerName:'Example'});assert.equal(row.execution_id,'broker-123');assert.equal(row.broker_key,'Example');
+});

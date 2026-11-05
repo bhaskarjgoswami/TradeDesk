@@ -35,8 +35,9 @@ const PAGES = {
         <p>This policy explains what {BRAND} collects and how it is used.</p>
         <h3>What we store</h3>
         <ul>
-          <li>Account: email address and an encrypted password (managed by Supabase Auth).</li>
+          <li>Account: email address and a securely hashed password (managed by Supabase Auth).</li>
           <li>Optional profile details: name, photo, country, language, trading experience, age group and gender. Journal data you enter or import: trades, reviews, notes, playbooks, checklists, routine, preferences and chart screenshots.</li>
+          <li>Optional profile details and feedback you submit, including attached images. Unsaved trade drafts stay in session storage in your current browser tab and are cleared on sign-out.</li>
           <li>Exchange API keys you save, encrypted by the application before storage.</li>
           <li>Plan status and payment reference IDs. Card and UPI details are handled by Razorpay and never reach us.</li>
         </ul>
@@ -47,7 +48,7 @@ const PAGES = {
         <h3>Your rights</h3>
         <p>In Settings → Your data you can download all your data or permanently delete your account, which removes your trades, journal, playbooks, screenshots and profile. You can also email {mail}.</p>
         <h3>Retention</h3>
-        <p>We keep your data while your account exists. Deleting your account removes it from our systems; backups age out within 30 days.</p>
+        <p>We keep your data while your account exists. Deleting your account removes your active account, journal records, and uploaded images. Infrastructure backups follow the storage providers’ retention schedules; we do not promise a specific removal period for those backups.</p>
         <p>Contact: {mail}</p>
       </>
     ),

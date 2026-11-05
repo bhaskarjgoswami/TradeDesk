@@ -97,7 +97,7 @@ async function tfSave(){if(TF.busy||TF.uploads)return;const form=$('#tfForm'),st
   const template=tfTemplate(TF.strategy),charts={...TF.charts},images=TF_CHARTS.map(([k])=>charts[k]).filter(Boolean),hasReview=Boolean(form.emotionIn.value||form.emotionOut.value||form.mistakes.value.trim()||form.management.value.trim()||form.followed.checked);
   const body={date:form.date.value,symbol:form.symbol.value.trim().toUpperCase(),direction:form.direction.value,setup:t.setup||template.name||'',tf_bias:t.tf_bias||'',logic:t.logic||'',
     entry:tfNum('entry'),stop:tfNum('stop'),exit:tfNum('exit'),target:tfNum('target'),qty:tfNum('qty'),risk:tfNum('risk'),pnl,r_multiple:tfNum('r_multiple'),
-    outcome:pnl==null?null:pnl>0?'Win':pnl<0?'Loss':'BE',rating:t.rating||null,tags:t.tags||'',notes:form.notes.value.trim(),images:images.length?JSON.stringify(images):null,
+    outcome:pnl==null?null:pnl-swap-commission>0?'Win':pnl-swap-commission<0?'Loss':'BE',rating:t.rating||null,tags:t.tags||'',notes:form.notes.value.trim(),images:images.length?JSON.stringify(images):null,
     checklist:t.checklist||null,fee:swap+commission||null,swap:swap||null,
     plan:JSON.stringify({...wsJson(t.plan),version:2,template,type:'custom',active:true,exitRules:template.exitRules||'',charts}),
     review:JSON.stringify({version:1,followedPlan:hasReview?form.followed.checked:(old.followedPlan??null),quality:old.quality||'',execution:old.execution||'',emotionIn:form.emotionIn.value,emotionOut:form.emotionOut.value,management:form.management.value.trim(),mistakes:form.mistakes.value.trim(),reviewed:hasReview||old.reviewed===true,reviewedAt:hasReview?(old.reviewedAt||(TF.reviewedAt ||= new Date().toISOString())):(old.reviewedAt||null)}),

@@ -34,3 +34,32 @@ def test_broker_import_preserves_currency_values_and_deduplicates(journal):
     assert workspace.import_trades(journal,{'rows':[row]})=={'imported':1,'skipped':0}
     assert workspace.import_trades(journal,{'rows':[row]})=={'imported':0,'skipped':1}
     assert core.stats()['net_pnl']==100
+
+
+def test_csv_requires_explicit_contract_units_before_calculating(journal):
+    row=dict(date='2026-11-05',symbol='EURUSD',direction='Long',entry=1.1,exit=1.101,qty=1,stop=1.099)
+    with pytest.raises(ValueError,match='contract multiplier'):workspace.import_trades(journal,{'rows':[row]})
+    assert workspace.import_trades(journal,{'rows':[{**row,'contract_value':100000}]})['imported']==1
+    saved=core.list_trades({})[0]
+    assert saved['pnl']==pytest.approx(100) and saved['risk']==pytest.approx(100)
+
+
+def test_csv_trade_ids_distinguish_identical_executions_and_ignore_notes(journal):
+    row=dict(date='2026-11-05',symbol='SPY',direction='Long',pnl=10,execution_id='one',broker_key='Example')
+    assert workspace.import_trades(journal,{'rows':[row]})['imported']==1
+    assert workspace.import_trades(journal,{'rows':[{**row,'notes':'edited'}]})['skipped']==1
+    assert workspace.import_trades(journal,{'rows':[{**row,'execution_id':'two'}]})['imported']==1
+
+
+def test_fallback_import_identity_ignores_mutable_annotations(journal):
+    row=dict(date='2026-11-05',symbol='SPY',direction='Long',pnl=10)
+    workspace.import_trades(journal,{'rows':[row]})
+    assert workspace.import_trades(journal,{'rows':[{**row,'notes':'edited','tags':'reviewed'}]})['skipped']==1
+
+
+def test_net_outcome_agrees_with_stats_and_filters_for_existing_trades(journal):
+    saved=core.create_trade(dict(date='2026-11-05',symbol='SPY',direction='Long',pnl=2,fee=5,outcome='Win'))
+    assert saved['outcome']=='Loss'
+    assert core.stats()['losses']==1
+    assert len(core.list_trades({'outcome':['Loss']}))==1
+    assert core.list_trades({'outcome':['Win']})==[]

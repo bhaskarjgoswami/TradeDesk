@@ -165,12 +165,9 @@ def read_settings(connect,key):
     return dict(settings=json.loads(row['value']) if row else dict(default),revision=row['revision'] if row else 0)
 
 
-def save_settings(connect,key,data):
-    if not isinstance(data,dict) or type(data.get('revision')) is not int:
-        raise ValueError('Settings and revision are required')
-    value=data.get('settings')
-    if not isinstance(value,dict):
-        raise ValueError('Settings are required')
+def validate_settings(key,value):
+    if key not in ('profile','preferences','guardrails') or not isinstance(value,dict):
+        raise ValueError('Choose valid settings')
     if key=='profile':
         clean={field:text(value.get(field,''),label,limit) for field,label,limit in [
             ('firstName','First name',60),('lastName','Surname',60),('displayName','Display name',60),('country','Country',60),
@@ -231,6 +228,16 @@ def save_settings(connect,key,data):
         clean['maxTrades']=number(value.get('maxTrades'),'Maximum daily trades',1,100)
         if int(clean['maxTrades'])!=clean['maxTrades']:
             raise ValueError('Maximum daily trades must be a whole number')
+    return clean
+
+
+def save_settings(connect,key,data):
+    if not isinstance(data,dict) or type(data.get('revision')) is not int:
+        raise ValueError('Settings and revision are required')
+    value=data.get('settings')
+    if not isinstance(value,dict):
+        raise ValueError('Settings are required')
+    clean=validate_settings(key,value)
     with connect() as conn:
         conn.execute('BEGIN IMMEDIATE')
         row=conn.execute('SELECT revision,value FROM journal_settings WHERE key=?',('workspace_'+key,)).fetchone()
@@ -276,19 +283,28 @@ def import_trades(connect,data):
         if not row['symbol'] or row['direction'] not in ('Long','Short'):
             raise ValueError('Add a symbol and Long/Short direction on row '+str(i+1))
         if row['pnl'] is None and all(row[k] is not None for k in ('entry','exit','qty')):
-            row['pnl']=(row['exit']-row['entry'])*row['qty']*(row['contract_value'] or 1)*(-1 if row['direction']=='Short' else 1)
-        if row['risk'] is None and all(row[k] is not None for k in ('entry','stop','qty')):
-            row['risk']=abs(row['entry']-row['stop'])*row['qty']*(row['contract_value'] or 1)
+            if row['contract_value'] is None:raise ValueError('Add a contract multiplier or broker P&L on row '+str(i+1))
+            row['pnl']=(row['exit']-row['entry'])*row['qty']*row['contract_value']*(-1 if row['direction']=='Short' else 1)
+        if row['risk'] is None and all(row[k] is not None for k in ('entry','stop','qty','contract_value')):
+            row['risk']=abs(row['entry']-row['stop'])*row['qty']*row['contract_value']
         if row['r_multiple'] is None and all(row[k] is not None for k in ('entry','stop','exit')) and row['entry']!=row['stop']:
             row['r_multiple']=(row['exit']-row['entry'])/abs(row['entry']-row['stop'])*(-1 if row['direction']=='Short' else 1)
-        row['source_id']='csv:'+hashlib.sha256(json.dumps(row,sort_keys=True).encode()).hexdigest()
-        row['outcome']=('Win' if row['pnl']>0 else 'Loss' if row['pnl']<0 else 'BE') if row['pnl'] is not None else None
+        legacy_source='csv:'+hashlib.sha256(json.dumps(row,sort_keys=True).encode()).hexdigest()
+        execution=text(raw.get('execution_id',''),'Broker trade ID',200)
+        broker=text(raw.get('broker_key',''),'Broker',100).strip().casefold()
+        if execution and not broker:raise ValueError('Choose a broker for trade IDs on row '+str(i+1))
+        identity={'broker':broker,'execution_id':execution} if execution else {key:row[key] for key in ('date','symbol','direction','entry','exit','qty','pnl','fee','contract_value')}
+        row['source_id']='csv2:'+hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()
+        row['_legacy_source']=legacy_source
+        net=(row['pnl'] or 0)-(row['fee'] or 0)
+        row['outcome']=('Win' if net>0 else 'Loss' if net<0 else 'BE') if row['pnl'] is not None else None
         row['created_at']=stamp();rows.append(row)
     added=0
     with connect() as conn:
         conn.execute('BEGIN IMMEDIATE')
         for row in rows:
-            if conn.execute('SELECT 1 FROM trades WHERE source_id=?',(row['source_id'],)).fetchone():continue
+            legacy=row.pop('_legacy_source')
+            if conn.execute('SELECT 1 FROM trades WHERE source_id IN (?,?)',(row['source_id'],legacy)).fetchone():continue
             cols=list(row)
             conn.execute('INSERT INTO trades('+','.join(cols)+') VALUES('+','.join('?' for _ in cols)+')',[row[col] for col in cols]);added+=1
     return dict(imported=added,skipped=len(rows)-added)
@@ -387,6 +403,9 @@ def create_trade_record(connect,fields,data,client_id,prepare):
     """Serialize a user write and make a repeated save intent return its record."""
     if client_id is not None and (not isinstance(client_id,str) or not re.fullmatch(r'[a-zA-Z0-9_-]{1,80}',client_id)):
         raise ValueError('Invalid save request ID')
+    if data.get('pnl') is not None:
+        net=float(data['pnl'])-float(data.get('fee') or 0)
+        data['outcome']='Win' if net>0 else 'Loss' if net<0 else 'BE'
     fingerprint=hashlib.sha256(json.dumps({key:data.get(key) for key in fields},sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
     with connect() as conn:
         conn.execute('BEGIN IMMEDIATE')
@@ -407,6 +426,9 @@ def create_trade_record(connect,fields,data,client_id,prepare):
 
 def update_trade_record(connect,fields,ident,data,expected):
     """A full editor save must be based on the current revision."""
+    if data.get('pnl') is not None:
+        net=float(data['pnl'])-float(data.get('fee') or 0)
+        data['outcome']='Win' if net>0 else 'Loss' if net<0 else 'BE'
     with connect() as conn:
         conn.execute('BEGIN IMMEDIATE')
         previous=conn.execute('SELECT * FROM trades WHERE id=?',(ident,)).fetchone()
