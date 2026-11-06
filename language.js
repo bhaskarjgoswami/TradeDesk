@@ -142,7 +142,7 @@
         const response = await root.fetch('/locales/' + next + '.json');
         if (!response.ok) throw Error('Language could not load');
         dictionary = await response.json();
-        if(!dictionary||Array.isArray(dictionary)||typeof dictionary!=='object'||!Object.entries(dictionary).every(([source,value])=>typeof value==='string'&&value.trim()&&JSON.stringify((source.match(/\{\w+\}/g)||[]).sort())===JSON.stringify((value.match(/\{\w+\}/g)||[]).sort())))throw Error('Invalid language catalog');
+        if(!dictionary||Array.isArray(dictionary)||typeof dictionary!=='object'||!Object.keys(dictionary).length||!Object.entries(dictionary).every(([source,value])=>typeof value==='string'&&value.trim()&&JSON.stringify((source.match(/\{\w+\}/g)||[]).sort())===JSON.stringify((value.match(/\{\w+\}/g)||[]).sort())))throw Error('Invalid language catalog');
         cache.set(next,dictionary);
       } catch (error) {
         if (version === requestVersion) root.dispatchEvent?.(new CustomEvent('td-language-error', {detail:{language:next}}));
