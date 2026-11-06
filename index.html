@@ -1636,7 +1636,18 @@ let routineReturnFocus=null,routineFocusOpen=false;
 const routineFocusObserver=new MutationObserver(()=>{const panel=$('#routinePanel'),open=!panel.hidden&&panel.getAttribute('aria-modal')==='true';if(open&&!routineFocusOpen){routineReturnFocus=document.activeElement;$('#app').inert=true;$('.mobilebar').inert=true;panel.querySelector('button,input,a[href]')?.focus();}if(!open&&routineFocusOpen){$('#app').inert=false;$('.mobilebar').inert=false;routineReturnFocus?.focus();}routineFocusOpen=open;});
 routineFocusObserver.observe($('#routinePanel'),{attributes:true,attributeFilter:['hidden','aria-modal']});
 $('#routinePanel').addEventListener('keydown',e=>{if(e.key!=='Tab'||!routineFocusOpen||document.querySelector('dialog[open]'))return;const controls=[...$('#routinePanel').querySelectorAll('button,input,a[href],select,textarea,summary,[tabindex="0"]')].filter(el=>!el.disabled&&el.getClientRects().length);if(!controls.length)return;const first=controls[0],last=controls.at(-1);if(e.shiftKey&&(document.activeElement===first||!$('#routinePanel').contains(document.activeElement))){e.preventDefault();last.focus();}else if(!e.shiftKey&&(document.activeElement===last||!$('#routinePanel').contains(document.activeElement))){e.preventDefault();first.focus();}});
-$('#routineOpen').onclick=async()=>{const wasHidden=$('#routinePanel').hidden;if(!await loadRoutine()){toast('Could not load routine. Try again.');return;}routineForced=wasHidden;if(!routineForced)routineHiddenPeriod=routineState.period;renderRoutinePanel();if(wasHidden)routineQuietSync();};
+let routineOpening=false;
+$('#routineOpen').onclick=async()=>{
+  if(routineOpening)return;
+  const wasHidden=$('#routinePanel').hidden;
+  // Boot already loaded the routine. Opening and closing must not wait for the API.
+  if(routineState){routineForced=wasHidden;if(!wasHidden)routineHiddenPeriod=routineState.period;renderRoutinePanel();if(wasHidden&&await loadRoutine()&&routineForced)routineQuietSync();return;}
+  routineOpening=true;
+  const buttons=[$('#routineOpen'),$('#routineMobileOpen')];
+  buttons.forEach(button=>{button.disabled=true;button.setAttribute('aria-busy','true');});
+  try{if(!await loadRoutine()){toast('Could not load routine. Try again.');return;}routineForced=true;renderRoutinePanel();routineQuietSync();}
+  finally{routineOpening=false;buttons.forEach(button=>{button.disabled=false;button.removeAttribute('aria-busy');});}
+};
 // ---------- boot ----------
 let booted=false;
 async function boot(){
