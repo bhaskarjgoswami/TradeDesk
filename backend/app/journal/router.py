@@ -283,6 +283,8 @@ def upload(request: Request, user=Depends(limit("upload", 20))):
     with scoped(user):
         try:
             return ok({"path": core.save_image(data.get("data", ""))})
+        except HTTPException:
+            raise
         except Exception as e:
             return err(str(e), 400)
 

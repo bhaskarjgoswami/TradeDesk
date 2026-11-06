@@ -33,3 +33,18 @@ def test_pro_budget_expires_and_pending_deletion_cannot_upload(monkeypatch):
     with pytest.raises(HTTPException) as error:
         with budget.storage_budget('a',1):pytest.fail('Deletion must block uploads')
     assert error.value.status_code==423
+
+
+@pytest.mark.parametrize('status',[413,423])
+def test_upload_preserves_storage_and_deletion_http_status(monkeypatch,status):
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app.auth import get_current_user
+    from app.journal import router
+    monkeypatch.setitem(app.dependency_overrides,get_current_user,lambda:dict(user_id='test',email='test@example.invalid'))
+    monkeypatch.setattr(router,'scoped',lambda user:contextlib.nullcontext())
+    def upload(data):raise HTTPException(status,'Storage unavailable')
+    monkeypatch.setattr(router.core,'save_image',upload)
+    response=TestClient(app).post('/j/api/upload',json={'data':'image'})
+    assert response.status_code==status
+    assert response.json()['detail']=='Storage unavailable'
