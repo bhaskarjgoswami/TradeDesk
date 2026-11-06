@@ -113,7 +113,7 @@ ZIP restores validate all item types, settings, routine progress, dates, JSON sh
 Operator workflow (run from `backend` with server-only environment variables):
 - `.venv/bin/python scripts/operations.py feedback --summary` gives queue counts; omit `--summary` to review the latest messages and attachment paths locally.
 - `.venv/bin/python scripts/operations.py triage --user <UUID> --id <ID> --status triaged` records review; use `closed` after resolution. The queue is private to operators and never grants browser users staff access. The project maintainer should review it daily; availability failures appear in the GitHub Production availability workflow. Configure GitHub notifications for its failures.
-- `.venv/bin/python scripts/operations.py metrics` reports aggregate first-trade activation, onboarding completion, and seven-day trading activity using existing records. No external analytics service or new browser tracking is installed. Counts are operational indicators, not cohort retention analysis.
+- `.venv/bin/python scripts/operations.py metrics` reports first-trade activation, onboarding completion, seven-day trading activity, and week-one retention. Retention counts a trade logged at account age 7–14 days, using only accounts at least 14 days old; accounts with no journal stay in the denominator. It uses existing records, so deleting trades also removes their contribution. No external analytics service or new browser tracking is installed.
 
 Images share an account-wide budget of 100 MB on Free and 1 GB on active Pro, in addition to the 5 MB file limit. Concurrent uploads and restores serialize budget checks. Existing images remain readable after downgrading; new uploads require sufficient room.
 

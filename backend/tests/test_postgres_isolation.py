@@ -346,3 +346,26 @@ def test_inflight_legacy_write_rechecks_account_after_deletion_lock(database):
                 cur.execute('UPDATE public.user_profiles SET deletion_started_at=now() WHERE id=%s',(UIDS[0],))
                 result=worker.submit(late_write)
         assert result.result(timeout=15)==423
+
+
+def test_retention_uses_mature_accounts_and_includes_nonactivated_accounts(database,monkeypatch):
+    from scripts import operations
+    connect,schemas=database
+    monkeypatch.setattr(operations,'get_conn',connect)
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute('ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now()')
+            cur.execute("UPDATE public.user_profiles SET created_at=now()-interval '20 days'")
+            cur.execute("INSERT INTO public.user_profiles(id,created_at) VALUES ('cccccccc-cccc-cccc-cccc-cccccccccccc',now()-interval '2 days')")
+            for schema in schemas:
+                cur.execute(f'ALTER TABLE "{schema}".trades ADD COLUMN created_at text')
+                cur.execute(f'CREATE TABLE "{schema}".journal_settings(key text PRIMARY KEY,value text)')
+                cur.execute(f'CREATE TABLE "{schema}".workspace_items(id bigint PRIMARY KEY)')
+            cur.execute(f"INSERT INTO \"{schemas[0]}\".trades(title,date,created_at) VALUES ('retained','2026-11-06',(now()-interval '12 days')::text)")
+    report=operations.metrics()
+    assert report['accounts']==3
+    assert report['journals_with_trades']==1
+    assert report['activation_rate']==0.3333
+    assert report['week_one_retention']['eligible_accounts']==2
+    assert report['week_one_retention']['retained_accounts']==1
+    assert report['week_one_retention']['rate']==0.5

@@ -51,13 +51,22 @@ def metrics():
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute('SET TRANSACTION READ ONLY')
-            cur.execute('SELECT count(*) AS n FROM public.user_profiles WHERE deletion_started_at IS NULL')
-            result['accounts']=cur.fetchone()['n']
+            cur.execute("SELECT id,created_at,created_at<=now()-interval '14 days' AS mature FROM public.user_profiles WHERE deletion_started_at IS NULL")
+            accounts={str(row['id']):row for row in cur.fetchall()}
+            result['accounts']=len(accounts)
+            mature=sum(bool(row['mature']) for row in accounts.values())
+            retained=0
             for schema in tenants(cur):
-                cur.execute(sql.SQL("SELECT (SELECT count(*) FROM {}.trades) AS trades,(SELECT count(*) FROM {}.trades WHERE created_at::timestamptz >= now()-interval '7 days') AS recent,(SELECT value FROM {}.journal_settings WHERE key='workspace_profile') AS profile").format(*[sql.Identifier(schema)]*3))
+                account=accounts.get(owner(schema))
+                if not account:continue
+                cur.execute(sql.SQL("SELECT (SELECT count(*) FROM {}.trades) AS trades,(SELECT count(*) FROM {}.trades WHERE created_at::timestamptz >= now()-interval '7 days') AS recent,(SELECT value FROM {}.journal_settings WHERE key='workspace_profile') AS profile,EXISTS(SELECT 1 FROM {}.trades WHERE created_at::timestamptz >= %s::timestamptz+interval '7 days' AND created_at::timestamptz < %s::timestamptz+interval '14 days') AS retained").format(*[sql.Identifier(schema)]*4),(account['created_at'],account['created_at']))
                 row=cur.fetchone();result['trades']+=row['trades'];result['journals_with_trades']+=int(row['trades']>0);result['active_journals_7d']+=int(row['recent']>0)
+                retained+=int(bool(account['mature']) and row['retained'])
                 if row['profile'] and json.loads(row['profile']).get('onboardingCompleted'):result['onboarding_completed']+=1
     result['activation_rate']=round(result['journals_with_trades']/result['accounts'],4) if result['accounts'] else 0
+    result['week_one_retention']=dict(eligible_accounts=mature,retained_accounts=retained,
+        rate=round(retained/mature,4) if mature else None,
+        definition='Accounts at least 14 days old with a trade logged at account age [7,14) days. Accounts without journals count in the denominator; recently created accounts are excluded. Deleted trades are not retained as analytics events.')
     return result
 
 
