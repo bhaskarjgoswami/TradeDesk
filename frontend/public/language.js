@@ -28,10 +28,10 @@
   const catalogIndexes=new WeakMap();
   const templateIndexes=new WeakMap();
   const key = value => String(value).replace(/\s+/g, ' ').trim();
-  function translate(source, dictionary = catalog) {
+  function translate(source, dictionary = catalog, interfaceLabel = false) {
     if (!source || language === 'en') return source;
     const normalized = key(source);
-    if (protectedText.has(normalized)) return source;
+    if (protectedText.has(normalized) && !interfaceLabel) return source;
     let index=catalogIndexes.get(dictionary);
     if(!index){index=new Map(Object.entries(dictionary).map(([k,v])=>[k.toLowerCase(),v]));catalogIndexes.set(dictionary,index);}
     const lookup = text => Object.hasOwn(dictionary,text) ? dictionary[text] : index.get(text.toLowerCase());
@@ -93,6 +93,7 @@
   function skipped(element) {
     return !element || !!element.closest('script,style,textarea,code,pre,[contenteditable="true"],[translate="no"],[data-user-content],.notranslate,#exSelect option');
   }
+  function interfaceLabel(element){return !!element?.closest('.navitem[data-view],button.btn,[data-settings-tab],[role="menuitem"],[data-i18n]');}
   function apply(scope = root.document?.body) {
     if (!scope || !root.document) return;
     observer?.disconnect();
@@ -107,7 +108,7 @@
         const old = originals.get(node);
         // React or the journal may have replaced the rendered text since last pass.
         const source = old && node.nodeValue === old.output ? old.source : node.nodeValue;
-        const output = translate(source);
+        const output = translate(source,catalog,interfaceLabel(node.parentElement));
         originals.set(node, {source, output});
         if (node.nodeValue !== output) node.nodeValue = output;
       }
@@ -119,7 +120,7 @@
           if (!element.hasAttribute(attr)) continue;
           const current = element.getAttribute(attr), old = saved[attr];
           const source = old && current === old.output ? old.source : current;
-          const output = translate(source);
+          const output = translate(source,catalog,interfaceLabel(element));
           saved[attr] = {source,output};
           if (current !== output) element.setAttribute(attr,output);
         }
