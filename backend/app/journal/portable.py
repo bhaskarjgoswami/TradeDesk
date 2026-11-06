@@ -122,9 +122,11 @@ def restore(connect, uid, encoded):
         entries = archive.infolist()
         if len(entries) > 1002 or sum(item.file_size for item in entries) > MAX_BYTES:
             raise ValueError("Backup is too large")
+        if any(item.flag_bits & 1 or item.compress_type not in (zipfile.ZIP_STORED,zipfile.ZIP_DEFLATED) for item in entries):
+            raise ValueError('Use the original, unencrypted TradeDesk ZIP backup')
         if len({item.filename for item in entries}) != len(entries): raise ValueError("Duplicate archive files")
         manifest = json.loads(archive.read("manifest.json"))
-        if manifest.get("product") != "TradeDesk" or manifest.get("version") != 1:
+        if not isinstance(manifest,dict) or manifest.get("product") != "TradeDesk" or type(manifest.get("version")) is not int or manifest["version"] != 1:
             raise ValueError("Unsupported backup version")
         names = manifest.get("images")
         if not isinstance(names, list) or any(not isinstance(name,str) or not re.fullmatch(r"[a-zA-Z0-9_.-]+", name) or ".." in name for name in names) or len(set(names))!=len(names):

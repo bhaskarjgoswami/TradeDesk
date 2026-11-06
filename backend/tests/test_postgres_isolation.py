@@ -313,15 +313,15 @@ def test_concurrent_uploads_observe_committed_storage_usage(database,monkeypatch
             cur.execute('CREATE SCHEMA IF NOT EXISTS storage')
             cur.execute('CREATE TABLE IF NOT EXISTS storage.objects(bucket_id text,name text,metadata jsonb)')
             cur.execute('TRUNCATE storage.objects')
-            cur.execute('INSERT INTO storage.objects VALUES (%s,%s,%s)',('trade-images',UIDS[0]+'/existing.png',Json({'size':budget.FREE_BYTES-1})))
+            cur.execute('INSERT INTO storage.objects(bucket_id,name,metadata) VALUES (%s,%s,%s)',('trade-images',UIDS[0]+'/existing.png',Json({'size':budget.FREE_BYTES-1})))
             # Another tenant and another bucket cannot consume this account budget.
-            cur.execute('INSERT INTO storage.objects VALUES (%s,%s,%s)',('trade-images',UIDS[1]+'/other.png',Json({'size':budget.FREE_BYTES})))
+            cur.execute('INSERT INTO storage.objects(bucket_id,name,metadata) VALUES (%s,%s,%s)',('trade-images',UIDS[1]+'/other.png',Json({'size':budget.FREE_BYTES})))
     def upload(index):
         try:
             with budget.storage_budget(UIDS[0],1):
                 with connect() as conn:
                     with conn.cursor() as cur:
-                        cur.execute('INSERT INTO storage.objects VALUES (%s,%s,%s)',('trade-images',UIDS[0]+'/'+str(index)+'.png',Json({'size':1})))
+                        cur.execute('INSERT INTO storage.objects(bucket_id,name,metadata) VALUES (%s,%s,%s)',('trade-images',UIDS[0]+'/'+str(index)+'.png',Json({'size':1})))
             return True
         except HTTPException as error:
             assert error.status_code==413
@@ -369,3 +369,38 @@ def test_retention_uses_mature_accounts_and_includes_nonactivated_accounts(datab
     assert report['week_one_retention']['eligible_accounts']==2
     assert report['week_one_retention']['retained_accounts']==1
     assert report['week_one_retention']['rate']==0.5
+
+
+def test_reclaim_reaches_unused_images_after_a_thousand_referenced_files(database,monkeypatch):
+    import json,httpx
+    from app.journal import router,storage
+    from app import storage_budget as budget
+    connect,(schema,_)=database
+    monkeypatch.setattr(storage,'get_conn',connect)
+    monkeypatch.setattr(budget,'get_conn',connect)
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(f'DROP SCHEMA "{schema}" CASCADE')
+            cur.execute('ALTER TABLE public.trades ADD COLUMN IF NOT EXISTS user_id uuid')
+            cur.execute("UPDATE public.user_profiles SET subscription_tier='pro' WHERE id=%s",(UIDS[0],))
+            cur.execute('CREATE SCHEMA IF NOT EXISTS storage')
+            cur.execute('CREATE TABLE IF NOT EXISTS storage.objects(bucket_id text,name text,metadata jsonb)')
+            cur.execute('ALTER TABLE storage.objects ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now()')
+            cur.execute('TRUNCATE storage.objects')
+            cur.execute("INSERT INTO storage.objects(bucket_id,name,metadata,created_at) SELECT 'trade-images',%s||'/ref'||lpad(n::text,4,'0')||'.png','{\"size\":1}'::jsonb,now()-interval '30 days' FROM generate_series(0,999) n",(UIDS[0],))
+            for name,age in [('unused.png',20),('unused2.png',20),('recent.png',0)]:
+                cur.execute("INSERT INTO storage.objects(bucket_id,name,metadata,created_at) VALUES ('trade-images',%s,'{\"size\":1}'::jsonb,now()-%s*interval '1 day')",(UIDS[0]+'/'+name,age))
+            cur.execute("INSERT INTO storage.objects(bucket_id,name,metadata,created_at) VALUES ('trade-images',%s,'{\"size\":1}'::jsonb,now()-interval '30 days')",(UIDS[1]+'/other.png',))
+    pgcompat.forget_schema(schema)
+    removed=[]
+    def delete(method,url,**kwargs):
+        removed.extend(kwargs['json']['prefixes'])
+        return httpx.Response(200)
+    monkeypatch.setattr(storage.httpx,'request',delete)
+    with router.scoped(dict(user_id=UIDS[0])):
+        with pgcompat.db() as conn:
+            for offset in range(0,1000,8):
+                images=json.dumps(['images/ref'+str(index).zfill(4)+'.png' for index in range(offset,offset+8)])
+                conn.execute("INSERT INTO trades(date,symbol,direction,images) VALUES (?,?,?,?)",('2026-11-06','TEST','Long',images))
+        assert storage.reclaim(UIDS[0])['removed']==2
+    assert set(removed)=={UIDS[0]+'/unused.png',UIDS[0]+'/unused2.png'}
