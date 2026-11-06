@@ -4,7 +4,7 @@ import time
 import threading
 import re
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from jwt import InvalidTokenError as JWTError
@@ -67,7 +67,7 @@ def _decode_token(token: str) -> dict:
     return payload
 
 
-def get_current_user(creds: HTTPAuthorizationCredentials = Depends(bearer)) -> dict:
+def get_current_user(creds: HTTPAuthorizationCredentials = Depends(bearer), request: Request = None) -> dict:
     token = creds.credentials
     try:
         payload = _decode_token(token)
@@ -81,12 +81,14 @@ def get_current_user(creds: HTTPAuthorizationCredentials = Depends(bearer)) -> d
     try:
         with get_conn(readonly=True) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT 1 FROM public.user_profiles WHERE id=%s", (uid,))
+                cur.execute("SELECT deletion_started_at FROM public.user_profiles WHERE id=%s", (uid,))
                 exists = cur.fetchone()
     except Exception:
         raise HTTPException(status_code=503, detail="Account verification temporarily unavailable")
     if not exists:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Account is no longer available")
+    if exists.get('deletion_started_at') and not (request is not None and request.method=='DELETE' and request.url.path=='/api/account'):
+        raise HTTPException(423, 'Account deletion is pending. Retry deletion to finish removing your account.')
     return {"user_id": uid, "email": payload.get("email", "")}
 
 

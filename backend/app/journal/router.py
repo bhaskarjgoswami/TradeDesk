@@ -300,7 +300,7 @@ def image(name: str, request: Request):
         uid = decode_media_token(token)
         with get_conn(readonly=True) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT 1 FROM public.user_profiles WHERE id=%s",(uid,))
+                cur.execute("SELECT 1 FROM public.user_profiles WHERE id=%s AND deletion_started_at IS NULL",(uid,))
                 if not cur.fetchone(): uid = None
     except Exception:
         uid = None
@@ -321,12 +321,26 @@ def workspace_api(rest: str, request: Request, user=Depends(get_current_user)):
     data = body(request) if request.method in ("POST", "PUT", "DELETE") else None
     with scoped(user):
         try:
+            if rest=='storage' and request.method=='GET':
+                from ..storage_budget import storage_budget
+                with storage_budget(user['user_id'],0) as usage:return ok(usage)
+            if rest=='storage/reclaim' and request.method=='POST':
+                from .storage import reclaim
+                return ok(reclaim(user['user_id']))
             if path == "/api/workspace/backup" and request.method == "GET":
                 return Response(portable.backup(db, user["user_id"]), media_type="application/zip",
                                 headers={"Content-Disposition": 'attachment; filename="tradedesk-backup.zip"'})
             if rest == "restore" and request.method == "POST":
                 return ok(portable.restore(db, user["user_id"], data.get("archive")))
             result, status = workspace.handle(db, request.method, path, qs(request), data)
+            if rest=='items' and request.method=='GET' and request.query_params.get('kind')=='feedback' and status==200:
+                with get_conn(readonly=True) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute('SELECT item_id,status,reply FROM public.feedback_triage WHERE user_id=%s',(user['user_id'],))
+                        states={row['item_id']:row for row in cur.fetchall()}
+                for item in result:
+                    state=states.get(item['id'],{})
+                    item['support']=dict(status=state.get('status','open'),reply=state.get('reply',''))
             return ok(result, status)
         except workspace.Conflict as e:
             return err(str(e), 409)

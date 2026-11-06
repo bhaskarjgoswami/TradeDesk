@@ -642,5 +642,20 @@
   "Submitting feedback…": "正在提交反馈…",
   "Please enter your feedback.": "请输入反馈内容。",
   "You can attach up to 3 images.": "最多可附加 3 张图片。",
-  "Optional · saved to your profile": "可选 · 保存到个人资料"
+  "Optional · saved to your profile": "可选 · 保存到个人资料",
+  "Quantity / lots": "数量 / 手数",
+  "Units per lot / contract": "每手 / 合约单位数",
+  "Your submissions": "您的提交记录",
+  "No submissions yet.": "暂无提交记录。",
+  "Image storage": "图片存储",
+  "Reclaim unused images": "清理未使用的图片",
+  "Contact support": "联系支持",
+  "Complete your deletion request": "完成账户删除请求",
+  "Retry deletion": "重试删除",
+  "Sign out": "退出登录",
+  "Reload saved trade": "重新加载已保存的交易",
+  "View plans": "查看套餐",
+  "Trade saved. Could not refresh the journal; try again shortly.": "交易已保存。无法刷新日志，请稍后重试。",
+  "Use 1 for shares or units. For contracts, enter the instrument’s units per lot.": "股票或单个单位请输入 1；合约请输入每手对应的单位数。",
+  "Offline · your saved journal needs a connection. Unsaved trade drafts stay in this tab.": "当前离线，日志需要联网访问。未保存的交易草稿保留在此标签页。"
 }

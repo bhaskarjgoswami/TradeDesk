@@ -642,5 +642,20 @@
   "Submitting feedback…": "Enviando comentarios…",
   "Please enter your feedback.": "Escribe tus comentarios.",
   "You can attach up to 3 images.": "Puedes adjuntar hasta 3 imágenes.",
-  "Optional · saved to your profile": "Opcional · guardado en tu perfil"
+  "Optional · saved to your profile": "Opcional · guardado en tu perfil",
+  "Quantity / lots": "Cantidad / lotes",
+  "Units per lot / contract": "Unidades por lote / contrato",
+  "Your submissions": "Tus solicitudes",
+  "No submissions yet.": "Aún no hay solicitudes.",
+  "Image storage": "Almacenamiento de imágenes",
+  "Reclaim unused images": "Eliminar imágenes sin usar",
+  "Contact support": "Contactar con soporte",
+  "Complete your deletion request": "Completa la eliminación de tu cuenta",
+  "Retry deletion": "Reintentar eliminación",
+  "Sign out": "Cerrar sesión",
+  "Reload saved trade": "Recargar operación guardada",
+  "View plans": "Ver planes",
+  "Trade saved. Could not refresh the journal; try again shortly.": "Operación guardada. No se pudo actualizar el diario; inténtalo en breve.",
+  "Use 1 for shares or units. For contracts, enter the instrument’s units per lot.": "Usa 1 para acciones o unidades. Para contratos, introduce las unidades por lote.",
+  "Offline · your saved journal needs a connection. Unsaved trade drafts stay in this tab.": "Sin conexión · el diario necesita internet. Los borradores permanecen en esta pestaña."
 }

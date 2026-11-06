@@ -8,7 +8,7 @@ import { confirmationRedirect, initialAuthReturn } from "../lib/authReturn";
 import { supabase } from "../lib/supabase";
 import { config } from "../lib/config";
 import { api } from "../lib/api";
-import { SUPPORT_EMAIL } from "../lib/brand";
+import { SUPPORT_EMAIL, SUPPORT_URL, SUPPORT_LABEL } from "../lib/brand";
 
 const API = config.apiUrl + "/j";
 let mode = new URLSearchParams(location.search).has("signup") ? "signup" : "login";
@@ -77,6 +77,21 @@ async function token() {
   return data.session?.access_token || null;
 }
 
+function showDeletionRecovery(){
+  if(document.getElementById('tdDeletionRecovery'))return;
+  const overlay=document.createElement('dialog');overlay.id='tdDeletionRecovery';overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','tdDeletionTitle');
+  overlay.style.cssText='position:fixed;inset:0;margin:auto;border:0;border-radius:24px;padding:0;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);background:white';
+  overlay.innerHTML='<div style="max-width:480px;background:white;padding:32px;border-radius:24px;color:#29283f"><h1 id="tdDeletionTitle">Complete your deletion request</h1><p>Retry to finish removing your account. If deletion has started, your journal remains locked until cleanup finishes.</p><p id="tdDeletionStatus" role="status"></p><button id="tdDeletionRetry" class="ws-btn primary">Retry deletion</button> <button id="tdDeletionLogout" class="ws-btn">Sign out</button></div>';
+  document.body.append(overlay);
+  // A modal dialog stays above the existing deletion confirmation and keeps
+  // keyboard focus on recovery while the account is locked.
+  overlay.addEventListener('cancel',event=>event.preventDefault());
+  overlay.showModal();
+  overlay.querySelector('#tdDeletionLogout').onclick=async()=>{window.TradeDeskDrafts?.clearAll();await supabase.auth.signOut();location.reload();};
+  const retry=overlay.querySelector('#tdDeletionRetry');retry.onclick=async()=>{retry.disabled=true;const status=overlay.querySelector('#tdDeletionStatus');status.textContent='Removing remaining account data…';try{await api.deleteAccount();window.TradeDeskDrafts?.clearAll();await supabase.auth.signOut();location.replace('/');}catch(error){status.textContent=error.message||'Deletion is not complete. Please retry.';}finally{retry.disabled=false;}};
+  retry.focus();
+}
+
 async function handle(url, init, nativeFetch) {
   const path = url.split("?")[0];
   const method = (init.method || "GET").toUpperCase();
@@ -118,7 +133,7 @@ async function handle(url, init, nativeFetch) {
       const rows=[];
       while (true) {
         const page = await nativeFetch(API + "/api/trades/page?" + search, {...init,headers});
-        if (!page.ok) { if(page.status===401)window.sessionExpired?.(); return page; }
+        if (!page.ok) { if(page.status===423)showDeletionRecovery(); if(page.status===401)window.sessionExpired?.(); return page; }
         const data=await page.json();
         rows.push(...data.rows);
         if (!data.next_cursor) break;
@@ -134,6 +149,7 @@ async function handle(url, init, nativeFetch) {
     await new Promise((r) => setTimeout(r, 800)); // API redeploying: retry reads once
     res = await nativeFetch(API + url, { ...init, headers });
   }
+  if(res.status===423)showDeletionRecovery();
   if (res.status === 401) {
     window.sessionExpired?.();
     return json({error:"Your session expired. Sign in again to continue; your unsaved form has been kept."},401);
@@ -149,7 +165,7 @@ function decorate() {
   document.title = "TradeDesk";
   document.querySelectorAll(".brandtxt").forEach((el) => { el.textContent = "TradeDesk"; });
   const foot = card.querySelector(".login-foot");
-  if (foot) foot.innerHTML = `Need help? Contact <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a> · <a href="/">Home</a>`;
+  if (foot) foot.innerHTML = `Need help? Contact <a href="${SUPPORT_URL}">${SUPPORT_LABEL}</a> · <a href="/">Home</a>`;
 
   if (!card.querySelector("[data-language-selector]")) {
     const label=document.createElement("label");label.className="auth-language";
@@ -265,7 +281,7 @@ supabase.auth.onAuthStateChange((event, session) => {
 window.addEventListener("pageshow", (event) => {
   if (event.persisted) supabase.auth.getSession().then(({ data }) => refreshSidebarMembership(data.session, true));
 });
-window.__td.resolve({ handle, deleteAccount:async()=>{await api.deleteAccount();window.TradeDeskDrafts?.clearAll();await supabase.auth.signOut();location.reload();} });
+window.__td.resolve({ handle, deleteAccount:async()=>{try{await api.deleteAccount();}catch(error){showDeletionRecovery();throw error;}window.TradeDeskDrafts?.clearAll();await supabase.auth.signOut();location.reload();} });
 
 
 function showPasswordRecovery() {

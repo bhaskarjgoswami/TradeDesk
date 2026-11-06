@@ -136,7 +136,9 @@ def restore(connect, uid, encoded):
     except (zipfile.BadZipFile, KeyError, TypeError, json.JSONDecodeError, UnicodeError) as exc:
         raise ValueError("Invalid TradeDesk backup") from exc
     uploaded = []
-    with httpx.Client(headers=HEADERS, timeout=30) as client:
+    from ..storage_budget import storage_budget
+    incoming=sum(archive.getinfo("images/"+name).file_size for name in names)
+    with storage_budget(uid,incoming), httpx.Client(headers=HEADERS, timeout=30) as client:
         try:
             with connect() as conn:
                 conn.execute("BEGIN IMMEDIATE")

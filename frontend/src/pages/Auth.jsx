@@ -2,7 +2,7 @@ import { confirmationRedirect } from "../lib/authReturn";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { SUPPORT_EMAIL } from "../lib/brand";
+import { SUPPORT_URL, SUPPORT_LABEL } from "../lib/brand";
 
 const BrandMark = (
   <span className="mark"><svg viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z" /><path d="M6 3.5v17" /><path d="M9.5 8h6M9.5 12h4" /></svg></span>
@@ -82,7 +82,7 @@ export default function Auth() {
           {mode === "signup" && (
             <div className="login-foot">By creating an account you agree to the <Link to="/terms">Terms</Link> and <Link to="/privacy">Privacy Policy</Link>.</div>
           )}
-          <div className="login-foot">Need help? Contact <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> · <Link to="/">Home</Link></div>
+          <div className="login-foot">Need help? Contact <a href={SUPPORT_URL}>{SUPPORT_LABEL}</a> · <Link to="/">Home</Link></div>
         </div>
 
         <div className="login-right">

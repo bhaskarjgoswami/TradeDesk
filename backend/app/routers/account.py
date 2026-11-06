@@ -44,18 +44,24 @@ def export_account(user=Depends(limit("export", 5))):
 def delete_account(user=Depends(limit("delete", 3))):
     """Delete screenshots, then the auth user (trades/day_logs/profile cascade)."""
     uid = user["user_id"]
+    # Commit a durable tombstone before removing any objects. A failure can be
+    # retried with the same valid account token, while other API access is blocked.
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))",('storage:'+uid,))
+            cur.execute('UPDATE public.user_profiles SET deletion_started_at=COALESCE(deletion_started_at,now()) WHERE id=%s',(uid,))
     with httpx.Client(headers=_ADMIN, timeout=30) as c:
         while True:
             r = c.post(f"{SUPABASE_URL}/storage/v1/object/list/{BUCKET}",
                        json={"prefix": uid, "limit": 1000})
             if r.status_code != 200:
-                raise HTTPException(502, "Could not list screenshots")
+                raise HTTPException(502, "Deletion started. Could not list screenshots; retry to finish.")
             names = [f"{uid}/{o['name']}" for o in r.json() if o.get("id")]
             if not names:
                 break
             d = c.request("DELETE", f"{SUPABASE_URL}/storage/v1/object/{BUCKET}", json={"prefixes": names})
             if d.status_code != 200:
-                raise HTTPException(502, "Could not delete screenshots")
+                raise HTTPException(502, "Deletion started. Could not remove screenshots; retry to finish.")
         # the journal (local-app UI) keeps each user's data in a private schema
         from ..journal.pgcompat import schema_for, forget_schema
         with get_conn() as conn:
@@ -64,7 +70,7 @@ def delete_account(user=Depends(limit("delete", 3))):
         forget_schema(schema_for(uid))
         r = c.delete(f"{SUPABASE_URL}/auth/v1/admin/users/{uid}")
         if r.status_code not in (200, 204):
-            raise HTTPException(502, "Could not delete account")
+            raise HTTPException(502, "Deletion started, but account removal is not complete. Retry to finish.")
     return {"ok": True}
 
 

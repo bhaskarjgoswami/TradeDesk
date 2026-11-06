@@ -41,8 +41,9 @@ def database(monkeypatch):
             pool.putconn(conn)
     with public_connect() as conn:
         with conn.cursor() as cur:
-            cur.execute("CREATE TABLE IF NOT EXISTS public.user_profiles(id uuid PRIMARY KEY, subscription_tier text, subscription_plan text, subscription_expires_at timestamptz, razorpay_payment_id text, updated_at timestamptz)")
+            cur.execute("CREATE TABLE IF NOT EXISTS public.user_profiles(id uuid PRIMARY KEY, subscription_tier text, subscription_plan text, subscription_expires_at timestamptz, razorpay_payment_id text, updated_at timestamptz, deletion_started_at timestamptz)")
             cur.execute("CREATE TABLE IF NOT EXISTS public.trades(id serial PRIMARY KEY, title text)")
+            cur.execute("ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS deletion_started_at timestamptz")
             cur.execute("TRUNCATE public.trades, public.user_profiles CASCADE")
             cur.execute("INSERT INTO public.trades(title) VALUES ('legacy-private-record')")
             cur.executemany("INSERT INTO public.user_profiles(id) VALUES (%s)", [(u,) for u in UIDS])
@@ -54,6 +55,10 @@ def database(monkeypatch):
         with conn.cursor() as cur:
             cur.execute((Path(__file__).parents[2] / "supabase/migrations/20261104_payment_ledger.sql").read_text())
             cur.execute((Path(__file__).parents[2] / "supabase/migrations/20261104_rate_limits.sql").read_text())
+            for migration in ('20261105_account_deletion.sql','20261105_feedback_triage.sql'):
+                statement=(Path(__file__).parents[2] / 'supabase/migrations' / migration).read_text()
+                cur.execute(statement)
+                cur.execute(statement)  # Release retries must be safe.
     monkeypatch.setattr(pgcompat, "_get_pool", lambda: pool)
     monkeypatch.setattr(auth, "get_conn", public_connect)
     schemas = [pgcompat.schema_for(uid) for uid in UIDS]
@@ -177,6 +182,10 @@ def test_portable_backup_restores_records_and_private_screenshots(database, monk
     with public_connect() as conn:
         with conn.cursor() as cur: cur.execute(f'DROP SCHEMA "{schema}" CASCADE')
     pgcompat.forget_schema(schema)
+    import contextlib
+    @contextlib.contextmanager
+    def budget(*args):yield {}
+    monkeypatch.setattr('app.storage_budget.storage_budget',budget)
     uploaded=[]
     class Storage:
         def __init__(self,**kwargs): pass
@@ -252,3 +261,88 @@ def test_manual_save_intent_and_stale_edit_are_atomic_on_postgres(database):
         except workspace.Conflict:return None
     with ThreadPoolExecutor(max_workers=2) as pool:edited=list(pool.map(edit,['tab-one','tab-two']))
     assert sum(row is not None for row in edited)==1
+
+
+def test_pending_deletion_revokes_access_and_prevents_schema_recreation(database,monkeypatch):
+    from starlette.requests import Request
+    public_connect,(schema,_) = database
+    monkeypatch.setattr(auth,'_decode_token',lambda _:dict(sub=UIDS[0],email='test@example.com'))
+    credential=HTTPAuthorizationCredentials(scheme='Bearer',credentials='valid-token')
+    with public_connect() as conn:
+        with conn.cursor() as cur:cur.execute('UPDATE public.user_profiles SET deletion_started_at=now() WHERE id=%s',(UIDS[0],))
+    with pytest.raises(HTTPException) as error:auth.get_current_user(credential)
+    assert error.value.status_code==423
+    request=Request(dict(type='http',method='DELETE',path='/api/account',headers=[]))
+    assert auth.get_current_user(credential,request)['user_id']==UIDS[0]
+    with pytest.raises(pgcompat.AccountDeleting):pgcompat.Connection(schema)
+    pgcompat.forget_schema(schema)
+    with pytest.raises(pgcompat.AccountDeleting):pgcompat.ensure_schema(schema,lambda:None)
+
+
+def test_feedback_triage_is_private_and_removed_with_account(database):
+    connect,_=database
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("INSERT INTO public.feedback_triage(user_id,item_id,status,reply) VALUES (%s,1,'triaged','Private reply')",(UIDS[0],))
+            for role in ('anon','authenticated'):
+                cur.execute("SELECT has_table_privilege(%s,'public.feedback_triage','SELECT') AS allowed",(role,))
+                assert cur.fetchone()['allowed'] is False
+            cur.execute('DELETE FROM public.user_profiles WHERE id=%s',(UIDS[0],))
+            cur.execute('SELECT count(*) AS n FROM public.feedback_triage WHERE user_id=%s',(UIDS[0],))
+            assert cur.fetchone()['n']==0
+
+
+def test_readiness_rejects_missing_release_migrations(database,monkeypatch):
+    from app import database as module,main
+    connect,_=database
+    monkeypatch.setattr(module,'get_conn',connect)
+    assert main.ready()=={'status':'ready'}
+    with connect() as conn:
+        with conn.cursor() as cur:cur.execute('ALTER TABLE public.feedback_triage DROP COLUMN reply')
+    assert main.ready().status_code==503
+
+
+def test_concurrent_uploads_observe_committed_storage_usage(database,monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from app import storage_budget as budget
+    from psycopg2.extras import Json
+    connect,_=database
+    monkeypatch.setattr(budget,'get_conn',connect)
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute('CREATE SCHEMA IF NOT EXISTS storage')
+            cur.execute('CREATE TABLE IF NOT EXISTS storage.objects(bucket_id text,name text,metadata jsonb)')
+            cur.execute('TRUNCATE storage.objects')
+            cur.execute('INSERT INTO storage.objects VALUES (%s,%s,%s)',('trade-images',UIDS[0]+'/existing.png',Json({'size':budget.FREE_BYTES-1})))
+            # Another tenant and another bucket cannot consume this account budget.
+            cur.execute('INSERT INTO storage.objects VALUES (%s,%s,%s)',('trade-images',UIDS[1]+'/other.png',Json({'size':budget.FREE_BYTES})))
+    def upload(index):
+        try:
+            with budget.storage_budget(UIDS[0],1):
+                with connect() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute('INSERT INTO storage.objects VALUES (%s,%s,%s)',('trade-images',UIDS[0]+'/'+str(index)+'.png',Json({'size':1})))
+            return True
+        except HTTPException as error:
+            assert error.status_code==413
+            return False
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        assert sum(workers.map(upload,range(2)))==1
+
+
+def test_inflight_legacy_write_rechecks_account_after_deletion_lock(database):
+    from concurrent.futures import ThreadPoolExecutor
+    from app.storage_budget import lock_account_write
+    connect,_=database
+    def late_write():
+        try:
+            with connect() as conn:lock_account_write(conn,UIDS[0])
+        except HTTPException as error:return error.status_code
+        return 200
+    with ThreadPoolExecutor(max_workers=1) as worker:
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute('SELECT pg_advisory_xact_lock(hashtext(%s))',('storage:'+UIDS[0],))
+                cur.execute('UPDATE public.user_profiles SET deletion_started_at=now() WHERE id=%s',(UIDS[0],))
+                result=worker.submit(late_write)
+        assert result.result(timeout=15)==423

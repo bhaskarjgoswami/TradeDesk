@@ -642,5 +642,20 @@
   "Submitting feedback…": "جارٍ إرسال الملاحظات…",
   "Please enter your feedback.": "يرجى إدخال ملاحظاتك.",
   "You can attach up to 3 images.": "يمكنك إرفاق ما يصل إلى 3 صور.",
-  "Optional · saved to your profile": "اختياري · محفوظ في ملفك الشخصي"
+  "Optional · saved to your profile": "اختياري · محفوظ في ملفك الشخصي",
+  "Quantity / lots": "الكمية / العقود",
+  "Units per lot / contract": "الوحدات لكل عقد",
+  "Your submissions": "طلباتك",
+  "No submissions yet.": "لا توجد طلبات بعد.",
+  "Image storage": "تخزين الصور",
+  "Reclaim unused images": "حذف الصور غير المستخدمة",
+  "Contact support": "التواصل مع الدعم",
+  "Complete your deletion request": "إكمال طلب حذف الحساب",
+  "Retry deletion": "إعادة محاولة الحذف",
+  "Sign out": "تسجيل الخروج",
+  "Reload saved trade": "إعادة تحميل الصفقة المحفوظة",
+  "View plans": "عرض الخطط",
+  "Trade saved. Could not refresh the journal; try again shortly.": "تم حفظ الصفقة. تعذر تحديث السجل؛ أعد المحاولة قريبًا.",
+  "Use 1 for shares or units. For contracts, enter the instrument’s units per lot.": "استخدم 1 للأسهم أو الوحدات. للعقود، أدخل عدد الوحدات لكل عقد.",
+  "Offline · your saved journal needs a connection. Unsaved trade drafts stay in this tab.": "غير متصل · يحتاج السجل إلى اتصال. تبقى مسودات الصفقات في هذا التبويب."
 }

@@ -35,6 +35,10 @@ _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
 _SCHEMA = re.compile(r"^j_[0-9a-f]{32}$")
 
 
+class AccountDeleting(RuntimeError):
+    """Account cleanup has started; no journal access is allowed."""
+
+
 class MissingJournalSchema(RuntimeError):
     """A tenant namespace disappeared; never fall back to another schema."""
 
@@ -109,11 +113,18 @@ class Connection:
                 self.close()
             raise
 
+    def _active_account(self,cur):
+        uid=self._schema[2:]
+        cur.execute('SELECT deletion_started_at FROM public.user_profiles WHERE id=%s::uuid FOR SHARE',(uid,))
+        account=cur.fetchone()
+        if not account or account['deletion_started_at'] is not None:raise AccountDeleting('Account deletion is pending')
+
     def _set_path(self):
         # SET LOCAL lasts one transaction (correct behind Supabase's transaction-mode
         # pooler, where a session-level SET could leak to another user). The journal
         # code commits mid-block and keeps going, so re-apply after every commit.
         with self._conn.cursor() as cur:
+            self._active_account(cur)
             cur.execute("SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname=%s)", (self._schema,))
             row = cur.fetchone()
             exists = next(iter(row.values())) if isinstance(row, dict) else row[0]
@@ -207,10 +218,16 @@ def ensure_schema(schema: str, init) -> None:
         try:
             conn.autocommit = False
             with conn.cursor() as cur:
+                cur.execute('SELECT deletion_started_at FROM public.user_profiles WHERE id=%s::uuid FOR SHARE',(schema[2:],))
+                account=cur.fetchone()
+                if not account or account['deletion_started_at'] is not None:raise AccountDeleting('Account deletion is pending')
                 cur.execute("CREATE SCHEMA IF NOT EXISTS %s" % psycopg2.extensions.quote_ident(schema, cur))
                 # API roles never see journal schemas (browser access is auth-only)
                 cur.execute("REVOKE ALL ON SCHEMA %s FROM anon, authenticated" % psycopg2.extensions.quote_ident(schema, cur))
             conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
         finally:
             pool.putconn(conn)
         token = current_schema.set(schema)

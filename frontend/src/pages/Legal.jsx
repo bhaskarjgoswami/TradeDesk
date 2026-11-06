@@ -1,8 +1,8 @@
 import { Navigate } from "react-router-dom";
-import { BRAND, SUPPORT_EMAIL, LEGAL_UPDATED } from "../lib/brand";
+import { BRAND, SUPPORT_EMAIL, SUPPORT_URL, SUPPORT_LABEL, LEGAL_UPDATED } from "../lib/brand";
 import { PublicHeader, PublicFooter } from "./Landing";
 
-const mail = <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>;
+const mail = <a href={SUPPORT_URL}>{SUPPORT_LABEL}</a>;
 
 const PAGES = {
   terms: {
@@ -59,7 +59,7 @@ const PAGES = {
       <>
         <p>Pro is a one-time payment for a fixed period. There is no subscription to cancel and nothing renews automatically.</p>
         <h3>Refunds</h3>
-        <p>If Pro does not work for you, email {mail} within 7 days of payment with your registered email and Razorpay payment ID for a full refund. After 7 days, payments are non-refundable, and Pro stays active until the end of the paid period.</p>
+        <p>If Pro does not work for you, contact {mail} within 7 days of payment with your registered email and Razorpay payment ID for a full refund. After 7 days, payments are non-refundable, and Pro stays active until the end of the paid period.</p>
         <h3>Failed or duplicate payments</h3>
         <p>If you were charged but Pro was not activated, or you were charged twice, contact us and we will activate or refund within 5 to 7 business days. Refunds go back to the original payment method through Razorpay.</p>
       </>
@@ -69,8 +69,10 @@ const PAGES = {
     title: "Contact",
     body: (
       <>
-        <p>For support, billing, refunds or data requests, email {mail}.</p>
-        <p>Please include the email you signed up with. For payment issues, also include your Razorpay payment ID.</p>
+        <p>For support, billing, refunds or data requests, <a href="/app#feedback">sign in and open Feedback</a>. Your submission and our reply stay private to your account. Check Your submissions for updates.</p>
+        {SUPPORT_EMAIL && <p>You can also email {mail}.</p>}
+        <p>Having trouble signing in? <a href="https://github.com/bhaskarjgoswami/TradeDesk/issues/new" target="_blank" rel="noreferrer">Report a technical issue</a>. GitHub issues are public: never include passwords, API keys, payment IDs, or journal data there.</p>
+        <p>For payment issues, include your Razorpay payment ID in private Feedback. Never share card details or passwords.</p>
       </>
     ),
   },

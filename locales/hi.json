@@ -642,5 +642,20 @@
   "Submitting feedback…": "प्रतिक्रिया भेजी जा रही है…",
   "Please enter your feedback.": "कृपया अपनी प्रतिक्रिया लिखें।",
   "You can attach up to 3 images.": "आप अधिकतम 3 चित्र जोड़ सकते हैं।",
-  "Optional · saved to your profile": "वैकल्पिक · आपकी प्रोफ़ाइल में सहेजा गया"
+  "Optional · saved to your profile": "वैकल्पिक · आपकी प्रोफ़ाइल में सहेजा गया",
+  "Quantity / lots": "मात्रा / लॉट",
+  "Units per lot / contract": "प्रति लॉट / अनुबंध इकाइयाँ",
+  "Your submissions": "आपके अनुरोध",
+  "No submissions yet.": "अभी कोई अनुरोध नहीं।",
+  "Image storage": "इमेज स्टोरेज",
+  "Reclaim unused images": "अप्रयुक्त इमेज हटाएँ",
+  "Contact support": "सहायता से संपर्क करें",
+  "Complete your deletion request": "खाता हटाने का अनुरोध पूरा करें",
+  "Retry deletion": "हटाने का पुनः प्रयास करें",
+  "Sign out": "साइन आउट",
+  "Reload saved trade": "सहेजा ट्रेड फिर लोड करें",
+  "View plans": "प्लान देखें",
+  "Trade saved. Could not refresh the journal; try again shortly.": "ट्रेड सहेजा गया। जर्नल रीफ़्रेश नहीं हुआ; थोड़ी देर में फिर कोशिश करें।",
+  "Use 1 for shares or units. For contracts, enter the instrument’s units per lot.": "शेयर या इकाई के लिए 1 लिखें। अनुबंध के लिए प्रति लॉट इकाइयाँ भरें।",
+  "Offline · your saved journal needs a connection. Unsaved trade drafts stay in this tab.": "ऑफ़लाइन · जर्नल के लिए इंटरनेट चाहिए। अधूरे ट्रेड इस टैब में रहते हैं।"
 }

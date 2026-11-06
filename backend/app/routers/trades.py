@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
 from ..auth import get_current_user
 from ..database import get_conn
+from ..storage_budget import lock_account_write
 from ..billing import active_tier, tier_and_day_count
 from ..ratelimit import limit
 from .playbooks import assert_owns_playbook
@@ -132,6 +133,7 @@ def analytics_rows(user=Depends(get_current_user)):
 @router.post("", status_code=201)
 def create_trade(body: TradeIn, user=Depends(get_current_user)):
     with get_conn() as conn:
+        lock_account_write(conn,user['user_id'])
         # exchange imports: skip round-trips we already have
         if body.ext_id:
             with conn.cursor() as cur:
@@ -200,11 +202,12 @@ def _import_row(raw: dict, n: int) -> dict:
     row["symbol"] = row["symbol"].upper()
 
     sign = -1 if row["direction"] == "Short" else 1
-    cv = row.pop("contract_value") or 1
+    cv = row.pop("contract_value")
     e, s_, x_, q = row["entry"], row["stop"], row["exit"], row["qty"]
     if row["pnl"] is None and None not in (e, x_, q):
+        if cv is None:raise ValueError(f"Row {n}: provide a contract multiplier or broker P&L")
         row["pnl"] = round((x_ - e) * q * cv * sign, 8)
-    if row["risk"] is None and None not in (e, s_, q):
+    if row["risk"] is None and None not in (e, s_, q, cv):
         row["risk"] = round(abs(e - s_) * q * cv, 8)
     if row["r_multiple"] is None and None not in (e, s_, x_) and e != s_:
         row["r_multiple"] = round((x_ - e) / abs(e - s_) * sign, 4)
@@ -230,6 +233,7 @@ def import_trades(body: ImportIn, user=Depends(limit("import", 10))):
 
     uid = user["user_id"]
     with get_conn() as conn:
+        lock_account_write(conn,user['user_id'])
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT ext_id FROM trades WHERE user_id=%s AND ext_id = ANY(%s)",
@@ -276,6 +280,7 @@ def update_trade(trade_id: int, body: TradeIn, user=Depends(get_current_user)):
     sets = ",".join(f"{f}=%s" for f in TRADE_FIELDS)
     vals = _vals(body) + [user["user_id"], trade_id]
     with get_conn() as conn:
+        lock_account_write(conn,user['user_id'])
         with conn.cursor() as cur:
             cur.execute("SELECT date FROM trades WHERE user_id=%s AND id=%s", (user["user_id"], trade_id))
             old = cur.fetchone()
@@ -299,6 +304,7 @@ def update_trade(trade_id: int, body: TradeIn, user=Depends(get_current_user)):
 @router.delete("/{trade_id}")
 def delete_trade(trade_id: int, user=Depends(get_current_user)):
     with get_conn() as conn:
+        lock_account_write(conn,user['user_id'])
         with conn.cursor() as cur:
             cur.execute("DELETE FROM trades WHERE user_id=%s AND id=%s", (user["user_id"], trade_id))
     return {"ok": True}
@@ -325,17 +331,20 @@ def upload_image(body: ImageUploadIn, user=Depends(limit("upload", 20))):
     except ValueError:
         raise HTTPException(400, "Invalid base64 image")
     filename = f"{user['user_id']}/{int(time.time())}_{secrets.token_hex(4)}.{ext}"
-    resp = httpx.put(
-        f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{filename}",
-        content=raw,
-        headers={
-            "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-            "Content-Type": "image/" + ("jpeg" if ext == "jpg" else ext),
-        },
-        timeout=30,
-    )
-    if resp.status_code not in (200, 201):
-        raise HTTPException(502, "Storage upload failed")
+    from ..storage_budget import storage_budget
+    with storage_budget(user['user_id'],len(raw)):
+        resp = httpx.put(
+            f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{filename}",
+            content=raw,
+            headers={
+                "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                "Content-Type": "image/" + ("jpeg" if ext == "jpg" else ext),
+            },
+            timeout=30,
+        )
+        if resp.status_code not in (200, 201):
+            raise HTTPException(502, "Storage upload failed")
+
     return {"path": filename}
 
 

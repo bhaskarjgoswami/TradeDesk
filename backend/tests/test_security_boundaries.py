@@ -21,7 +21,7 @@ def test_missing_namespace_never_searches_public_and_releases_connection(monkeyp
     cursor = Mock()
     cursor.__enter__ = Mock(return_value=cursor)
     cursor.__exit__ = Mock(return_value=False)
-    cursor.fetchone.return_value = (False,)
+    cursor.fetchone.side_effect = [{"deletion_started_at":None}, (False,)]
     connection = Mock(closed=False)
     connection.cursor.return_value = cursor
     pool = Mock()
@@ -39,7 +39,7 @@ def test_tenant_search_path_excludes_shared_tables(monkeypatch):
     cursor = Mock()
     cursor.__enter__ = Mock(return_value=cursor)
     cursor.__exit__ = Mock(return_value=False)
-    cursor.fetchone.return_value = (True,)
+    cursor.fetchone.side_effect = [{"deletion_started_at":None}, (True,)]
     connection = Mock(closed=False)
     connection.cursor.return_value = cursor
     pool = Mock()

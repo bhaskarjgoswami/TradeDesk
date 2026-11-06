@@ -109,3 +109,28 @@ Unsaved journal edits are recovered from account-scoped session storage in the c
 CSV imports require a positive contract multiplier to calculate P&L from price and quantity. Broker P&L remains authoritative when supplied. A mapped closed-trade ID is namespaced by broker and distinguishes identical executions. Without IDs, immutable financial fields form the duplicate key; notes and tags do not create new trades. Identical executions without IDs cannot be distinguished: provide IDs before importing those files. Outcome badges and filters use P&L after total fees.
 
 ZIP restores validate all item types, settings, routine progress, dates, JSON shapes, IDs, revisions, columns, and referenced images before any upload or database write. Transient pretrade checklist state is reset. Restore is available only in an empty journal.
+
+Operator workflow (run from `backend` with server-only environment variables):
+- `.venv/bin/python scripts/operations.py feedback --summary` gives queue counts; omit `--summary` to review the latest messages and attachment paths locally.
+- `.venv/bin/python scripts/operations.py triage --user <UUID> --id <ID> --status triaged` records review; use `closed` after resolution. The queue is private to operators and never grants browser users staff access. The project maintainer should review it daily; availability failures appear in the GitHub Production availability workflow. Configure GitHub notifications for its failures.
+- `.venv/bin/python scripts/operations.py metrics` reports aggregate first-trade activation, onboarding completion, and seven-day trading activity using existing records. No external analytics service or new browser tracking is installed. Counts are operational indicators, not cohort retention analysis.
+
+Images share an account-wide budget of 100 MB on Free and 1 GB on active Pro, in addition to the 5 MB file limit. Concurrent uploads and restores serialize budget checks. Existing images remain readable after downgrading; new uploads require sufficient room.
+
+Account deletion commits a durable pending state before removing anything. Normal API access and media credentials are blocked, in-flight journal operations finish before cleanup begins, and retries resume the same removal. A failed cleanup displays a recovery action. Apply `20261105_account_deletion.sql` and `20261105_feedback_triage.sql` before deploying this release.
+
+Server failures return an `X-Request-ID` for investigation. Structured request logs omit user IDs, raw URLs, query strings, bodies and exception messages. Optional Sentry reporting disables body capture, breadcrumbs, local variables, and tracing; its final event scrubber retains only error classes and code locations. Production Sentry DSN and alert delivery still need provider configuration.
+
+Support now defaults to `/contact` rather than an unconfigured email address. Customers submit private Feedback and read operator replies in Your submissions. Operators use `triage --reply-file <UTF-8-file>` to reply without sending email; messages are rendered as text. For public sign-in problems the contact page links to GitHub with an explicit warning against posting private data. Set `VITE_SUPPORT_EMAIL` only after verifying the mailbox.
+
+Settings → Journal shows image usage and can reclaim at most 100 unreferenced files older than seven days per request. Reclamation holds account storage and journal write locks, excludes legacy references, and requires user confirmation because an old unsaved draft may refer to an unattached image.
+
+Readiness also checks the billing payment ledger, feedback triage/reply schema and account deletion marker. A release with missing migrations returns 503 rather than advertising a healthy service. Legacy trade writes recheck the account after acquiring the storage lock, so a request authenticated before deletion cannot resume writing after deletion starts.
+
+For a repeatable local load baseline, initialize a disposable PostgreSQL database named `tradedesk_test`, run the backend tests against it, then run from the repository root:
+
+```sh
+TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:55432/tradedesk_test backend/.venv/bin/python backend/scripts/load_baseline.py
+```
+
+The script rejects non-local databases, creates and removes its own test account, seeds 10,000 trades, and measures 100 requests with eight workers (80% paginated reads and 20% writes). On 6 November 2026 it recorded zero errors, a 146.55 ms median and a 172.26 ms p95. These are local application measurements; hosted staging, production network latency, browser rendering and a production capacity target still require validation.

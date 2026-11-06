@@ -642,5 +642,20 @@
   "Submitting feedback…": "Envoi de votre avis…",
   "Please enter your feedback.": "Veuillez saisir votre avis.",
   "You can attach up to 3 images.": "Vous pouvez joindre jusqu’à 3 images.",
-  "Optional · saved to your profile": "Facultatif · enregistré dans votre profil"
+  "Optional · saved to your profile": "Facultatif · enregistré dans votre profil",
+  "Quantity / lots": "Quantité / lots",
+  "Units per lot / contract": "Unités par lot / contrat",
+  "Your submissions": "Vos demandes",
+  "No submissions yet.": "Aucune demande pour le moment.",
+  "Image storage": "Stockage des images",
+  "Reclaim unused images": "Supprimer les images inutilisées",
+  "Contact support": "Contacter l’assistance",
+  "Complete your deletion request": "Finalisez la suppression du compte",
+  "Retry deletion": "Réessayer la suppression",
+  "Sign out": "Se déconnecter",
+  "Reload saved trade": "Recharger la transaction enregistrée",
+  "View plans": "Voir les offres",
+  "Trade saved. Could not refresh the journal; try again shortly.": "Transaction enregistrée. Impossible d’actualiser le journal ; réessayez bientôt.",
+  "Use 1 for shares or units. For contracts, enter the instrument’s units per lot.": "Utilisez 1 pour les actions ou unités. Pour les contrats, indiquez les unités par lot.",
+  "Offline · your saved journal needs a connection. Unsaved trade drafts stay in this tab.": "Hors ligne · le journal nécessite une connexion. Les brouillons restent dans cet onglet."
 }

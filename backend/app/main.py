@@ -2,9 +2,10 @@ import os
 import psycopg2
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from .journal.pgcompat import MissingJournalSchema
+from .journal.pgcompat import MissingJournalSchema, AccountDeleting
 from fastapi.middleware.cors import CORSMiddleware
 from .config import FRONTEND_URL
+from .observability import scrub_event,request_diagnostics
 from .routers import trades, stats, daylogs, exchange, subscription, account, playbooks
 from .journal.router import router as journal_router
 
@@ -13,8 +14,12 @@ if os.environ.get("SENTRY_DSN"):
     sentry_sdk.init(
         dsn=os.environ["SENTRY_DSN"],
         environment="production" if os.environ.get("RENDER") else "development",
-        traces_sample_rate=0.1,
-        send_default_pii=False,  # never ship emails, keys or request bodies
+        traces_sample_rate=0,
+        max_request_body_size="never",
+        include_local_variables=False,
+        before_send=scrub_event,
+        before_breadcrumb=lambda breadcrumb,hint:None,
+        send_default_pii=False,
     )
 
 # Interactive API docs only outside production (Render sets RENDER=true).
@@ -25,21 +30,6 @@ app = FastAPI(
     openapi_url="/openapi.json" if _docs else None,
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        FRONTEND_URL,
-        "http://localhost:5173",   # Vite dev
-        "http://localhost:3000",   # alt dev
-        "capacitor://localhost",   # Capacitor mobile
-        "http://localhost",        # Expo mobile
-    ],
-    # Allow this project's Vercel domains (stable production alias + per-deploy preview URLs)
-    allow_origin_regex=r"https://trade-desk-dl66[a-z0-9-]*\.vercel\.app",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 app.include_router(trades.router)
 app.include_router(stats.router)
@@ -54,6 +44,11 @@ app.include_router(journal_router)
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "TradeDesk API"}
+
+
+@app.exception_handler(AccountDeleting)
+def account_deleting(request,exc):
+    return JSONResponse(status_code=423,content={'detail':'Account deletion is pending. Retry deletion to finish.'})
 
 
 @app.exception_handler(MissingJournalSchema)
@@ -76,7 +71,17 @@ def ready():
     try:
         with get_conn(readonly=True) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT to_regclass('public.user_profiles') IS NOT NULL AND to_regclass('public.billing_orders') IS NOT NULL AND to_regclass('public.api_rate_buckets') IS NOT NULL AS ready")
+                cur.execute("""SELECT to_regclass('public.user_profiles') IS NOT NULL
+                    AND to_regclass('public.billing_orders') IS NOT NULL
+                    AND to_regclass('public.billing_payments') IS NOT NULL
+                    AND to_regclass('public.api_rate_buckets') IS NOT NULL
+                    AND to_regclass('public.feedback_triage') IS NOT NULL
+                    AND EXISTS (SELECT 1 FROM information_schema.columns
+                        WHERE table_schema='public' AND table_name='user_profiles'
+                        AND column_name='deletion_started_at')
+                    AND EXISTS (SELECT 1 FROM information_schema.columns
+                        WHERE table_schema='public' AND table_name='feedback_triage'
+                        AND column_name='reply') AS ready""")
                 row = cur.fetchone()
                 if not row or not row["ready"]:
                     return JSONResponse(status_code=503, content={"status": "unavailable"})
@@ -114,3 +119,24 @@ async def parse_journal_body(request, call_next):
             return JSONResponse(status_code=400,content={"detail":"Send a valid JSON object"})
         request.state.journal_body = value
     return await call_next(request)
+
+# Outermost middleware supplies a support reference even for parser failures.
+app.middleware("http")(request_diagnostics)
+
+# CORS wraps generated error responses as well as successful requests.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        FRONTEND_URL,
+        "http://localhost:5173",   # Vite dev
+        "http://localhost:3000",   # alt dev
+        "capacitor://localhost",   # Capacitor mobile
+        "http://localhost",        # Expo mobile
+    ],
+    # Allow this project's Vercel domains (stable production alias + per-deploy preview URLs)
+    allow_origin_regex=r"https://trade-desk-dl66[a-z0-9-]*\.vercel\.app",
+    allow_credentials=True,
+    expose_headers=["X-Request-ID"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)

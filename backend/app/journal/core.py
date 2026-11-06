@@ -572,15 +572,17 @@ def save_image(data_url):
         raise ValueError("Image too large (max 5 MB)")
     raw = base64.b64decode(b64, validate=True)
     name = f"{int(time.time())}_{secrets.token_hex(4)}.{ext}"
-    resp = httpx.put(
-        f"{SUPABASE_URL}/storage/v1/object/{IMAGE_BUCKET}/{current_user_id.get()}/{name}",
-        content=raw,
-        headers={"Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-                 "Content-Type": "image/" + ("jpeg" if ext == "jpg" else ext)},
-        timeout=30,
-    )
-    if resp.status_code not in (200, 201):
-        raise ValueError("Image upload failed")
+    from ..storage_budget import storage_budget
+    with storage_budget(current_user_id.get(),len(raw)):
+        resp = httpx.put(
+            f"{SUPABASE_URL}/storage/v1/object/{IMAGE_BUCKET}/{current_user_id.get()}/{name}",
+            content=raw,
+            headers={"Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                     "Content-Type": "image/" + ("jpeg" if ext == "jpg" else ext)},
+            timeout=30,
+        )
+        if resp.status_code not in (200, 201):
+            raise ValueError("Image upload failed")
     return "images/" + name
 
 
