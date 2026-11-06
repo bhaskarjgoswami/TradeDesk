@@ -28,3 +28,14 @@ test('billing styles remain isolated while its content follows language changes'
   language='es';w.dispatchEvent(new w.Event('td-language-change'));assert.equal(w.testHost.mount.querySelector('h1').textContent,'Planes');w.testHost.dispose();
  }finally{w.close();}
 });
+
+test('billing translates accessible labels when only an attribute changes',async()=>{
+ const dom=new JSDOM('<div id="panel"></div>',{url:'https://tradedesk.example/app',pretendToBeVisual:true,runScripts:'outside-only'}),w=dom.window;
+ try{
+  const source=readFileSync(new URL('../cloud/billingHost.js',import.meta.url),'utf8').replace('export function','function');
+  w.testLocale={apply:scope=>{for(const node of scope.querySelectorAll('[aria-label]')){const value=node.getAttribute('aria-label');if(value==='Plans')node.setAttribute('aria-label','Planes');if(value==='Current plan')node.setAttribute('aria-label','Plan actual');}}};
+  w.eval(source+';window.testHost=createBillingHost(document.querySelector("#panel"),"",window.testLocale)');
+  w.testHost.mount.innerHTML='<button aria-label="Plans">Pro</button>';await new Promise(resolve=>setTimeout(resolve,40));
+  const button=w.testHost.mount.querySelector('button');assert.equal(button.getAttribute('aria-label'),'Planes');button.setAttribute('aria-label','Current plan');await new Promise(resolve=>setTimeout(resolve,40));assert.equal(button.getAttribute('aria-label'),'Plan actual');assert.equal(button.textContent,'Pro');w.testHost.dispose();
+ }finally{w.close();}
+});

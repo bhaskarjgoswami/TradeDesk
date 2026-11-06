@@ -14,9 +14,9 @@ export function createBillingHost(host, css, locale = window.TDLocale) {
   function translate() {
     observer.disconnect();
     locale?.apply(mount);
-    observer.observe(mount,{childList:true,subtree:true,characterData:true});
+    observer.observe(mount,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['aria-label','title','placeholder','alt','data-tip']});
   }
   window.addEventListener('td-language-change',translate);
-  observer.observe(mount,{childList:true,subtree:true,characterData:true});
+  observer.observe(mount,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['aria-label','title','placeholder','alt','data-tip']});
   return {mount,dispose(){observer.disconnect();window.removeEventListener('td-language-change',translate);}};
 }

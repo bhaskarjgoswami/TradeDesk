@@ -585,8 +585,8 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
   </div>
 </div>
 <div class="mobilebar">
-  <button class="hamb" id="hamb" aria-label="Menu"><svg class="hi" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-  <div class="mbrand"><span class="logo-ic"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></span> Trade Journal</div><button type="button" class="btn ghost" id="routineMobileOpen" style="margin-left:auto">Pre-Market Routine</button>
+  <button type="button" class="hamb" id="hamb" aria-label="Menu" aria-controls="sidebar" aria-expanded="false"><svg class="hi" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <div class="mbrand"><span class="logo-ic"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></span> Trade Journal</div><button type="button" class="btn ghost" id="routineMobileOpen">Pre-Market Routine</button>
 </div>
 <div class="backdrop" id="backdrop"></div>
 <div class="app" id="app">
@@ -605,7 +605,8 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
   <div class="offline-notice" id="offlineNotice" role="status" hidden>You are offline. New changes will not sync until your connection returns. Unsaved trade drafts stay in this tab.</div>
   <div class="appbody">
   <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar" id="sidebar" tabindex="-1" aria-label="Navigation">
+<button type="button" id="drawerClose" aria-label="Close navigation">×</button>
 <div class="side-h">Journal</div>
 <div class="navitem" data-view="month" role="button" tabindex="0" title="Journal" aria-label="Journal"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6zM9 7h6M9 11h6M9 15h4"/></svg></span>Journal</div>
 <div class="navitem" data-view="performance" role="button" tabindex="0" title="Stats" aria-label="Stats"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16h16M7 15l4-5 4 3 5-7"/></svg></span>Stats</div>
@@ -921,14 +922,38 @@ function setView(v){
   if(window.renderWorkspaceView)window.renderWorkspaceView(v);
   if(typeof routineState!=='undefined')renderRoutinePanel();
 }
-function openDrawer(){$('#sidebar').classList.add('open');$('#backdrop').classList.add('show');}
-function closeDrawer(){$('#sidebar').classList.remove('open');$('#backdrop').classList.remove('show');}
+function openDrawer(){
+  if(!drawerMedia.matches)return;
+  const sidebar=$('#sidebar');sidebar.classList.add('open');$('#backdrop').classList.add('show');
+  sidebar.removeAttribute('inert');sidebar.removeAttribute('aria-hidden');sidebar.setAttribute('role','dialog');sidebar.setAttribute('aria-modal','true');$('#hamb').setAttribute('aria-expanded','true');
+  if(!drawerBackground.size)$$('.content-card,.topbar,.mobilebar').forEach(element=>{drawerBackground.set(element,element.hasAttribute('inert'));element.setAttribute('inert','');});
+  (drawerControls()[0]||sidebar).focus();
+}
+function closeDrawer(restoreFocus=true){
+  const sidebar=$('#sidebar'),wasOpen=sidebar.classList.contains('open');
+  sidebar.classList.remove('open');$('#backdrop').classList.remove('show');sidebar.removeAttribute('role');sidebar.removeAttribute('aria-modal');$('#hamb').setAttribute('aria-expanded','false');
+  for(const [element,wasInert] of drawerBackground)element.toggleAttribute('inert',wasInert);drawerBackground.clear();
+  sidebar.toggleAttribute('inert',drawerMedia.matches);if(drawerMedia.matches)sidebar.setAttribute('aria-hidden','true');else sidebar.removeAttribute('aria-hidden');
+  if(wasOpen&&restoreFocus&&drawerMedia.matches)$('#hamb').focus();
+}
+const drawerMedia=matchMedia('(max-width:980px)'),drawerBackground=new Map();
+function drawerControls(){return [...$('#sidebar').querySelectorAll('button,a[href],input,select,[tabindex="0"]')].filter(element=>!element.disabled&&!element.closest('[hidden]')&&element.getClientRects().length);}
+$('#drawerClose').onclick=()=>closeDrawer();
+$('#sidebar').addEventListener('keydown',event=>{
+  if(!drawerMedia.matches||!$('#sidebar').classList.contains('open'))return;
+  if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeDrawer();return;}
+  if(event.key!=='Tab')return;const controls=drawerControls(),first=controls[0],last=controls.at(-1);
+  if(!first){event.preventDefault();$('#sidebar').focus();}
+  else if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+  else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+});
+drawerMedia.addEventListener('change',()=>closeDrawer(false));closeDrawer(false);
 // ---------- login (server-verified session) ----------
 let userEmail='';
 function setAvatar(email){userEmail=email||userEmail;const c=(userEmail||'T').trim()[0];$('#tbAvatar').textContent=(c||'T').toUpperCase();
   const membership=$('#sidebarMembership');if(membership){membership.hidden=Boolean(window.__td)&&!userEmail;if(!window.__td){$('#sidebarMemberPlan').textContent='TradeDesk';$('#sidebarMemberDetail').textContent='Unlock unlimited daily trades';$('#sidebarMemberUpgrade').hidden=false;membership.title='Upgrade your TradeDesk account';}}}
 function sessionExpired(){booted=false;showLogin();$('#loginErr').textContent='Your session expired. Sign in again to continue. Your unsaved form is still here.';}
-function showLogin(){$('#loginScreen').classList.remove('hidden');$('#loginEmail').focus();}
+function showLogin(){closeDrawer(false);$('#loginScreen').classList.remove('hidden');$('#loginEmail').focus();}
 function hideLogin(){$('#loginScreen').classList.add('hidden');}
 $('#eyeBtn').onclick=()=>{const i=$('#loginPass'),show=i.type==='password';i.type=show?'text':'password';$('#eyeBtn').setAttribute('aria-label',show?'Hide password':'Show password');$('#eyeBtn').setAttribute('aria-pressed',String(show));};
 $('#loginForm').addEventListener('submit',async e=>{
@@ -1386,7 +1411,7 @@ async function pullDelta(){
   const btns=[$('#pullBtn')];btns.forEach(b=>{if(b){b.disabled=true;}});
   try{
     const r=await(await fetch('/api/delta/today')).json();
-    if(r.error==='no-credentials'){alert('No Delta API keys found. Add DELTA_API_KEY and DELTA_API_SECRET to /Volumes/My_drive/Trade/.env and restart.');return;}
+    if(r.error==='no-credentials'){alert('No Delta API keys. Add your read-only keys in Settings → Integrations.');return;}
     if(r.error){alert('Delta: '+r.error);return;}
     if(!r.trades||!r.trades.length){toast('No Delta trades for today');return;}
     importQueue=r.trades;importIdx=0;loadImport();
@@ -1424,7 +1449,7 @@ function showSettingsTab(key){settingsTab=key;
   $$('[data-settings-panel]').forEach(panel=>{panel.hidden=panel.dataset.settingsPanel!==key;panel.id='settings-panel-'+panel.dataset.settingsPanel;panel.setAttribute('aria-labelledby','settings-tab-'+panel.dataset.settingsPanel);});
   $$('[data-settings-tab]').forEach(button=>{const selected=button.dataset.settingsTab===key;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;});
 }
-$$('[data-settings-tab]').forEach(button=>{button.onclick=()=>showSettingsTab(button.dataset.settingsTab);button.onkeydown=event=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(event.key))return;event.preventDefault();const tabs=$$('[data-settings-tab]'),i=tabs.indexOf(button);const target=event.key==='Home'?tabs[0]:event.key==='End'?tabs.at(-1):tabs[(i+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length];target.click();target.focus();};});
+$$('[data-settings-tab]').forEach(button=>{button.onclick=()=>showSettingsTab(button.dataset.settingsTab);button.onkeydown=event=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(event.key))return;event.preventDefault();const tabs=$$('[data-settings-tab]'),i=tabs.indexOf(button);const target=event.key==='Home'?tabs[0]:event.key==='End'?tabs.at(-1):tabs[(i+((event.key==='ArrowRight'?1:-1)*(document.documentElement.dir==='rtl'?-1:1))+tabs.length)%tabs.length];target.click();target.focus();};});
 const ROUTINE_ICONS={calendar:'◷',target:'◎',chart:'↗',calm:'❋'};
 let routineState=null,routineDraft=null,routineRevision=0,routineBusy=false,routineTimer=null,routineHiddenPeriod=null,routineForced=false;
 async function loadRoutine(){try{const response=await fetch('/api/routine');if(!response.ok)throw Error();routineState=await response.json();routineAfterReset();renderRoutinePanel();return true;}catch{if(!routineState)$('#routineOpen').textContent='Pre-Market Routine';return false;}}

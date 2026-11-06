@@ -10,7 +10,8 @@
     "test": "node --test src/lib/*.test.js",
     "sync:journal": "node scripts/sync-journal-ui.mjs",
     "check:journal": "node scripts/sync-journal-ui.mjs --check",
-    "prebuild": "npm run sync:journal"
+    "prebuild": "npm run sync:journal",
+    "check:translations": "node scripts/audit-translations.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
@@ -22,6 +23,7 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.7.0",
     "jsdom": "26.1.0",
-    "vite": "^6.4.5"
+    "vite": "^6.4.5",
+    "@babel/parser": "7.29.7"
   }
 }

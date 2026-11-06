@@ -637,3 +637,7 @@ table.grp .num{text-align:right;font-variant-numeric:tabular-nums}
 [dir="rtl"] .language-control,[dir="rtl"] .pc-feats li,[dir="rtl"] .tf-field{text-align:start}
 [dir="rtl"] input[type="email"],[dir="rtl"] input[type="password"],[dir="rtl"] input[type="number"],[dir="rtl"] .pc-price{direction:ltr;unicode-bidi:isolate}
 @media(max-width:620px){.billing-topbar{flex-wrap:wrap;gap:12px;padding-block:16px}.billing-topbar .language-control{margin-inline-end:0}.language-control>span{display:none}.pub-head nav{flex-wrap:wrap;justify-content:flex-end}}
+
+/* Keep localized navigation and billing copy within narrow viewports. */
+.pub-legal{overflow-wrap:anywhere}.pub-foot nav,.billing-footer>div,.bill-controls{flex-wrap:wrap}.billing-membership{max-inline-size:100%}.billing-back>span{display:inline-block}[dir=rtl] .billing-back>span{transform:scaleX(-1)}
+@media(max-width:620px){.pub-head{flex-wrap:wrap;justify-content:center}.pub-head nav{width:100%;justify-content:center}.pub-head .language-control{min-width:0;max-width:100%}.pub-head .language-control select{min-height:44px;font-size:16px;max-width:100%}.pub-head nav>a{min-height:44px;align-items:center;justify-content:center;white-space:normal;text-align:center;max-width:100%}.pub-head nav>a.btn{display:inline-flex}.pub-foot nav{max-width:100%;row-gap:12px}.bill-seg button{min-width:0;white-space:normal}.billing-footer a{overflow-wrap:anywhere}}

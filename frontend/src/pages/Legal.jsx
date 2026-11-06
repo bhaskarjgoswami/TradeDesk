@@ -1,4 +1,5 @@
 import { Navigate } from "react-router-dom";
+import { useSyncExternalStore } from "react";
 import { BRAND, SUPPORT_EMAIL, SUPPORT_URL, SUPPORT_LABEL, LEGAL_UPDATED } from "../lib/brand";
 import { PublicHeader, PublicFooter } from "./Landing";
 
@@ -9,11 +10,11 @@ const PAGES = {
     title: "Terms of Service",
     body: (
       <>
-        <p>These terms govern your use of {BRAND}, a trading journal web application. By creating an account you agree to them.</p>
+        <p>{`These terms govern your use of ${BRAND}, a trading journal web application. By creating an account you agree to them.`}</p>
         <h3>The service</h3>
-        <p>{BRAND} lets you record trades, journal notes and screenshots, and import trade fills from supported exchanges using read-only API keys you provide. {BRAND} never places orders on your behalf.</p>
+        <p>{`${BRAND} lets you record trades, journal notes and screenshots, and import trade fills from supported exchanges using read-only API keys you provide. ${BRAND} never places orders on your behalf.`}</p>
         <h3>Not financial advice</h3>
-        <p>Statistics, charts and any other output are records of your own data. Nothing in {BRAND} is investment, trading or tax advice. Trading carries risk of loss and you are solely responsible for your decisions.</p>
+        <p>{`Statistics, charts and any other output are records of your own data. Nothing in ${BRAND} is investment, trading or tax advice. Trading carries risk of loss and you are solely responsible for your decisions.`}</p>
         <h3>Your account</h3>
         <p>Keep your login credentials secure. Use exchange API keys with read-only permissions. You are responsible for activity under your account.</p>
         <h3>Plans and payment</h3>
@@ -32,7 +33,7 @@ const PAGES = {
     title: "Privacy Policy",
     body: (
       <>
-        <p>This policy explains what {BRAND} collects and how it is used.</p>
+        <p>{`This policy explains what ${BRAND} collects and how it is used.`}</p>
         <h3>What we store</h3>
         <ul>
           <li>Account: email address and a securely hashed password (managed by Supabase Auth).</li>
@@ -46,7 +47,7 @@ const PAGES = {
         <h3>Where it lives</h3>
         <p>Data is stored with Supabase (database, authentication, private file storage). The application runs on Render and Vercel. Payments are processed by Razorpay. Screenshots are private and served through short-lived signed links.</p>
         <h3>Your rights</h3>
-        <p>In Settings → Your data you can download all your data or permanently delete your account, which removes your trades, journal, playbooks, screenshots and profile. You can also email {mail}.</p>
+        <p>In Settings → Your data you can download all your data or permanently delete your account, which removes your trades, journal, playbooks, screenshots and profile. You can also contact {mail}.</p>
         <h3>Retention</h3>
         <p>We keep your data while your account exists. Deleting your account removes your active account, journal records, and uploaded images. Infrastructure backups follow the storage providers’ retention schedules; we do not promise a specific removal period for those backups.</p>
         <p>Contact: {mail}</p>
@@ -81,6 +82,8 @@ const PAGES = {
 export const LEGAL_PAGES = Object.keys(PAGES); // keep in sync with App.jsx LEGAL_PAGES
 
 export default function Legal({ page }) {
+  const language=useSyncExternalStore(listener=>window.TDLocale?.subscribe(listener)||(()=>{}),()=>window.TDLocale?.language||'en',()=> 'en');
+  const updated=new Intl.DateTimeFormat(language,{dateStyle:'long',timeZone:'UTC'}).format(new Date(LEGAL_UPDATED+'T00:00:00Z'));
   const p = PAGES[page];
   if (!p) return <Navigate to="/" replace />;
   return (
@@ -89,7 +92,7 @@ export default function Legal({ page }) {
       <main className="pub-legal">
         <h1>{p.title}</h1>
         {p.body}
-        <p className="muted">Last updated {LEGAL_UPDATED}</p>
+        <p className="muted">Last updated {updated}</p>
       </main>
       <PublicFooter />
     </div>

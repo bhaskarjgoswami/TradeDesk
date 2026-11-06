@@ -26,6 +26,7 @@
   let language = initialLanguage(), catalog = {}, requestVersion = 0, observer = null, scheduled = false;
   const cache = new Map([['en', {}]]), originals = new WeakMap(), attributes = new WeakMap(), listeners = new Set(), protectedText = new Set();
   const catalogIndexes=new WeakMap();
+  const templateIndexes=new WeakMap();
   const key = value => String(value).replace(/\s+/g, ' ').trim();
   function translate(source, dictionary = catalog) {
     if (!source || language === 'en') return source;
@@ -35,7 +36,26 @@
     if(!index){index=new Map(Object.entries(dictionary).map(([k,v])=>[k.toLowerCase(),v]));catalogIndexes.set(dictionary,index);}
     const lookup = text => Object.hasOwn(dictionary,text) ? dictionary[text] : index.get(text.toLowerCase());
     const result = lookup(normalized);
-    if (result) return source.replace(source.trim(), result);
+    if (result) return source.replace(source.trim(), () => result);
+    let templates=templateIndexes.get(dictionary);
+    if(!templates){
+      templates=[];
+      for(const [template,output] of Object.entries(dictionary)){
+        const names=[],parts=template.split(/(\{\w+\})/g);
+        if(parts.length<3 || parts.filter((_,i)=>i%2===0).join('').replace(/[^a-z]/gi,'').length<2)continue;
+        const pattern=parts.map((part,i)=>{
+          if(i%2){const name=part.slice(1,-1);names.push(name);return ['count','total'].includes(name)?'([0-9.,]+)':'(.+?)';}
+          return part.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        }).join('');
+        templates.push({pattern:new RegExp('^'+pattern+'$','i'),names,output,weight:parts.filter((_,i)=>i%2===0).join('').length});
+      }
+      templates.sort((a,b)=>b.weight-a.weight||a.names.length-b.names.length);templateIndexes.set(dictionary,templates);
+    }
+    for(const template of templates){
+      const match=normalized.match(template.pattern);if(!match)continue;
+      const values=Object.fromEntries(template.names.map((name,i)=>[name,match[i+1]]));
+      return source.replace(source.trim(),()=>template.output.replace(/\{(\w+)\}/g,(token,name)=>Object.hasOwn(values,name)?values[name]:token));
+    }
     const sentences=normalized.split(/(?<=[.!?])\s+/);
     if(sentences.length>1 && sentences.every(sentence=>lookup(sentence))) return sentences.map(lookup).join(' ');
     // Keep punctuation and counts separate from translated UI labels.
@@ -123,6 +143,7 @@
         const response = await root.fetch('/locales/' + next + '.json');
         if (!response.ok) throw Error('Language could not load');
         dictionary = await response.json();
+        if(!dictionary||Array.isArray(dictionary)||typeof dictionary!=='object'||!Object.entries(dictionary).every(([source,value])=>typeof value==='string'&&value.trim()&&JSON.stringify((source.match(/\{\w+\}/g)||[]).sort())===JSON.stringify((value.match(/\{\w+\}/g)||[]).sort())))throw Error('Invalid language catalog');
         cache.set(next,dictionary);
       } catch (error) {
         if (version === requestVersion) root.dispatchEvent?.(new CustomEvent('td-language-error', {detail:{language:next}}));
