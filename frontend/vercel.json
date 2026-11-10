@@ -95,11 +95,6 @@
   ],
   "redirects": [
     {
-      "source": "/",
-      "destination": "/app",
-      "permanent": false
-    },
-    {
       "source": "/journal",
       "destination": "/app",
       "permanent": false

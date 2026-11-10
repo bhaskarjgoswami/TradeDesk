@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /auth/
+Disallow: /previews/
+
+Sitemap: https://trade-desk-dl66.vercel.app/sitemap.xml

@@ -1,4 +1,5 @@
 import LanguageSelector from "../components/LanguageSelector";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { BRAND } from "../lib/brand";
 import { Icon } from "../lib/ui";
@@ -30,7 +31,7 @@ export function PublicHeader() {
       <Link to="/" className="pub-brand"><span className="pub-mark">{Icon.book}</span>{BRAND}</Link>
       <nav>
         <LanguageSelector />
-        <a href="/billing">Pricing</a>
+        <a href="/#pricing">Pricing</a>
         <a href="/app" className="btn ghost">Sign in</a>
         <a href="/app?signup=1" className="btn">Start free</a>
       </nav>
@@ -39,6 +40,10 @@ export function PublicHeader() {
 }
 
 export default function Landing() {
+  // Arriving from another page with /#pricing: the section renders after load, so scroll to it here.
+  useEffect(() => {
+    if (location.hash.length > 1) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+  }, []);
   return (
     <div className="pub">
       <PublicHeader />
