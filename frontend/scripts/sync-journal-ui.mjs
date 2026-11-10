@@ -1,5 +1,6 @@
 // Copy the local desktop journal's UI (repo root) into the web build, unchanged
-// except for two injected <script> tags that connect it to TradeDesk cloud.
+// except for two injected <script> tags that connect it to TradeDesk cloud
+// and the hosted page title.
 // Source of truth stays at the repo root (also served by `python3 app.py`).
 //   node scripts/sync-journal-ui.mjs          -> write frontend/app/index.html + public/*
 //   node scripts/sync-journal-ui.mjs --check  -> exit 1 if the copies are stale (CI)
@@ -27,6 +28,9 @@ let html = readFileSync(join(root, "index.html"), "utf8");
 const inject = `<head>\n<!-- ${BANNER} -->\n<script src="/cloud-boot.js"></script>\n<script type="module" src="/src/cloud/shim.js"></script>\n<link rel="manifest" href="/manifest.webmanifest">\n<link rel="icon" type="image/svg+xml" href="/favicon.svg">`;
 if (!/<head>/i.test(html)) throw new Error("journal index.html has no <head>");
 html = html.replace(/<head>/i, inject);
+// The hosted app carries the product name; the local desktop journal keeps its own title.
+if (!/<title>Trade Journal<\/title>/.test(html)) throw new Error("journal index.html title changed; update the hosted title swap");
+html = html.replace("<title>Trade Journal</title>", "<title>TradeDesk - Trading Journal</title>");
 outputs[join(front, "app", "index.html")] = html;
 
 const check = process.argv.includes("--check");
