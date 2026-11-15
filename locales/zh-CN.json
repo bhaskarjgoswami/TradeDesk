@@ -1259,5 +1259,10 @@
   "Page {count} of {total}": "第 {count} 页，共 {total} 页",
   "{count} trade": "{count} 笔交易",
   "{count} chart attached": "已附加 {count} 张图表",
-  "{count} charts attached": "已附加 {count} 张图表"
+  "{count} charts attached": "已附加 {count} 张图表",
+  "New plan · not saved yet": "新计划 · 尚未保存",
+  "Name this plan": "为此计划命名",
+  "Plan created": "计划已创建",
+  "Create plan": "创建计划",
+  "Untitled plan": "未命名计划"
 }

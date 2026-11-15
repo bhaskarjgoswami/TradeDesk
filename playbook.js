@@ -39,7 +39,7 @@ function renderPlaybook(){const all=WS.items.strategy,plans=all.filter(i=>i.body
     ${plans.length?plans.map(row).join(''):'<p class="pbv-none">No plans yet. Start blank or from a preset.</p>'}
     ${presets.length?`<p class="pbv-cap pbv-sec">Presets</p>${presets.map(prow).join('')}`:''}
     ${archived.length?`<p class="pbv-cap pbv-sec">Archived</p>${archived.map(row).join('')}`:''}</aside>`;
-  const main=cur.item?(PB.draft&&PB.draft.id===cur.item.id?pbEditView(cur.item):pbPlanView(cur.item)):cur.preset?pbPresetView(cur.preset):`<div class="pbv-main">${wsEmpty('Write down your edge','Create a plan with your charting process, entry criteria and example charts.','new-strategy','+ New plan')}</div>`;
+  const main=cur.item?pbPlanView(cur.item):cur.preset?pbPresetView(cur.preset):`<div class="pbv-main">${wsEmpty('Write down your edge','Create a plan with your charting process, entry criteria and example charts.','new-strategy','+ New plan')}</div>`;
   $('#ws-strategies').innerHTML=`${wsErrorBanner()}<div class="pbv ${PB.collapsed?'collapsed':''}">${side}${main}</div>`;
   pbBind(cur);}
 
@@ -73,30 +73,52 @@ function pbPresetView(key){const t=PLAN_SETTINGS.templates[key];return `<div cla
    <div class="pbv-active pbv-note">Presets are starting points. Using one creates an editable copy in My plans.</div><div class="pbv-body"><div class="pbv-col">${pbRead(pbPresetBody(t))}</div></div></div>`;}
 
 // ---------- edit mode ----------
-function pbStartEdit(item,focus){PB.draft={id:item.id,title:item.title,body:clonePlan({...item.body,limits:pbLimits(item.body)})};PB.dirty=false;for(const key of Object.keys(PB_LISTS))PB.draft.body[key]=[...(PB.draft.body[key]||[])];renderPlaybook();
-  const target=focus?$(`#ws-strategies ${focus}`):$('#pbTitle');target?.focus();}
+function pbStartEdit(item,focus){PB.draft={id:item.id,title:item.title,body:clonePlan({...item.body,limits:pbLimits(item.body)})};PB.dirty=false;for(const key of Object.keys(PB_LISTS))PB.draft.body[key]=[...(PB.draft.body[key]||[])];pbRenderEditor();
+  const target=focus?$(`#pbEditor ${focus}`):$('#pbTitle');target?.focus();}
+// A new plan opens in the same editor popup as an unsaved draft; it is created on Save.
+function pbStartNew(){if(PB.draft&&PB.dirty&&!confirm('Discard your unsaved changes to this plan?'))return;
+  PB.draft={id:'new',clientId:crypto.randomUUID(),title:'',body:{description:'',charting:[],criteria:[],management:[],exitRules:'',notes:[],setupImages:[],entryImages:[],limits:pbLimits({}),active:true,primary:!WS.items.strategy.some(i=>i.body.primary&&i.body.active)}};
+  PB.dirty=false;pbRenderEditor();$('#pbTitle')?.focus();}
+// Each point is its own row (ClickUp-style): status ring, inline text, hover actions, and an "Add" row at the end.
 function pbListEdit(key){const [title,ph]=PB_LISTS[key],rows=PB.draft.body[key],num=key==='charting';
-  return `<section class="pbv-sec-block"><h3 class="pbv-cap">${PB_IC[{charting:'chart',criteria:'check',management:'list',notes:'note'}[key]]}${title}<button type="button" class="pbv-add" data-pb-add="${key}">+ Add</button></h3>
-   <div class="pbv-rows" data-pb-list="${key}">${rows.map((v,i)=>`<div class="pbv-row" data-i="${i}">${num?`<span class="pbv-num">${i+1}</span>`:''}<span class="pbv-grip" data-pb-grip title="Drag to reorder" aria-hidden="true">${PB_IC.grip}</span><div class="pbv-field"><input data-pb-row="${key}:${i}" value="${esc(v)}" maxlength="500" aria-label="${title} ${i+1}"><span class="pbv-row-acts"><button type="button" class="pbv-icon" data-pb-row-dup="${key}:${i}" aria-label="Duplicate">${PB_IC.copy}</button><button type="button" class="pbv-icon danger" data-pb-row-del="${key}:${i}" aria-label="Delete">${PB_IC.trash}</button></span></div></div>`).join('')}
-    <div class="pbv-row pbv-next">${num?`<span class="pbv-num">${rows.length+1}</span>`:''}<span class="pbv-grip" aria-hidden="true">${PB_IC.grip}</span><div class="pbv-field"><input data-pb-next="${key}" placeholder="${ph}" maxlength="500" aria-label="${ph}"></div></div></div></section>`;}
-function pbEditView(item){const d=PB.draft;return `<div class="pbv-main is-editing"><header class="pbv-head"><h2><i class="pbv-dot" style="--dot:${pbDot(item)}"></i><input id="pbTitle" class="pbv-title-in" value="${esc(d.title)}" maxlength="200" aria-label="Plan name"></h2><div class="pbv-acts"><span class="pbv-status" id="pbStatus" role="status"></span><button type="button" class="btn ghost" data-pb-cancel>Cancel</button><button type="button" class="btn" data-pb-save ${PB.busy?'disabled':''}>Save</button></div></header>
-   ${pbToggle(item)}<div class="pbv-body"><div class="pbv-col">
+  const mark=i=>`<span class="pbv-mark${num?' numbered':''}" aria-hidden="true">${num?i+1:''}</span>`;
+  return `<section class="pbv-sec-block"><h3 class="pbv-cap">${PB_IC[{charting:'chart',criteria:'check',management:'list',notes:'note'}[key]]}${title}<span class="pbv-count">${rows.length||''}</span></h3>
+   <div class="pbv-rows" data-pb-list="${key}">${rows.map((v,i)=>`<div class="pbv-row" data-i="${i}"><span class="pbv-grip" data-pb-grip title="Drag to reorder" aria-hidden="true">${PB_IC.grip}</span>${mark(i)}<div class="pbv-field"><input data-pb-row="${key}:${i}" value="${esc(v)}" maxlength="500" aria-label="${title} ${i+1}"><span class="pbv-row-acts"><button type="button" class="pbv-icon" data-pb-row-dup="${key}:${i}" aria-label="Duplicate">${PB_IC.copy}</button><button type="button" class="pbv-icon danger" data-pb-row-del="${key}:${i}" aria-label="Delete">${PB_IC.trash}</button></span></div></div>`).join('')}
+    <div class="pbv-row pbv-next" hidden><span class="pbv-grip" aria-hidden="true">${PB_IC.grip}</span>${mark(rows.length)}<div class="pbv-field"><input data-pb-next="${key}" placeholder="${ph}" maxlength="500" aria-label="${ph}"></div></div>
+    <button type="button" class="pbv-addrow" data-pb-add="${key}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>${ph}</button></div></section>`;}
+// Editing happens in a large popup (ClickUp-style): top bar, plan on the left, stats and limits on the right.
+function pbEditView(item){const d=PB.draft,isNew=d.id==='new',v={...item,body:d.body};return `<header class="pbs-bar"><nav class="pbs-crumb"><span>Playbook</span><span aria-hidden="true">/</span><b><i class="pbv-dot" style="--dot:${pbDot(item)}"></i>${esc(isNew?'New plan':item.title)}</b></nav><div class="pbv-acts"><span class="pbv-status" id="pbStatus" role="status"></span><button type="button" class="btn ghost pbs-cancel" data-pb-cancel>Cancel</button><button type="button" class="btn" data-pb-save ${PB.busy?'disabled':''}>${isNew?'Create plan':'Save'}</button><button type="button" class="pbv-icon pbs-close" data-pb-cancel aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div></header>
+   <div class="pbs-body"><div class="pbs-main"><input id="pbTitle" class="pbs-title" value="${esc(d.title)}" maxlength="200" placeholder="Name this plan" aria-label="Plan name">
+   ${pbToggle(v)}
    <section class="pbv-sec-block"><p class="pbv-label">Plan type</p><input class="pbv-input" id="pbType" value="${esc(d.body.description||'')}" maxlength="2000" placeholder="e.g. LQ Sweep Entry Model"></section>
    ${pbListEdit('charting')}${pbListEdit('criteria')}
    ${pbSection('camera','Entry models',pbShots(d.body,true))}
    ${pbListEdit('management')}
    ${pbSection('exit','Exit criteria',`<textarea class="pbv-input" id="pbExit" rows="3" maxlength="4000" placeholder="Add your exit rules so you don't freestyle">${esc(d.body.exitRules||'')}</textarea>`)}
-   ${pbListEdit('notes')}</div>${pbAside(item,true)}</div></div>`;}
-function pbFocusRow(key,i){const el=$(`#ws-strategies [data-pb-row="${key}:${i}"]`)||$(`#ws-strategies [data-pb-next="${key}"]`);if(el){el.focus();el.setSelectionRange?.(el.value.length,el.value.length);}}
-function pbRerender(key,i){PB.dirty=true;renderPlaybook();if(key)pbFocusRow(key,i);}
-async function pbSave(){const d=PB.draft,item=WS.items.strategy.find(i=>i.id===d.id),status=$('#pbStatus');if(!item)return;
+   ${pbListEdit('notes')}</div>${pbAside(item,true)}</div>`;}
+function pbRenderEditor(){const d=PB.draft;let dlg=$('#pbEditor');if(!d){if(dlg?.open)dlg.close();return;}
+  if(!dlg){dlg=document.createElement('dialog');dlg.id='pbEditor';dlg.className='pbs';document.body.appendChild(dlg);
+    dlg.addEventListener('cancel',e=>{e.preventDefault();pbCloseEditor();});
+    dlg.addEventListener('mousedown',e=>{if(e.target===dlg)pbCloseEditor();});}
+  const item=d.id==='new'?{id:'new',title:d.title,body:d.body}:WS.items.strategy.find(i=>i.id===d.id);if(!item){pbCloseEditor(true);return;}
+  const main=dlg.querySelector('.pbs-main'),aside=dlg.querySelector('.pbv-aside'),top=main?.scrollTop||0,asideTop=aside?.scrollTop||0;
+  dlg.setAttribute('aria-label',d.id==='new'?'New plan':'Edit plan');dlg.innerHTML=pbEditView(item);if(!dlg.open)dlg.showModal();
+  dlg.querySelector('.pbs-main').scrollTop=top;dlg.querySelector('.pbv-aside').scrollTop=asideTop;pbBindEditor(dlg);}
+function pbCloseEditor(force=false){if(PB.busy&&!force)return;if(!force&&PB.dirty&&!confirm('Discard your unsaved changes to this plan?'))return;PB.draft=null;PB.dirty=false;$('#pbEditor')?.close();}
+function pbFocusRow(key,i){const el=$(`#pbEditor [data-pb-row="${key}:${i}"]`)||$(`#pbEditor [data-pb-next="${key}"]`);if(el?.dataset.pbNext)pbShowNext(key);if(el){el.focus();el.setSelectionRange?.(el.value.length,el.value.length);}}
+function pbShowNext(key,show=true){const list=$(`#pbEditor [data-pb-list="${key}"]`);if(!list)return;list.querySelector('.pbv-next').hidden=!show;list.querySelector('.pbv-addrow').hidden=show;}
+function pbRerender(key,i){PB.dirty=true;pbRenderEditor();if(key)pbFocusRow(key,i);}
+async function pbSave(){const d=PB.draft,isNew=d.id==='new',item=isNew?null:WS.items.strategy.find(i=>i.id===d.id),status=$('#pbStatus');if(!isNew&&!item)return;
   const body={...d.body};for(const key of Object.keys(PB_LISTS))body[key]=body[key].map(s=>s.trim()).filter(Boolean);
   const title=d.title.trim();if(!title){status.textContent='Give the plan a name';$('#pbTitle').focus();return;}
   if(!body.criteria.length){status.textContent='Add at least one entry criterion';pbFocusRow('criteria',0);return;}
   const L=body.limits;if(L.start&&!L.end||!L.start&&L.end){status.textContent='Set both window times, or neither';return;}
   PB.busy=true;status.textContent='Saving…';
-  try{await wsApi('items/'+item.id,'PUT',{kind:'strategy',title,body,revision:item.revision});await wsReload('strategy');PB.draft=null;PB.dirty=false;toast('Plan saved');}
-  catch(error){toast(error.message);}finally{PB.busy=false;renderPlaybook();}}
+  try{if(body.primary)for(const other of WS.items.strategy.filter(i=>i.body.primary&&i.id!==d.id))await wsApi('items/'+other.id,'PUT',pbPayload(other,{primary:false}));
+    if(isNew){const created=await wsApi('items','POST',{kind:'strategy',title,body,clientId:d.clientId});PB.sel=created.id;}
+    else await wsApi('items/'+item.id,'PUT',{kind:'strategy',title,body,revision:item.revision});
+    await wsReload('strategy');PB.draft=null;PB.dirty=false;toast(isNew?'Plan created':'Plan saved');}
+  catch(error){toast(error.message);}finally{PB.busy=false;renderPlaybook();pbRenderEditor();if(typeof routineState!=='undefined'&&routineState)renderRoutinePanel();}}
 async function pbUpload(key,file){const status=$('#pbStatus');if(!file)return;if(!file.type.startsWith('image/')){status.textContent='Choose an image file';return;}status.textContent='Uploading chart…';
   try{const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
     const response=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})});const result=await response.json();if(!response.ok||!result.path)throw Error('Chart upload failed');
@@ -109,7 +131,7 @@ function pbBind(cur){const root=$('#ws-strategies'),on=(sel,fn)=>root.querySelec
   const newBtn=$('#pbNew'),newMenu=$('#pbNewMenu');newBtn.onclick=event=>{event.stopPropagation();pbCloseMenus();newMenu.hidden=false;newBtn.setAttribute('aria-expanded','true');newMenu.querySelector('button')?.focus();};
   $('#pbFold').onclick=()=>{PB.collapsed=!PB.collapsed;try{localStorage.setItem('tj_pb_collapsed',PB.collapsed?'1':'0');}catch{}renderPlaybook();};
   on('[data-pb-sel]',b=>b.onclick=()=>{const v=b.dataset.pbSel,next=v.startsWith('p:')?v:Number(v);if(next===PB.sel||!guard())return;PB.draft=null;PB.dirty=false;PB.sel=next;renderPlaybook();});
-  on('[data-pb-blank]',b=>b.onclick=()=>{pbCloseMenus();wsOpenItemEditor('strategy');});
+  on('[data-pb-blank]',b=>b.onclick=()=>{pbCloseMenus();pbStartNew();});
   on('[data-pb-preset]',b=>b.onclick=event=>{event.stopPropagation();pbFromPreset(b.dataset.pbPreset,b);});
   on('[data-pb-menu]',b=>b.onclick=event=>{event.stopPropagation();pbOpenMenu(b);});
   on('[data-pb-edit]',b=>b.onclick=()=>pbStartEdit(cur.item));
@@ -122,13 +144,15 @@ function pbBind(cur){const root=$('#ws-strategies'),on=(sel,fn)=>root.querySelec
       const fresh=WS.items.strategy.find(i=>i.id===item.id);if(PB.draft&&fresh){PB.draft.body.primary=fresh.body.primary;}
       renderPlaybook();toast(turnOn?`${item.title} is now your active plan`:'No plan is active now');if(typeof routineState!=='undefined'&&routineState)renderRoutinePanel();}
     catch(error){toast(error.message);b.disabled=false;}});
-  if(!PB.draft||!cur.item||PB.draft.id!==cur.item.id)return;
+}
+function pbBindEditor(root){const on=(sel,fn)=>root.querySelectorAll(sel).forEach(el=>fn(el));
   const d=PB.draft,dirty=()=>{PB.dirty=true;};
+  on('[data-pb-primary]',b=>b.onclick=()=>{d.body.primary=!d.body.primary;pbRerender();});
   $('#pbTitle').oninput=e=>{d.title=e.target.value;dirty();};
   $('#pbType').oninput=e=>{d.body.description=e.target.value;dirty();};
   $('#pbExit').oninput=e=>{d.body.exitRules=e.target.value;dirty();};
   on('[data-pb-limit]',el=>el.oninput=()=>{const k=el.dataset.pbLimit;d.body.limits[k]=['start','end','tz'].includes(k)?(el.value||(k==='tz'?'UTC':null)):(el.value===''?null:Number(el.value));dirty();});
-  on('[data-pb-cancel]',b=>b.onclick=()=>{if(!guard())return;PB.draft=null;PB.dirty=false;renderPlaybook();});
+  on('[data-pb-cancel]',b=>b.onclick=()=>pbCloseEditor());
   on('[data-pb-save]',b=>b.onclick=pbSave);
   on('[data-pb-add]',b=>b.onclick=()=>pbFocusRow(b.dataset.pbAdd,-1));
   on('[data-pb-row]',el=>{const [key,i]=el.dataset.pbRow.split(':'),n=Number(i);
@@ -138,7 +162,8 @@ function pbBind(cur){const root=$('#ws-strategies'),on=(sel,fn)=>root.querySelec
       else if(e.key==='ArrowUp'&&n>0){e.preventDefault();pbFocusRow(key,n-1);}else if(e.key==='ArrowDown'){e.preventDefault();pbFocusRow(key,n+1);}};});
   on('[data-pb-next]',el=>{const key=el.dataset.pbNext;
     el.oninput=()=>{d.body[key].push(el.value);pbRerender(key,d.body[key].length-1);};
-    el.onkeydown=e=>{if(e.key==='ArrowUp'&&d.body[key].length){e.preventDefault();pbFocusRow(key,d.body[key].length-1);}};});
+    el.onblur=()=>{if(!el.value)pbShowNext(key,false);};
+    el.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();el.blur();}else if(e.key==='ArrowUp'&&d.body[key].length){e.preventDefault();pbFocusRow(key,d.body[key].length-1);}};});
   on('[data-pb-row-dup]',b=>b.onclick=()=>{const [key,i]=b.dataset.pbRowDup.split(':'),n=Number(i);d.body[key].splice(n+1,0,d.body[key][n]);pbRerender(key,n+1);});
   on('[data-pb-row-del]',b=>b.onclick=()=>{const [key,i]=b.dataset.pbRowDel.split(':'),n=Number(i);d.body[key].splice(n,1);pbRerender(key,Math.min(n,d.body[key].length-1));});
   on('[data-pb-img-del]',b=>b.onclick=()=>{const [key,i]=b.dataset.pbImgDel.split(':');d.body[key].splice(Number(i),1);pbRerender();});
@@ -182,4 +207,8 @@ const pbBaseRender=window.renderWorkspaceView;
 // Playbook lives in the Trading Edge page as its first tab.
 window.renderWorkspaceView=function(key){if(key==='strategies'){settingsTab='playbook';setView('edge');}else if(key==='edge'){if(settingsTab==='playbook')renderPlaybook();}else pbBaseRender(key);};
 wsActions.strategies=()=>{settingsTab='playbook';setView('edge');};
+wsActions['new-strategy']=()=>{settingsTab='playbook';if(view!=='edge')setView('edge');pbStartNew();};
+const pbBaseEditItem=wsActions['edit-item'];
+wsActions['edit-item']=button=>{if(button.dataset.kind!=='strategy')return pbBaseEditItem(button);const item=WS.items.strategy.find(i=>i.id===Number(button.dataset.id));if(!item)return;
+  if(PB.draft&&PB.dirty&&PB.draft.id!==item.id&&!confirm('Discard your unsaved changes to this plan?'))return;PB.dirty=false;settingsTab='playbook';PB.sel=item.id;if(view!=='edge')setView('edge');pbStartEdit(item);};
 $('#settings-tab-playbook')?.addEventListener('click',()=>renderPlaybook());

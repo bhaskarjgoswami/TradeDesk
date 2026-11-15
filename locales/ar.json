@@ -1259,5 +1259,10 @@
   "Page {count} of {total}": "الصفحة {count} من {total}",
   "{count} trade": "{count} صفقة",
   "{count} chart attached": "تم إرفاق {count} رسم بياني",
-  "{count} charts attached": "الرسوم البيانية المرفقة: {count}"
+  "{count} charts attached": "الرسوم البيانية المرفقة: {count}",
+  "New plan · not saved yet": "خطة جديدة · لم تُحفظ بعد",
+  "Name this plan": "سمِّ هذه الخطة",
+  "Plan created": "تم إنشاء الخطة",
+  "Create plan": "إنشاء الخطة",
+  "Untitled plan": "خطة بلا عنوان"
 }

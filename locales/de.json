@@ -1259,5 +1259,10 @@
   "Page {count} of {total}": "Seite {count} von {total}",
   "{count} trade": "{count} Trade",
   "{count} chart attached": "{count} Chart angehängt",
-  "{count} charts attached": "{count} Charts angehängt"
+  "{count} charts attached": "{count} Charts angehängt",
+  "New plan · not saved yet": "Neuer Plan · noch nicht gespeichert",
+  "Name this plan": "Diesen Plan benennen",
+  "Plan created": "Plan erstellt",
+  "Create plan": "Plan erstellen",
+  "Untitled plan": "Unbenannter Plan"
 }

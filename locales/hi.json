@@ -1259,5 +1259,10 @@
   "Page {count} of {total}": "{total} में से पृष्ठ {count}",
   "{count} trade": "{count} ट्रेड",
   "{count} chart attached": "{count} चार्ट संलग्न",
-  "{count} charts attached": "{count} चार्ट संलग्न"
+  "{count} charts attached": "{count} चार्ट संलग्न",
+  "New plan · not saved yet": "नई योजना · अभी सहेजी नहीं गई",
+  "Name this plan": "इस योजना को नाम दें",
+  "Plan created": "योजना बनाई गई",
+  "Create plan": "योजना बनाएं",
+  "Untitled plan": "बिना नाम की योजना"
 }
