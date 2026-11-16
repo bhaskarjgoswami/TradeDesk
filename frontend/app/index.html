@@ -1655,15 +1655,19 @@ const routineFocusObserver=new MutationObserver(()=>{const panel=$('#routinePane
 routineFocusObserver.observe($('#routinePanel'),{attributes:true,attributeFilter:['hidden','aria-modal']});
 $('#routinePanel').addEventListener('keydown',e=>{if(e.key!=='Tab'||!routineFocusOpen||document.querySelector('dialog[open]'))return;const controls=[...$('#routinePanel').querySelectorAll('button,input,a[href],select,textarea,summary,[tabindex="0"]')].filter(el=>!el.disabled&&el.getClientRects().length);if(!controls.length)return;const first=controls[0],last=controls.at(-1);if(e.shiftKey&&(document.activeElement===first||!$('#routinePanel').contains(document.activeElement))){e.preventDefault();last.focus();}else if(!e.shiftKey&&(document.activeElement===last||!$('#routinePanel').contains(document.activeElement))){e.preventDefault();first.focus();}});
 let routineOpening=false;
+function routineEmpty(){const settings=routineState?.settings;return !!settings&&(settings.enabled===false||(Array.isArray(settings.steps)&&!settings.steps.length));}
+function routineGoSetup(){closeDrawer();settingsTab='routine';setView('edge');}
 $('#routineOpen').onclick=async()=>{
   if(routineOpening)return;
+  // Routine switched off (or empty): take the trader to Trading Edge > Pre-Market Routine to set it up.
+  if(routineEmpty()){routineGoSetup();return;}
   const wasHidden=$('#routinePanel').hidden;
   // Boot already loaded the routine. Opening and closing must not wait for the API.
   if(routineState){routineForced=wasHidden;if(!wasHidden)routineHiddenPeriod=routineState.period;renderRoutinePanel();if(wasHidden&&await loadRoutine()&&routineForced)routineQuietSync();return;}
   routineOpening=true;
   const buttons=[$('#routineOpen'),$('#routineMobileOpen')];
   buttons.forEach(button=>{button.disabled=true;button.setAttribute('aria-busy','true');});
-  try{if(!await loadRoutine()){toast('Could not load routine. Try again.');return;}routineForced=true;renderRoutinePanel();routineQuietSync();}
+  try{if(!await loadRoutine()){toast('Could not load routine. Try again.');return;}if(routineEmpty()){routineGoSetup();return;}routineForced=true;renderRoutinePanel();routineQuietSync();}
   finally{routineOpening=false;buttons.forEach(button=>{button.disabled=false;button.removeAttribute('aria-busy');});}
 };
 // ---------- boot ----------
