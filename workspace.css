@@ -739,3 +739,17 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 @media(max-width:900px){.pbs{width:100vw;height:100dvh;max-width:none;border-radius:0;border:0}.pbs-body{display:block;overflow:auto}.pbs-main{overflow:visible;padding:20px 16px 24px}.pbs .pbv-aside{border-left:0;border-top:1px solid var(--line);padding:16px}.pbs-bar{padding:8px 8px 8px 16px}.pbs-crumb>span{display:none}.pbs-title{font-size:22px}}
 @media(max-width:600px){.pbs .pbs-cancel{display:none}#pbEditor .pbs-title{font-size:22px!important}}
 .pbs .pbs-title:focus,.pbs .pbs-title:focus-visible{outline:none!important;box-shadow:none!important;border:0!important}
+/* Text fields show focus as a soft ring that follows their own corners instead of the themes' square outline.
+   Checkboxes, radios, buttons and links keep the outline for keyboard users. */
+:root :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),select,textarea):focus-visible{outline:none!important;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+/* Borderless fields whose wrapper already shows focus (login pill, plan rows, plan title). */
+:root :is(.ic-field input,.pbv-rows input,.pbs-title):focus-visible{box-shadow:none!important}
+/* Collapsed optional sections in the plan editor: one-line actions, "+" on hover. */
+.pbs-more{display:grid;gap:2px;margin:22px -10px 0}
+.pbs-act{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:var(--txt);font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.pbs-act>svg{color:var(--mut)}
+.pbs-act:hover,.pbs-act:focus-visible{background:var(--panel2)}
+.pbs-act-plus{margin-left:auto;width:24px;height:24px;border:1px solid var(--line);border-radius:6px;background:var(--panel);display:grid;place-items:center;opacity:0;transition:opacity .12s ease}
+.pbs-act-plus svg{width:13px;height:13px}
+.pbs-act:hover .pbs-act-plus,.pbs-act:focus-visible .pbs-act-plus{opacity:1}
+@media(hover:none){.pbs-act-plus{opacity:1}}

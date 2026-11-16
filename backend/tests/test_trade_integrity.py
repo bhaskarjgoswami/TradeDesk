@@ -50,3 +50,22 @@ def test_pull_and_sync_share_the_same_broker_trade_reference(journal):
     assert first['source_id']=='delta:EURUSD:123'
     assert core.create_trade(trade(clientId='pull-1',sourceId='delta:EURUSD:123'))['id']==first['id']
     with pytest.raises(workspace.Conflict):core.create_trade(trade(clientId='pull-again',sourceId='delta:EURUSD:123'))
+
+def test_future_dated_trade_does_not_wipe_routine_ticks(journal):
+    # Trade times are stored in UTC. A trade timed later today (e.g. typed in the wrong zone)
+    # hasn't happened yet, so ticking the plan checklist must not be reset by it.
+    from datetime import datetime,timedelta,timezone
+    later=(datetime.now(timezone.utc)+timedelta(hours=3)).strftime('%Y-%m-%dT%H:%M')
+    core.create_trade(dict(trade(clientId='future'),date=later[:10],entry_time=later))
+    period=core.routine_state()['period']
+    state=core.save_routine_progress(dict(period=period,id='plan::m0',checked=True))
+    assert state['planChecked']==['plan::m0'] and state['reset'] is None
+    assert core.routine_state()['planChecked']==['plan::m0']
+
+def test_trade_taken_after_tick_still_resets_routine(journal):
+    period=core.routine_state()['period']
+    core.save_routine_progress(dict(period=period,id='plan::m0',checked=True))
+    with journal() as conn:conn.execute("UPDATE routine_progress SET ticked_at='2000-01-01T00:00:00+00:00'")
+    core.create_trade(trade(clientId='after-tick'))
+    state=core.routine_state()
+    assert state['planChecked']==[] and state['reset']['symbol']=='EURUSD'

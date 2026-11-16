@@ -26,7 +26,9 @@ import threading
 import psycopg2
 import psycopg2.extras
 
-from ..database import _get_pool
+import time
+
+from ..database import IDLE_PING_SECONDS, _get_pool, _last_used
 
 current_schema: contextvars.ContextVar[str | None] = contextvars.ContextVar("journal_schema", default=None)
 current_user_id: contextvars.ContextVar[str | None] = contextvars.ContextVar("journal_user", default=None)
@@ -101,6 +103,17 @@ class Connection:
             raise ValueError("invalid journal schema")
         self._pool = _get_pool()
         self._conn = self._pool.getconn()
+        # A pooled connection idle long enough may have been dropped by the network or the
+        # pooler; check it first so the request doesn't hang on a dead socket.
+        if self._conn.closed or time.monotonic() - _last_used.get(id(self._conn), 0) > IDLE_PING_SECONDS:
+            try:
+                self._conn.autocommit = True
+                with self._conn.cursor() as cur:
+                    cur.execute("SELECT 1")
+            except psycopg2.Error:
+                _last_used.pop(id(self._conn), None)
+                self._pool.putconn(self._conn, close=True)
+                self._conn = self._pool.getconn()
         self._closed = False
         self._schema = schema
         try:
@@ -185,6 +198,10 @@ class Connection:
     def close(self):
         if not self._closed:
             self._closed = True
+            if self._conn.closed:
+                _last_used.pop(id(self._conn), None)
+            else:
+                _last_used[id(self._conn)] = time.monotonic()
             self._pool.putconn(self._conn, close=bool(self._conn.closed))
 
 

@@ -390,7 +390,7 @@ def update_pending_checklist(conn, plan_keys):
                    exit=pick('x', exit_rules), management=pick('m', body.get('management', [])),
                    template={k: body.get(k) for k in ('charting', 'criteria', 'management', 'exitRules', 'notes')} | {'name': name})
     conn.execute("INSERT INTO journal_settings(key,value,revision) VALUES('pending_checklist',?,1) "
-                 "ON CONFLICT(key) DO UPDATE SET value=excluded.value,revision=revision+1", (json.dumps(pending),))
+                 "ON CONFLICT(key) DO UPDATE SET value=excluded.value,revision=journal_settings.revision+1", (json.dumps(pending),))
 
 
 def apply_pending_checklist(conn, trade):

@@ -112,7 +112,8 @@
   .login-left .sub{font-size:14px;line-height:1.5;color:#858394;margin-bottom:32px}
   .login-left label{display:block;font-size:12px;color:#737184;margin:0 0 8px;font-weight:420}
   .login-left .ic-field{display:flex;align-items:center;gap:10px;background:transparent;border:1px solid #e3e1ee;border-radius:32px;padding:0 18px;margin-bottom:20px;height:42px;min-height:42px;transition:border-color .15s,box-shadow .15s}
-  .login-left .ic-field>svg{display:none}.login-left .ic-field input{flex:1;min-width:0;width:100%;background:none;border:none;outline:none;color:#353247;font-family:var(--auth-font);font-size:14px;font-weight:400;line-height:1.4}.login-left .ic-field input::placeholder{color:#a19dac}.login-left .ic-field:focus-within{border-color:var(--auth-primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--auth-primary) 10%,transparent)}
+  .login-left .ic-field>svg{display:none}.login-left .ic-field input{flex:1;min-width:0;width:100%;background:none;border:none;outline:none;color:#353247;font-family:var(--auth-font);font-size:14px;font-weight:400;line-height:1.4}.login-left .ic-field input::placeholder{color:#a19dac}.login-left .ic-field input:focus,.login-left .ic-field input:focus-visible{outline:none!important;box-shadow:none}
+.login-left .ic-field:focus-within{border-color:var(--auth-primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--auth-primary) 10%,transparent)}
   .login-left .eye{display:flex;align-items:center;justify-content:center;background:none;border:0;padding:2px;color:#8a879b;cursor:pointer}.login-left .eye svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.5}
   .login-left .forgot{display:block;text-align:right;font-size:12px;color:var(--auth-primary);text-decoration:none;margin:-9px 0 25px}.login-left .forgot:hover{color:color-mix(in srgb,var(--auth-primary) 80%,black)}
   .login-err{color:#b44b45;font-size:12px;line-height:1.6;min-height:0;margin:0 0 16px}.login-err:empty{display:none}
@@ -1624,11 +1625,20 @@ function renderRoutinePanel(){const el=$('#routinePanel');if(!routineState){el.h
   $('#routineDone')?.addEventListener('click',()=>{$('#routineClose').click();if(complete)toast('Routine complete. Trade your plan.');});
   $('#routineClose').onclick=()=>{routineArtIntro=true;routineForced=false;routineHiddenPeriod=period;if(popup)try{localStorage.setItem('tj_routine_popup',period);}catch{}renderRoutinePanel();};
   el.querySelectorAll('[data-routine-action]').forEach(button=>button.onclick=()=>{if(popup&&button.dataset.routineAction==='focus'){rmOpen(button.dataset.step);return;}if(popup)$('#routineClose').click();if(button.dataset.routineAction==='preferences'){settingsTab='playbook';setView('edge');}else setView(button.dataset.routineAction);});
-  el.querySelectorAll('[data-complete-step]').forEach(input=>input.onchange=async()=>{el.querySelectorAll('input').forEach(box=>box.disabled=true);try{const response=await fetch('/api/routine/progress',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({period,id:input.dataset.completeStep,checked:input.checked})});const result=await response.json();if(!response.ok)throw Error(result.error||'Could not save progress');routineJust=input.dataset.completeStep;routineJustArt=input.dataset.completeStep;routineState=result;const parentId=input.dataset.completeStep.split('::')[1]!==undefined?input.dataset.completeStep.split('::')[0]:null;
-      if(parentId){const step=routineState.settings.steps.find(x=>x.id===parentId),all=step&&routinePlanKeys(step).every(k=>(routineState.planChecked||[]).includes(k)),has=routineState.checked.includes(parentId);
-        if(step&&all!==has){const r2=await fetch('/api/routine/progress',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({period,id:parentId,checked:all})});if(r2.ok)routineState=await r2.json();}}
-      renderRoutinePanel();}catch(error){input.checked=!input.checked;$('#routinePanelStatus').textContent=error.message;el.querySelectorAll('input').forEach(box=>box.disabled=false);}});
+  // Ticks update instantly; saves run in order in the background (no disabling, no waiting on the network).
+  el.querySelectorAll('[data-complete-step]').forEach(input=>input.onchange=()=>{const id=input.dataset.completeStep,on=input.checked;
+    routineSetLocal(id,on);
+    const parentId=id.includes('::')?id.split('::')[0]:null;
+    if(parentId){const step=routineState.settings.steps.find(x=>x.id===parentId),all=step&&routinePlanKeys(step).every(k=>routineState.planChecked.includes(k));
+      if(step&&all!==routineState.checked.includes(parentId)){routineSetLocal(parentId,all);routineSave(period,parentId,all);}}
+    routineJust=id;routineJustArt=id;routineSave(period,id,on);renderRoutinePanel();});
 }
+function routineSetLocal(id,on){const key=id.includes('::')?'planChecked':'checked',list=new Set(routineState[key]||[]);on?list.add(id):list.delete(id);routineState={...routineState,[key]:[...list]};}
+let routineSaveChain=Promise.resolve(),routineSavesPending=0;
+function routineSave(period,id,checked){routineSavesPending++;
+  routineSaveChain=routineSaveChain.then(async()=>{const response=await fetch('/api/routine/progress',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({period,id,checked})});const result=await response.json();if(!response.ok)throw Error(result.error||'Could not save progress');return result;})
+    .then(result=>{if(--routineSavesPending===0){const same=JSON.stringify([...result.checked].sort())===JSON.stringify([...routineState.checked].sort())&&JSON.stringify([...result.planChecked].sort())===JSON.stringify([...routineState.planChecked].sort());routineState=result;if(!same)renderRoutinePanel();}})
+    .catch(async error=>{routineSavesPending=0;routineSaveChain=Promise.resolve();await loadRoutine();renderRoutinePanel();const status=$('#routinePanelStatus');if(status)status.textContent=error.message;else toast(error.message);});}
 $('#routineMobileOpen').onclick=()=>$('#routineOpen').click();
 $('#routineBackdrop').onclick=()=>$('#routineClose')?.click();
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#routineBackdrop').hidden&&!document.querySelector('#tfLightbox[open]')){e.stopPropagation();$('#routineClose')?.click();}},true);  // before the trade form's Escape handler
@@ -1657,7 +1667,8 @@ async function boot(){
   setView(['#settings','#edge','#performance','#focus','#feedback','#billing'].includes(location.hash)?location.hash.slice(1):'month');
   try{await loadPlanSettings();await loadRoutine();await loadWorkspace();await loadAll();await loadDays(false);}
   catch(error){booted=false;toast(error.message||'Could not load your journal. Please try again.');return;}
-  if(view==='month')renderMonth();
+  // The first paint happens before data loads; redraw data-driven views opened straight from the URL (e.g. #edge).
+  if(view==='month')renderMonth();else if(['edge','trades','settings'].includes(view))setView(view);
   routineQuietSync();
   window.maybeOnboarding?.();
   if(routineTimer)clearInterval(routineTimer);routineTimer=setInterval(()=>{if(booted)loadRoutine();},60000);

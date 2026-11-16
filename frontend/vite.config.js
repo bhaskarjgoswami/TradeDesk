@@ -11,8 +11,21 @@ if (process.env.VERCEL_ENV === "preview") {
   }
 }
 
+// Dev only: mirror vercel.json's "/app" -> "/app/index.html" rewrite. Without it the
+// dev server serves the React site at /app, which bounces between /app and /login.
+const journalAppRewrite = {
+  name: "journal-app-rewrite",
+  configureServer(server) {
+    server.middlewares.use((req, _res, next) => {
+      const [path, query] = req.url.split("?");
+      if (path === "/app") req.url = "/app/index.html" + (query ? "?" + query : "");
+      next();
+    });
+  },
+};
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), journalAppRewrite],
   server: { port: 5173 },
   build: {
     rollupOptions: {

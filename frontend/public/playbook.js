@@ -2,7 +2,7 @@
 'use strict';
 // Playbook: plan list on the left, the selected plan on the right (view or inline edit).
 // The active plan (body.primary) is preselected on new trades and drives the pre-market checklist.
-const PB={collapsed:false,sel:null,draft:null,dirty:false,busy:false};
+const PB={collapsed:false,sel:null,draft:null,dirty:false,busy:false,open:new Set()};
 try{PB.collapsed=localStorage.getItem('tj_pb_collapsed')==='1';}catch{}
 const PB_DOTS=['#e0457b','#7c5cff','#1f9d6b','#e08a1e','#2f80ed','#c2410c'];
 const PB_LISTS={charting:['Charting process','Add next step'],criteria:['Entry criteria','Add criterion'],management:['Trade management rules','Add rule'],notes:['Trading notes','Add note']};
@@ -63,7 +63,8 @@ function pbAside(item,editing=false){const trades=allTrades.filter(t=>Number(t.s
   const risk=`<div class="pbv-card pbv-risk"><h3 class="pbv-cap">Risk controls<span class="pbv-tip" title="Your limits for days you trade this plan. They are reminders and do not block trades.">${PB_IC.info}</span>${editing?'':`<button type="button" class="pbv-icon pbv-card-edit" data-pb-edit-limits aria-label="Edit risk controls">${PB_IC.pen}</button>`}</h3>
     <div class="pbv-kv">${editing?inp('maxTrades','Max trades per day','step="1"')+inp('maxLoss','Max daily loss','step="any"')+inp('maxProfit','Max daily profit','step="any"')+inp('riskPct','Risk per trade (%)','step="0.01" max="100"'):stat(L.maxTrades??'—','Max trades per day')+stat(cash(L.maxLoss),'Max daily loss')+stat(cash(L.maxProfit),'Max daily profit')+stat(pct(L.riskPct),'Risk per trade')}</div></div>`;
   const win=`<div class="pbv-card pbv-window"><h3 class="pbv-cap">${PB_IC.clock}Trading window</h3>${editing?`<div class="pbv-win-edit"><input type="time" data-pb-limit="start" value="${esc(L.start||'')}" aria-label="Window start"><span>to</span><input type="time" data-pb-limit="end" value="${esc(L.end||'')}" aria-label="Window end"><input type="text" data-pb-limit="tz" value="${esc(L.tz||'UTC')}" maxlength="40" aria-label="Timezone" class="pbv-tz"></div>`:`<p class="pbv-win">${L.start&&L.end?`${esc(L.start)} - ${esc(L.end)} (${esc(L.tz||'UTC')})`:'<span class="pbv-ph">Not set</span>'}</p>`}</div>`;
-  return `<aside class="pbv-aside">${stats}${risk}${win}</aside>`;}
+  // The editor popup shows only the editable cards; stats stay on the plan's page.
+  return `<aside class="pbv-aside">${editing?'':stats}${risk}${win}</aside>`;}
 function pbToggle(item){return `<div class="pbv-active"><button type="button" class="pbv-switch" role="switch" aria-checked="${!!item.body.primary}" data-pb-primary="${item.id}" ${item.body.active?'':'disabled'}><span></span></button><span>Active</span><span class="pbv-tip" title="The active plan is preselected on new trades and used for the pre-market checklist. Only one plan is active at a time.">${PB_IC.info}</span>${item.body.active?'':'<span class="pbv-ph">Archived. Restore it to make it active.</span>'}</div>`;}
 function pbPlanView(item){return `<div class="pbv-main"><header class="pbv-head"><h2><i class="pbv-dot" style="--dot:${pbDot(item)}"></i>${esc(item.title)}</h2><div class="pbv-acts">
     <button type="button" class="pbv-icon pbv-box" data-pb-delete="${item.id}" aria-label="Delete plan" title="Delete">${PB_IC.trash}</button>
@@ -74,11 +75,11 @@ function pbPresetView(key){const t=PLAN_SETTINGS.templates[key];return `<div cla
    <div class="pbv-active pbv-note">Presets are starting points. Using one creates an editable copy in My plans.</div><div class="pbv-body"><div class="pbv-col">${pbRead(pbPresetBody(t))}</div></div></div>`;}
 
 // ---------- edit mode ----------
-function pbStartEdit(item,focus){PB.draft={id:item.id,title:item.title,body:clonePlan({...item.body,limits:pbLimits(item.body)})};PB.dirty=false;for(const key of Object.keys(PB_LISTS))PB.draft.body[key]=[...(PB.draft.body[key]||[])];pbRenderEditor();
+function pbStartEdit(item,focus){PB.open=new Set();PB.draft={id:item.id,title:item.title,body:clonePlan({...item.body,limits:pbLimits(item.body)})};PB.dirty=false;for(const key of Object.keys(PB_LISTS))PB.draft.body[key]=[...(PB.draft.body[key]||[])];pbRenderEditor();
   const target=focus?$(`#pbEditor ${focus}`):$('#pbTitle');target?.focus();}
 // A new plan opens in the same editor popup as an unsaved draft; it is created on Save.
 function pbStartNew(){if(PB.draft&&PB.dirty&&!confirm('Discard your unsaved changes to this plan?'))return;
-  PB.draft={id:'new',clientId:crypto.randomUUID(),title:'',body:{description:'',charting:[],criteria:[],management:[],exitRules:'',notes:[],setupImages:[],entryImages:[],limits:pbLimits({}),active:true,primary:!WS.items.strategy.some(i=>i.body.primary&&i.body.active)}};
+  PB.open=new Set();PB.draft={id:'new',clientId:crypto.randomUUID(),title:'',body:{description:'',charting:[],criteria:[],management:[],exitRules:'',notes:[],setupImages:[],entryImages:[],limits:pbLimits({}),active:true,primary:!WS.items.strategy.some(i=>i.body.primary&&i.body.active)}};
   PB.dirty=false;pbRenderEditor();$('#pbTitle')?.focus();}
 // Each point is its own row (ClickUp-style): status ring, inline text, hover actions, and an "Add" row at the end.
 function pbListEdit(key){const [title,ph]=PB_LISTS[key],rows=PB.draft.body[key],num=key==='charting';
@@ -92,11 +93,15 @@ function pbEditView(item){const d=PB.draft,isNew=d.id==='new',v={...item,body:d.
    <div class="pbs-body"><div class="pbs-main"><input id="pbTitle" class="pbs-title" value="${esc(d.title)}" maxlength="200" placeholder="Name this plan" aria-label="Plan name">
    ${pbToggle(v)}
    <section class="pbv-sec-block"><p class="pbv-label">Plan type</p><input class="pbv-input" id="pbType" value="${esc(d.body.description||'')}" maxlength="2000" placeholder="e.g. LQ Sweep Entry Model"></section>
-   ${pbListEdit('charting')}${pbListEdit('criteria')}
-   ${pbSection('camera','Entry models',pbShots(d.body,true))}
-   ${pbListEdit('management')}
-   ${pbSection('exit','Exit criteria',`<textarea class="pbv-input" id="pbExit" rows="3" maxlength="4000" placeholder="Add your exit rules so you don't freestyle">${esc(d.body.exitRules||'')}</textarea>`)}
-   ${pbListEdit('notes')}</div>${pbAside(item,true)}</div>`;}
+   ${pbEditSections(d)}</div>${pbAside(item,true)}</div>`;}
+// Empty optional sections collapse into one-line actions (ClickUp-style); clicking one opens it.
+const PB_OPTIONAL={charting:['chart','Charting process'],models:['camera','Entry models'],management:['list','Trade management rules'],exit:['exit','Exit criteria'],notes:['note','Trading notes']};
+function pbEditSections(d){const b=d.body,has={charting:b.charting.length,models:(b.setupImages||[]).length+(b.entryImages||[]).length,management:b.management.length,exit:String(b.exitRules||'').trim(),notes:b.notes.length};
+  const show=k=>k==='criteria'||has[k]||PB.open.has(k);
+  const html={charting:()=>pbListEdit('charting'),criteria:()=>pbListEdit('criteria'),models:()=>pbSection('camera','Entry models',pbShots(b,true)),management:()=>pbListEdit('management'),
+    exit:()=>pbSection('exit','Exit criteria',`<textarea class="pbv-input" id="pbExit" rows="3" maxlength="4000" placeholder="Add your exit rules so you don't freestyle">${esc(b.exitRules||'')}</textarea>`),notes:()=>pbListEdit('notes')};
+  const order=['charting','criteria','models','management','exit','notes'],closed=order.filter(k=>!show(k));
+  return order.filter(show).map(k=>html[k]()).join('')+(closed.length?`<div class="pbs-more">${closed.map(k=>`<button type="button" class="pbs-act" data-pb-open="${k}">${PB_IC[PB_OPTIONAL[k][0]]}<span>${PB_OPTIONAL[k][1]}</span><span class="pbs-act-plus" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></button>`).join('')}</div>`:'');}
 function pbRenderEditor(){const d=PB.draft;let dlg=$('#pbEditor');if(!d){if(dlg?.open)dlg.close();return;}
   if(!dlg){dlg=document.createElement('dialog');dlg.id='pbEditor';dlg.className='pbs';document.body.appendChild(dlg);
     dlg.addEventListener('cancel',e=>{e.preventDefault();pbCloseEditor();});
@@ -115,10 +120,12 @@ async function pbSave(){const d=PB.draft,isNew=d.id==='new',item=isNew?null:WS.i
   if(!body.criteria.length){status.textContent='Add at least one entry criterion';pbFocusRow('criteria',0);return;}
   const L=body.limits;if(L.start&&!L.end||!L.start&&L.end){status.textContent='Set both window times, or neither';return;}
   PB.busy=true;status.textContent='Saving…';
-  try{if(body.primary)for(const other of WS.items.strategy.filter(i=>i.body.primary&&i.id!==d.id))await wsApi('items/'+other.id,'PUT',pbPayload(other,{primary:false}));
-    if(isNew){const created=await wsApi('items','POST',{kind:'strategy',title,body,clientId:d.clientId});PB.sel=created.id;}
-    else await wsApi('items/'+item.id,'PUT',{kind:'strategy',title,body,revision:item.revision});
-    await wsReload('strategy');PB.draft=null;PB.dirty=false;toast(isNew?'Plan created':'Plan saved');}
+  // The API returns each saved row, so merge those instead of re-fetching every plan (one less slow round trip).
+  const merge=row=>{const list=WS.items.strategy,i=list.findIndex(x=>x.id===row.id);if(i<0)list.unshift(row);else list[i]=row;};
+  try{if(body.primary)for(const other of WS.items.strategy.filter(i=>i.body.primary&&i.id!==d.id))merge(await wsApi('items/'+other.id,'PUT',pbPayload(other,{primary:false})));
+    if(isNew){const created=await wsApi('items','POST',{kind:'strategy',title,body,clientId:d.clientId});merge(created);PB.sel=created.id;}
+    else merge(await wsApi('items/'+item.id,'PUT',{kind:'strategy',title,body,revision:item.revision}));
+    PB.draft=null;PB.dirty=false;toast(isNew?'Plan created':'Plan saved');}
   catch(error){toast(error.message);}finally{PB.busy=false;renderPlaybook();pbRenderEditor();if(typeof routineState!=='undefined'&&routineState)renderRoutinePanel();}}
 async function pbUpload(key,file){const status=$('#pbStatus');if(!file)return;if(!file.type.startsWith('image/')){status.textContent='Choose an image file';return;}status.textContent='Uploading chart…';
   try{const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
@@ -149,9 +156,10 @@ function pbBind(cur){const root=$('#ws-strategies'),on=(sel,fn)=>root.querySelec
 function pbBindEditor(root){const on=(sel,fn)=>root.querySelectorAll(sel).forEach(el=>fn(el));
   const d=PB.draft,dirty=()=>{PB.dirty=true;};
   on('[data-pb-primary]',b=>b.onclick=()=>{d.body.primary=!d.body.primary;pbRerender();});
+  on('[data-pb-open]',b=>b.onclick=()=>{const k=b.dataset.pbOpen;PB.open.add(k);pbRenderEditor();if(PB_LISTS[k])pbFocusRow(k,-1);else if(k==='exit')$('#pbExit')?.focus();else $('#pbEditor .pbv-upload')?.focus();});
   $('#pbTitle').oninput=e=>{d.title=e.target.value;dirty();};
   $('#pbType').oninput=e=>{d.body.description=e.target.value;dirty();};
-  $('#pbExit').oninput=e=>{d.body.exitRules=e.target.value;dirty();};
+  const exitBox=$('#pbExit');if(exitBox)exitBox.oninput=e=>{d.body.exitRules=e.target.value;dirty();};
   on('[data-pb-limit]',el=>el.oninput=()=>{const k=el.dataset.pbLimit;d.body.limits[k]=['start','end','tz'].includes(k)?(el.value||(k==='tz'?'UTC':null)):(el.value===''?null:Number(el.value));dirty();});
   on('[data-pb-cancel]',b=>b.onclick=()=>pbCloseEditor());
   on('[data-pb-save]',b=>b.onclick=pbSave);

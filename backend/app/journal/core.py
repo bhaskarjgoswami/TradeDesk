@@ -226,7 +226,7 @@ def init_routine():
     with db() as conn:
         conn.execute('CREATE TABLE IF NOT EXISTS routine_progress (period TEXT PRIMARY KEY, checked TEXT NOT NULL)')
         cols={r[1] for r in conn.execute('PRAGMA table_info(routine_progress)')}
-        if 'ticked_at' not in cols:   # local time of the latest tick; a trade after it resets the routine
+        if 'ticked_at' not in cols:   # UTC time of the latest tick; a trade after it resets the routine
             conn.execute('ALTER TABLE routine_progress ADD COLUMN ticked_at TEXT')
 
 
@@ -287,10 +287,13 @@ def routine_state():
         # A trade taken after the latest tick means the routine was used: start fresh for the next trade.
         ticked_at=progress['ticked_at'] if progress else None
         if checked and ticked_at:
+            # Trade times are stored in UTC, so the tick time is too. A trade dated in the future
+            # (e.g. a time typed in the wrong zone) hasn't happened yet and must not wipe the ticks.
+            now_utc=datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S+00:00')
             hit=conn.execute("""SELECT symbol,COALESCE(NULLIF(entry_time,''),REPLACE(created_at,' ','T')) AS at FROM trades
-                WHERE (entry_time IS NOT NULL AND entry_time<>'' AND entry_time>=?)
+                WHERE (entry_time IS NOT NULL AND entry_time<>'' AND entry_time>=? AND entry_time<=?)
                    OR (source_id IS NULL AND REPLACE(created_at,' ','T')>?)
-                ORDER BY at LIMIT 1""",(ticked_at[:16],ticked_at)).fetchone()
+                ORDER BY at LIMIT 1""",(ticked_at[:16],now_utc,ticked_at)).fetchone()
             if hit:
                 conn.execute('UPDATE routine_progress SET checked=?,ticked_at=NULL WHERE period=?',('[]',period))
                 conn.execute("DELETE FROM journal_settings WHERE key='pending_checklist'")
@@ -337,6 +340,12 @@ def routine_active_plan(conn):
     return None, tpl.get('name', 'Default checklist'), tpl
 
 
+def _utc_now(fmt):
+    """Current UTC time; trade entry/created times are stored in UTC, so routine times must match."""
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc).strftime(fmt)
+
+
 def update_pending_checklist(conn, plan_keys):
     """Remember the ticked plan items (with the time) so the next trade can carry them."""
     if not plan_keys:
@@ -347,12 +356,12 @@ def update_pending_checklist(conn, plan_keys):
         idx = sorted({int(k.split('::' + prefix)[1]) for k in plan_keys if '::' + prefix in k})
         return [items[i] for i in idx if i < len(items)]
     exit_rules = [line.strip() for line in str(body.get('exitRules') or '').splitlines() if line.strip()]
-    pending = dict(at=time.strftime('%Y-%m-%dT%H:%M'), planId=pid, planName=name, keys=sorted(plan_keys),
+    pending = dict(at=_utc_now('%Y-%m-%dT%H:%M'), planId=pid, planName=name, keys=sorted(plan_keys),
                    charting=pick('c', body.get('charting', [])), criteria=pick('e', body.get('criteria', [])),
                    exit=pick('x', exit_rules), management=pick('m', body.get('management', [])),
                    template={k: body.get(k) for k in ('charting', 'criteria', 'management', 'exitRules', 'notes')} | {'name': name})
     conn.execute("INSERT INTO journal_settings(key,value,revision) VALUES('pending_checklist',?,1) "
-                 "ON CONFLICT(key) DO UPDATE SET value=excluded.value,revision=revision+1", (json.dumps(pending),))
+                 "ON CONFLICT(key) DO UPDATE SET value=excluded.value,revision=journal_settings.revision+1", (json.dumps(pending),))
 
 
 def apply_pending_checklist(conn, trade):
@@ -411,7 +420,7 @@ def save_routine_progress(body):
             checked.discard(key)
         conn.execute('INSERT INTO routine_progress(period,checked) VALUES(?,?) ON CONFLICT(period) DO UPDATE SET checked=excluded.checked',(state['period'],json.dumps(sorted(checked))))
         if body['checked']:
-            conn.execute('UPDATE routine_progress SET ticked_at=? WHERE period=?',(time.strftime('%Y-%m-%dT%H:%M:%S'),state['period']))
+            conn.execute('UPDATE routine_progress SET ticked_at=? WHERE period=?',(_utc_now('%Y-%m-%dT%H:%M:%S+00:00'),state['period']))
         if '::' in key:
             update_pending_checklist(conn, [k for k in checked if '::' in k])
     return routine_state()

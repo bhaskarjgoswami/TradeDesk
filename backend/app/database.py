@@ -21,7 +21,9 @@ def _get_pool():
             if _pool is None:
                 _pool = psycopg2.pool.ThreadedConnectionPool(
                     1, 20, DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor,
-                    keepalives=1, keepalives_idle=30,
+                    keepalives=1, keepalives_idle=15, keepalives_interval=5, keepalives_count=3,
+                    # Fail fast instead of hanging for minutes when the network or pooler drops a connection.
+                    connect_timeout=10, tcp_user_timeout=20000,
                 )
     return _pool
 
