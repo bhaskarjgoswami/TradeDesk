@@ -95,6 +95,15 @@ def _translate(sql: str) -> str:
     return s
 
 
+# set_config(..., true) is SET LOCAL: it lasts one transaction. The schema name is strictly
+# validated before use; pg_catalog stays implicit and shared tables are never searched.
+_PATH_SQL = """SELECT p.deletion_started_at,
+    EXISTS (SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname=%s) AS ns,
+    CASE WHEN p.deletion_started_at IS NULL AND EXISTS (SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname=%s)
+         THEN set_config('search_path', %s, true) END AS path
+  FROM public.user_profiles p WHERE p.id=%s::uuid FOR SHARE OF p"""
+
+
 class Connection:
     """sqlite3.Connection look-alike over a pooled psycopg2 connection."""
 
@@ -126,26 +135,19 @@ class Connection:
                 self.close()
             raise
 
-    def _active_account(self,cur):
-        uid=self._schema[2:]
-        cur.execute('SELECT deletion_started_at FROM public.user_profiles WHERE id=%s::uuid FOR SHARE',(uid,))
-        account=cur.fetchone()
-        if not account or account['deletion_started_at'] is not None:raise AccountDeleting('Account deletion is pending')
-
     def _set_path(self):
         # SET LOCAL lasts one transaction (correct behind Supabase's transaction-mode
         # pooler, where a session-level SET could leak to another user). The journal
         # code commits mid-block and keeps going, so re-apply after every commit.
+        # One round trip (each one crosses regions): lock the account row, confirm the
+        # namespace exists, and only then set the transaction-local search_path.
         with self._conn.cursor() as cur:
-            self._active_account(cur)
-            cur.execute("SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname=%s)", (self._schema,))
+            cur.execute(_PATH_SQL, (self._schema, self._schema, f'"{self._schema}"', self._schema[2:]))
             row = cur.fetchone()
-            exists = next(iter(row.values())) if isinstance(row, dict) else row[0]
-            if not exists:
+            if not row or row['deletion_started_at'] is not None:
+                raise AccountDeleting('Account deletion is pending')
+            if not row['ns']:
                 raise MissingJournalSchema("Journal namespace is unavailable")
-            # The name is strictly validated in __init__. pg_catalog remains
-            # implicitly available; shared application tables are never searched.
-            cur.execute(f'SET LOCAL search_path TO "{self._schema}"')
 
     # sqlite3 uses the connection itself as a transaction context
     def __enter__(self):
@@ -221,8 +223,12 @@ def forget_schema(schema: str) -> None:
         _provisioned.discard(schema)
 
 
-def ensure_schema(schema: str, init) -> None:
-    """Create the user's schema and run the journal's own table setup once."""
+def ensure_schema(schema: str, init, version: str | None = None) -> None:
+    """Create the user's schema and run the journal's own table setup once.
+
+    With a version, the finished setup is recorded as a comment on the schema, so a
+    restarted server (free hosting sleeps when idle) skips the ~100 setup queries
+    until the journal code changes."""
     if not _SCHEMA.fullmatch(schema):
         raise ValueError("invalid journal schema")
     if schema in _provisioned:
@@ -238,6 +244,13 @@ def ensure_schema(schema: str, init) -> None:
                 cur.execute('SELECT deletion_started_at FROM public.user_profiles WHERE id=%s::uuid FOR SHARE',(schema[2:],))
                 account=cur.fetchone()
                 if not account or account['deletion_started_at'] is not None:raise AccountDeleting('Account deletion is pending')
+                if version:
+                    cur.execute("SELECT obj_description(oid,'pg_namespace') AS note FROM pg_catalog.pg_namespace WHERE nspname=%s",(schema,))
+                    found=cur.fetchone()
+                    if found and found['note']==version:
+                        conn.commit()
+                        _provisioned.add(schema)
+                        return
                 cur.execute("CREATE SCHEMA IF NOT EXISTS %s" % psycopg2.extensions.quote_ident(schema, cur))
                 # API roles never see journal schemas (browser access is auth-only)
                 cur.execute("REVOKE ALL ON SCHEMA %s FROM anon, authenticated" % psycopg2.extensions.quote_ident(schema, cur))
@@ -252,6 +265,18 @@ def ensure_schema(schema: str, init) -> None:
             init()  # the journal's own CREATE TABLE IF NOT EXISTS + column migrations
         finally:
             current_schema.reset(token)
+        if version:
+            conn = pool.getconn()
+            try:
+                conn.autocommit = False
+                with conn.cursor() as cur:
+                    cur.execute("COMMENT ON SCHEMA %s IS %%s" % psycopg2.extensions.quote_ident(schema, cur), (version,))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+            finally:
+                pool.putconn(conn)
         _provisioned.add(schema)
 
 

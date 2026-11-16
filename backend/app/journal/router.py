@@ -38,13 +38,28 @@ def _init_tables():
     install_trade_guards(schema_for(current_user_id.get()))
 
 
+def _setup_version() -> str:
+    """Changes whenever the journal's table setup code could have changed."""
+    import hashlib
+    from pathlib import Path
+    from . import pgcompat
+    digest = hashlib.sha256()
+    for module in (core, workspace, pgcompat):
+        digest.update(Path(module.__file__).read_bytes())
+    digest.update(Path(__file__).read_bytes())
+    return "tradedesk-journal:" + digest.hexdigest()[:24]
+
+
+SETUP_VERSION = _setup_version()
+
+
 @contextlib.contextmanager
 def scoped(user):
     """Point db() at this user's schema (creating it on first use)."""
     schema = schema_for(user["user_id"])
     t1, t2 = current_user_id.set(user["user_id"]), current_schema.set(None)
     try:
-        ensure_schema(schema, _init_tables)
+        ensure_schema(schema, _init_tables, SETUP_VERSION)
         current_schema.set(schema)
         yield
     finally:

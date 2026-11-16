@@ -21,7 +21,7 @@ def test_missing_namespace_never_searches_public_and_releases_connection(monkeyp
     cursor = Mock()
     cursor.__enter__ = Mock(return_value=cursor)
     cursor.__exit__ = Mock(return_value=False)
-    cursor.fetchone.side_effect = [{"deletion_started_at":None}, (False,)]
+    cursor.fetchone.return_value = {"deletion_started_at": None, "ns": False, "path": None}
     connection = Mock(closed=False)
     connection.cursor.return_value = cursor
     pool = Mock()
@@ -31,6 +31,9 @@ def test_missing_namespace_never_searches_public_and_releases_connection(monkeyp
         pgcompat.Connection(SCHEMA)
     statements = [str(c.args[0]) for c in cursor.execute.call_args_list]
     assert not any("SET LOCAL search_path" in s for s in statements)
+    # The only path change is conditional on the namespace existing in the same statement.
+    assert statements[-1] == pgcompat._PATH_SQL
+    assert "CASE WHEN p.deletion_started_at IS NULL AND EXISTS (SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname=%s)" in statements[-1]
     connection.rollback.assert_called_once()
     pool.putconn.assert_called_once()
 
@@ -39,16 +42,17 @@ def test_tenant_search_path_excludes_shared_tables(monkeypatch):
     cursor = Mock()
     cursor.__enter__ = Mock(return_value=cursor)
     cursor.__exit__ = Mock(return_value=False)
-    cursor.fetchone.side_effect = [{"deletion_started_at":None}, (True,)]
+    cursor.fetchone.return_value = {"deletion_started_at": None, "ns": True, "path": f'"{SCHEMA}"'}
     connection = Mock(closed=False)
     connection.cursor.return_value = cursor
     pool = Mock()
     pool.getconn.return_value = connection
     monkeypatch.setattr(pgcompat, "_get_pool", lambda: pool)
     wrapped = pgcompat.Connection(SCHEMA)
-    path = cursor.execute.call_args_list[-1].args[0]
-    assert path == f'SET LOCAL search_path TO "{SCHEMA}"'
-    assert "public" not in path
+    sql, params = cursor.execute.call_args_list[-1].args
+    assert "set_config('search_path', %s, true)" in sql  # transaction-local, like SET LOCAL
+    assert params[2] == f'"{SCHEMA}"'
+    assert "public" not in params[2]
     wrapped.close()
 
 

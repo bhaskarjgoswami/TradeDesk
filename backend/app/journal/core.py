@@ -265,10 +265,13 @@ def validate_routine(value):
 def routine_state():
     from datetime import datetime, timedelta, timezone
     with db() as conn:
-        row=conn.execute("SELECT value,revision FROM journal_settings WHERE key='routine'").fetchone()
+        # Routine, pending checklist and time zone in one round trip, on this one connection.
+        rows={r['key']:r for r in conn.execute("SELECT key,value,revision FROM journal_settings WHERE key IN ('routine','pending_checklist','workspace_profile')").fetchall()}
+        row,pend=rows.get('routine'),rows.get('pending_checklist')
         settings=validate_routine(json.loads(row['value'])) if row else json.loads(json.dumps(DEFAULT_ROUTINE))
         hours,minutes=map(int,settings['resetTime'].split(':'))
-        now=datetime.now(journal_zone())
+        profile=json.loads(rows['workspace_profile']['value']) if 'workspace_profile' in rows else {}
+        now=datetime.now(journal_zone(profile.get('timezone') or 'UTC'))
         boundary=now.replace(hour=hours,minute=minutes,second=0,microsecond=0)
         if now < boundary:
             boundary-=timedelta(days=1)
@@ -278,7 +281,6 @@ def routine_state():
         reset=None
         # Plan ticks are stored by item position, so they only make sense for the plan they were ticked on.
         # If the active plan changed since, drop them and the pending checklist.
-        pend=conn.execute("SELECT value FROM journal_settings WHERE key='pending_checklist'").fetchone()
         if pend and json.loads(pend['value']).get('planId')!=routine_active_plan(conn)[0]:
             conn.execute("DELETE FROM journal_settings WHERE key='pending_checklist'")
             checked=[k for k in checked if '::' not in k]
