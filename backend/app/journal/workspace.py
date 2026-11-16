@@ -10,8 +10,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 KINDS = {'note', 'strategy', 'event', 'session', 'resource', 'blocked', 'feedback'}
-CURRENCIES = {'USD', 'INR', 'EUR', 'GBP', 'AUD', 'CAD', 'JPY', 'USDT', 'SGD', 'AED', 'CHF', 'HKD', 'CNY'}
-DEFAULT_PREFS = dict(currency='USD', capital=0, name='My trading journal', displayCurrency='USD', fxRate=1, fxAt='')
+CURRENCIES = {'USD', 'INR', 'EUR', 'GBP', 'AUD', 'CAD', 'JPY', 'USDT', 'SGD', 'AED', 'CHF', 'HKD', 'CNY', 'ZAR'}
+NEWS_REGIONS = ['stocks','forex','commodities','crypto','macro','ipo','funds']
+DEFAULT_NEWS_REGIONS = ['stocks','forex','commodities','crypto']
+NEWS_COUNTRIES = ['global','in','us','gb','eu','ca','au','sg','cn','asia','ae','za']
+LEGACY_NEWS_TOPICS = {'india':'stocks','us':'stocks','global':'macro','bonds':'macro'}
+DEFAULT_PREFS = dict(currency='USD', capital=0, name='My trading journal', displayCurrency='USD', fxRate=1, fxAt='', newsRegions=list(DEFAULT_NEWS_REGIONS), newsCountry='global')
 DEFAULT_PROFILE = dict(firstName='', lastName='', displayName='', mobile='', country='', zip='', timezone='',
                        experience='', markets='', bio='', photo='', language='', gender='', ageGroup='', tradingLevel='', onboardingCompleted=False, onboardingVersion=0)
 EXPERIENCE = {'', 'Under 1 year', '1-3 years', '3-5 years', '5+ years'}
@@ -218,6 +222,17 @@ def validate_settings(key,value):
         clean['displayCurrency']=display
         clean['fxRate']=number(value.get('fxRate',1),'Exchange rate',1e-9,1e9)
         clean['fxAt']=text(value.get('fxAt',''),'Exchange rate time',40)
+        # News page: headline topics and the country whose local sources to use. Missing (older saves) means the defaults.
+        regions=value.get('newsRegions',DEFAULT_NEWS_REGIONS)
+        if isinstance(regions,list):
+            regions=[LEGACY_NEWS_TOPICS.get(r,r) for r in regions]
+        if not isinstance(regions,list) or not regions or any(r not in NEWS_REGIONS for r in regions):
+            raise ValueError('Choose at least one news topic')
+        clean['newsRegions']=[r for r in NEWS_REGIONS if r in regions]
+        country=value.get('newsCountry','global')
+        if country not in NEWS_COUNTRIES:
+            raise ValueError('Choose a supported news country')
+        clean['newsCountry']=country
     else:
         for field in ('enabled','requireRoutine','requireChecklist'):
             if not isinstance(value.get(field),bool):

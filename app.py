@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import re
 import workspace
+import news
 import os
 import sqlite3
 import urllib.request
@@ -255,7 +256,7 @@ def save_plan_settings(body):
 
 
 DEFAULT_ROUTINE = dict(enabled=True, showAll=True, autoHide=True, popup=False, resetTime='00:00', steps=[
-    dict(id='news', title='Review news on the economic calendar', action='none', icon='calendar'),
+    dict(id='news', title='Review news on the economic calendar', action='news', icon='calendar'),
     dict(id='plan', title='Review your trade plan', action='preferences', icon='target'),
     dict(id='meditate', title='Meditate (15 mins)', action='focus', icon='calm')])
 
@@ -289,7 +290,7 @@ def validate_routine(value):
             raise ValueError('Invalid routine step ID')
         if not isinstance(title, str) or not title.strip() or len(title)>200:
             raise ValueError('Each routine step needs a title of up to 200 characters')
-        if step.get('action') not in ('none','journal','preferences','performance','focus') or step.get('icon') not in ('calendar','target','chart','calm'):
+        if step.get('action') not in ('none','journal','preferences','performance','focus','news') or step.get('icon') not in ('calendar','target','chart','calm'):
             raise ValueError('Choose a valid routine icon and action')
         med=step.get('meditation') or ''
         if not isinstance(med,str) or (med and not re.fullmatch(r'[a-z0-9-]{1,40}',med)):
@@ -1040,7 +1041,7 @@ class Handler(BaseHTTPRequestHandler):
             except FileNotFoundError:self._send_json({'error':'Language not found'},404)
             return
 
-        if path in ('/language.js','/onboarding.js','/feedback-page.js','/trade-drafts.js','/workspace.js','/workspace.css','/theme.css','/theme-mercury.css','/calendar.js','/trade.js','/playbook.js','/profile.js','/meditation.js'):
+        if path in ('/language.js','/onboarding.js','/feedback-page.js','/trade-drafts.js','/workspace.js','/workspace.css','/theme.css','/theme-mercury.css','/calendar.js','/trade.js','/playbook.js','/profile.js','/meditation.js','/news.js'):
             filename=os.path.join(HERE,path[1:])
             try:
                 with open(filename,'rb') as handle:body=handle.read()
@@ -1134,6 +1135,33 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(delta_price(sym))
             except Exception as e:
                 self._send_json({"error": str(e)}, 502)
+            return
+
+        if path == "/api/news":
+            try:
+                self._send_json(news.headlines(params.get("cat", ["all"])[0], params.get("country", ["global"])[0]))
+            except ValueError as e:
+                self._send_json({"error": str(e)}, 400)
+            except Exception:
+                self._send_json({"error": "News is unavailable right now. Try again in a minute."}, 502)
+            return
+
+        if path == "/api/news/indices":
+            try:
+                self._send_json(news.index_news(params.get("country", ["global"])[0]))
+            except ValueError as e:
+                self._send_json({"error": str(e)}, 400)
+            except Exception:
+                self._send_json({"error": "Index news is unavailable right now. Try again in a minute."}, 502)
+            return
+
+        if path == "/api/news/calendar":
+            try:
+                self._send_json(news.calendar(params.get("impact", ["medium"])[0]))
+            except ValueError as e:
+                self._send_json({"error": str(e)}, 400)
+            except Exception:
+                self._send_json({"error": "The economic calendar is unavailable right now. Try again in a few minutes."}, 502)
             return
 
         if path == "/api/fx":
@@ -1304,6 +1332,7 @@ def main():
     print(f"      Delta account: {creds}")
     print("      Sign in with the credentials configured in your local .env file.")
     print("      press Ctrl+C to stop\n")
+    news.start_warmer()
     try:
         server.serve_forever()
     except KeyboardInterrupt:

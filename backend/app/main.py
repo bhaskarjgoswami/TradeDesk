@@ -1,3 +1,4 @@
+import contextlib
 import os
 import psycopg2
 from fastapi import FastAPI
@@ -24,8 +25,18 @@ if os.environ.get("SENTRY_DSN"):
 
 # Interactive API docs only outside production (Render sets RENDER=true).
 _docs = not os.environ.get("RENDER")
+@contextlib.asynccontextmanager
+async def lifespan(_app):
+    # Fetch market news and the economic calendar once at boot and keep them fresh,
+    # so the first person to open News is not waiting on the public feeds.
+    if os.environ.get("NEWS_PRELOAD", "1") != "0":
+        from .journal import news
+        news.start_warmer()
+    yield
+
+
 app = FastAPI(
-    title="TradeDesk API", version="1.0.0",
+    title="TradeDesk API", lifespan=lifespan, version="1.0.0",
     docs_url="/docs" if _docs else None, redoc_url=None,
     openapi_url="/openapi.json" if _docs else None,
 )

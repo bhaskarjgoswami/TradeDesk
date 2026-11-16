@@ -117,8 +117,26 @@ function wsOpenImport(){
     finally{WS.dialogBusy=false;inputs.forEach(input=>input.disabled=false);$('#wsImportConfirm').disabled=!rows.length;}
   };
 }
-const WS_CURRENCIES=['USD','INR'];
+// Journal currencies offered worldwide; keep in sync with CURRENCIES in workspace.py.
+const WS_CURRENCIES=['USD','EUR','GBP','INR','JPY','CNY','HKD','SGD','AUD','CAD','CHF','AED','ZAR','USDT'];
 function wsCurrencyLabel(c){let name='';try{name=new Intl.DisplayNames(undefined,{type:'currency'}).of(c);}catch{}return c==='USDT'?'USDT · Tether (= USD)':`${c} · ${name||c}`;}
+// Saves run one after another so quick edits never race each other.
+let wsPrefsQueue=Promise.resolve();
+function wsQueuePrefsSave(){wsPrefsQueue=wsPrefsQueue.then(wsSavePrefsNow,wsSavePrefsNow);return wsPrefsQueue;}
+async function wsSavePrefsNow(){
+  const form=$('#wsPrefsForm'),status=$('#wsPrefsStatus');if(!form)return;
+  const prefs=WS.prefs.settings,name=form.elements.name.value.trim(),display=form.elements.displayCurrency.value;
+  if(!name){status.textContent='Journal name is required';return;}
+  if(name===prefs.name&&display===wsDisplayCurrency())return;
+  status.textContent='Saving…';
+  let fx={rate:prefs.fxRate,at:prefs.fxAt};
+  if(display!==wsDisplayCurrency()){try{const r=await wsFetchFx(display);fx={rate:r.rate,at:new Date().toISOString()};}catch(error){status.textContent=error.message;form.elements.displayCurrency.value=wsDisplayCurrency();return;}}
+  const currencyChanged=display!==wsDisplayCurrency();
+  try{WS.prefs=await wsApi('preferences','PUT',{settings:{...prefs,name,displayCurrency:display,fxRate:fx.rate,fxAt:fx.at},revision:WS.prefs.revision});}
+  catch(error){status.textContent=error.message;return;}
+  status.textContent='Saved.';
+  if(currencyChanged){wsAfterCurrencyChange();toast('Display currency set to '+display);}
+}
 function wsFxNote(){const p=WS.prefs.settings,d=wsDisplayCurrency();if(d===p.currency)return `Showing amounts in ${esc(p.currency)}, the currency your trades are stored in.`;return `1 ${esc(p.currency)} = ${wsNum(Number(p.fxRate),4)} ${esc(d)}${p.fxAt?` · rate from ${esc(new Date(p.fxAt).toLocaleString(window.TDLocale?.language||undefined,{dateStyle:'medium',timeStyle:'short'}))}`:''}. Updates automatically every 12 hours.`;}
 async function wsFetchFx(display){const base=WS.prefs.settings.currency;if(display===base)return{rate:1};const response=await fetch(`/api/fx?base=${encodeURIComponent(base)}&to=${encodeURIComponent(display)}`);const r=await response.json();if(!response.ok||!(r.rate>0))throw Error('Could not get the exchange rate. Check your internet connection.');return r;}
 // Re-render whatever is on screen so every amount picks up the new currency.
@@ -129,15 +147,14 @@ function renderWorkspaceSettings(){
   const panels=$('#pane-settings .settings-card');
   if(!$('#wsJournalPrefs')){const node=document.createElement('div');node.className='set-sec settings-panel';node.dataset.settingsPanel='journal';node.setAttribute('role','tabpanel');node.hidden=true;node.innerHTML='<div id="wsJournalPrefs"></div>';panels.append(node);const tab=document.createElement('button');tab.type='button';tab.role='tab';tab.id='settings-tab-journal';tab.dataset.settingsTab='journal';tab.setAttribute('aria-controls','settings-panel-journal');tab.textContent='Journal';tab.onclick=()=>showSettingsTab('journal');$('#pane-settings .settings-tabs').append(tab);}
   const prefs=WS.prefs.settings;
-  const currencyChoices=value=>[...new Set([...WS_CURRENCIES,value].filter(Boolean))].map(code=>[code,wsCurrencyLabel(code)+(WS_CURRENCIES.includes(code)?'':' · existing journal')]);
   if(!$('#wsPrefsForm')){
-    $('#wsJournalPrefs').innerHTML=`<div class="set-label">Journal preferences</div><p class="plan-settings-help muted">Choose USD or INR for your journal. The base currency locks after your first trade; display currency converts amounts for viewing.</p><form id="wsPrefsForm"><div class="ws-form-grid">${wsField('Journal name','name',prefs.name,'text',true)}${wsSelect('Journal base currency','currency',currencyChoices(prefs.currency),prefs.currency)}${wsSelect('Display currency','displayCurrency',currencyChoices(wsDisplayCurrency()),wsDisplayCurrency())}<p class="ws-inline-feedback full" id="wsFxNote">${wsFxNote()}</p></div><div class="ws-form-footer"><button class="btn" type="submit">Save journal preferences</button><span class="ws-form-status" id="wsPrefsStatus" role="status"></span></div></form><hr class="ws-divider"><h3>Back up your journal</h3><p class="plan-settings-help muted">Download the database, plans, notes, routines and uploaded charts. Broker credentials and login sessions are excluded.</p>${wsBtn('Download full backup (.zip)','backup',true)}`;
-    $('#wsPrefsForm').onsubmit=async event=>{
-      event.preventDefault();const form=event.currentTarget,data=new FormData(form),base=data.get('currency')||WS.prefs.settings.currency,changed=base!==WS.prefs.settings.currency,display=changed?base:data.get('displayCurrency');let fx;
-      try{fx=changed?{rate:1}:await wsFetchFx(display);}catch(error){$('#wsPrefsStatus').textContent=error.message;return;}
-      await wsSaveSettingsForm('preferences',{...WS.prefs.settings,currency:base,name:data.get('name'),displayCurrency:display,fxRate:fx.rate,fxAt:new Date().toISOString()},WS.prefs,'wsPrefsStatus',form,result=>{WS.prefs=result;wsAfterCurrencyChange();$('#wsPrefsForm').remove();renderWorkspaceSettings();});
-      $('#wsPrefsForm [name=currency]').disabled=allTrades.length>0;
-    };
+    $('#wsJournalPrefs').innerHTML=`<div class="set-label">Journal preferences</div><p class="plan-settings-help muted">Trades are recorded in the journal's base currency (US dollars for new journals). Choose the currency amounts are shown in.</p><form id="wsPrefsForm"><div class="ws-form-grid">${wsField('Journal name','name',prefs.name,'text',true)}<input type="hidden" name="currency" value="${esc(prefs.currency)}">${wsSelect('Display currency','displayCurrency',WS_CURRENCIES.includes(wsDisplayCurrency())?WS_CURRENCIES.map(code=>[code,wsCurrencyLabel(code)]):[...WS_CURRENCIES,wsDisplayCurrency()].map(code=>[code,wsCurrencyLabel(code)]),wsDisplayCurrency())}<p class="ws-inline-feedback full" id="wsFxNote">${wsFxNote()}</p></div><span class="ws-form-status" id="wsPrefsStatus" role="status"></span></form><hr class="ws-divider"><h3>Back up your journal</h3><p class="plan-settings-help muted">Download the database, plans, notes, routines and uploaded charts. Broker credentials and login sessions are excluded.</p>${wsBtn('Download full backup (.zip)','backup',true)}`;
+    // Changes save on their own: the currency as soon as it is picked, the name shortly after typing stops.
+    const form=$('#wsPrefsForm');let nameTimer=null;
+    form.onsubmit=event=>{event.preventDefault();wsQueuePrefsSave();};
+    form.elements.displayCurrency.onchange=()=>wsQueuePrefsSave();
+    form.elements.name.oninput=()=>{clearTimeout(nameTimer);nameTimer=setTimeout(wsQueuePrefsSave,700);};
+    form.elements.name.onchange=()=>{clearTimeout(nameTimer);wsQueuePrefsSave();};
   }
   $('#wsPrefsForm [name=currency]').disabled=allTrades.length>0;
   if(window.__td&&!$('#wsImageStorage')){
@@ -146,7 +163,7 @@ function renderWorkspaceSettings(){
     const usage=async()=>{try{const value=await wsApi('storage');$('#wsStorageUsage').textContent=(value.used/1024/1024).toFixed(1)+' MB / '+Math.round(value.limit/1024/1024)+' MB';}catch(error){$('#wsStorageUsage').textContent=error.message;}};usage();
     $('#wsStorageReclaim').onclick=async event=>{const button=event.currentTarget;if(!confirm('Remove unused images older than seven days? Old unsaved drafts may reference these files.'))return;button.disabled=true;try{const result=await wsApi('storage/reclaim','POST',{});toast('Removed '+result.removed+' unused images');await usage();}catch(error){toast(error.message);}finally{button.disabled=false;}};
   }
-if(!$('#wsBackupData')){const dataPanel=$('[data-settings-panel=data]');dataPanel.insertAdjacentHTML('beforeend',`<div id="wsBackupData"><hr class="ws-divider"><div class="set-row"><span>Complete journal backup · database and charts</span>${wsBtn('Download backup','backup',true)}${window.__td?wsBtn('Restore backup','restore'):''}</div><div class="set-row" style="margin-top:14px"><span>Add trades from a CSV file</span>${wsBtn('Import CSV','import',true)}</div></div>`); }if(window.__td&&!$('#wsDeleteAccount')){const panel=$('[data-settings-panel=account]');const row=document.createElement('div');row.className='set-row';row.style.marginTop='24px';row.innerHTML='<span>Permanently delete your account and all journal data</span><button class="btn danger" id="wsDeleteAccount" data-ws-action="delete-account">Delete account</button>';panel.append(row);}$('#setExport').onclick=()=>wsExport(true);}
+if(!$('#wsBackupData')){const dataPanel=$('[data-settings-panel=data]');dataPanel.insertAdjacentHTML('beforeend',`<div id="wsBackupData"><hr class="ws-divider"><div class="set-row"><span>Complete journal backup · database and charts</span>${wsBtn('Download backup','backup',true)}${window.__td?wsBtn('Restore backup','restore'):''}</div><div class="set-row" style="margin-top:14px"><span>Add trades from a CSV file</span>${wsBtn('Import CSV','import',true)}</div></div>`); }if(window.__td&&!$('#wsDeleteAccount')){const panel=$('[data-settings-panel=account]');const row=document.createElement('div');row.className='set-row';row.style.marginTop='24px';row.innerHTML='<span>Permanently delete your account and all journal data</span><button class="btn danger" id="wsDeleteAccount" data-ws-action="delete-account">Delete account</button>';panel.append(row);}$('#setExport').onclick=()=>wsExport(true);window.renderNewsSettings?.();}
 window.renderWorkspaceView=function(key){if(key==='dashboard')renderDashboard();else if(key==='trades')renderTradeHistory();else if(key==='strategies')renderStrategies();else if(key==='planner')renderPlanner();else if(key==='guardrails')renderGuardrails();else if(key==='notebook')renderNotebook();else if(key==='events')renderEvents();else if(key==='focus')renderFocus();else if(key==='resources')renderResources();else if(key==='settings')renderWorkspaceSettings();};
 async function wsNewTrade(){if(formVisible()&&$('#f_symbol').value&&!confirm('Open a new trade and discard the current editor?'))return false;setView('journal');await $('#addTradeBtn').onclick();return true;}
 const wsActions={

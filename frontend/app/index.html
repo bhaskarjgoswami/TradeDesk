@@ -587,14 +587,14 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
 </div>
 <div class="mobilebar">
   <button type="button" class="hamb" id="hamb" aria-label="Menu" aria-controls="sidebar" aria-expanded="false"><svg class="hi" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-  <div class="mbrand"><span class="logo-ic"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></span> Trade Journal</div><button type="button" class="btn ghost" id="routineMobileOpen">Pre-Market Routine</button>
+  <div class="mbrand"><span class="logo-ic"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></span> Trade Journal</div><button type="button" class="btn ghost" id="routineMobileOpen"><svg class="rt-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M4.9 8.9l1.4 1.4M19.1 8.9l-1.4 1.4M3 17h2M19 17h2M7.5 17a4.5 4.5 0 0 1 9 0M2 21h20"/></svg><span class="rt-label">Pre-Market Routine</span></button>
 </div>
 <div class="backdrop" id="backdrop"></div>
 <div class="app" id="app">
   <!-- TOP BAR -->
   <div class="topbar">
     <div class="tb-brand"><div class="logo"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></div> Trade Journal</div>
-    <div class="tb-right"><button type="button" class="btn ghost" id="routineOpen" aria-controls="routinePanel" aria-expanded="false">Pre-Market Routine</button><div class="tb-bell"><svg class="hi" viewBox="0 0 24 24"><path d="M6 9.5a6 6 0 0 1 12 0c0 4.5 1.8 5.5 1.8 5.5H4.2S6 14 6 9.5"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></div>
+    <div class="tb-right"><button type="button" class="btn ghost" id="routineOpen" aria-controls="routinePanel" aria-expanded="false"><svg class="rt-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M4.9 8.9l1.4 1.4M19.1 8.9l-1.4 1.4M3 17h2M19 17h2M7.5 17a4.5 4.5 0 0 1 9 0M2 21h20"/></svg><span class="rt-label">Pre-Market Routine</span></button><div class="tb-bell"><svg class="hi" viewBox="0 0 24 24"><path d="M6 9.5a6 6 0 0 1 12 0c0 4.5 1.8 5.5 1.8 5.5H4.2S6 14 6 9.5"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></div>
       <div class="tb-acct">
         <button type="button" class="tb-avatar" id="tbAvatar" title="Account" aria-label="Account menu" aria-haspopup="menu" aria-controls="avatarMenu" aria-expanded="false">B</button>
         <div class="tb-menu" id="avatarMenu" role="menu" aria-label="Account">
@@ -612,6 +612,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
 <div class="navitem" data-view="month" role="button" tabindex="0" title="Journal" aria-label="Journal"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6zM9 7h6M9 11h6M9 15h4"/></svg></span>Journal</div>
 <div class="navitem" data-view="performance" role="button" tabindex="0" title="Stats" aria-label="Stats"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16h16M7 15l4-5 4 3 5-7"/></svg></span>Stats</div>
 <div class="navitem" data-view="edge" role="button" tabindex="0" title="Trading Edge" aria-label="Trading Edge"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></span>Trading Edge</div>
+<div class="navitem" data-view="news" role="button" tabindex="0" title="News" aria-label="News"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h13v14H6a2 2 0 0 1-2-2zM17 9h3v8a2 2 0 0 1-2 2M7 9h7M7 13h7M7 16h4"/></svg></span>News</div>
 <div class="navitem" data-view="focus" role="button" tabindex="0" title="Meditation" aria-label="Meditation"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4c-2.5 3-2.5 6 0 9 2.5-3 2.5-6 0-9zM4 12c2 3.5 5 5 8 5s6-1.5 8-5M7 20h10"/></svg></span>Meditation</div>
 <div class="navitem" data-view="feedback" role="button" tabindex="0" title="Feedback" aria-label="Feedback"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11a8 8 0 0 1-8 8H6l-4 3V11a9 9 0 0 1 19 0Z"/><path d="M7 9h9M7 13h6"/></svg></span>Feedback</div>
 <div class="navitem" data-view="settings" role="button" tabindex="0" title="Settings" aria-label="Settings"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>Settings</div>
@@ -673,6 +674,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
 </div></div>
 <div class="pane" id="pane-billing"><div id="billingMount"></div></div>
 <div class="pane" id="pane-feedback"><div class="pane-pad feedback-page" id="feedbackPage"></div></div>
+<div class="pane" id="pane-news"><div class="pane-pad ws-page" id="ws-news"></div></div>
 <div class="pane" id="pane-focus"><div class="pane-pad ws-page" id="ws-focus"></div></div>
 <div class="pane" id="pane-tradeview"><div class="pane-pad ws-page" id="ws-tradeview"></div></div>
 <div class="pane" id="pane-trade"><div class="pane-pad ws-page" id="ws-trade"></div></div>
@@ -822,7 +824,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
         <div class="fld"><label for="f_stop">Stop</label><input type="number" step="any" id="f_stop"></div>
         <div class="fld"><label for="f_exit">Exit</label><input type="number" step="any" id="f_exit"></div>
         <div class="fld"><label for="f_qty">Qty / size</label><input type="number" step="any" id="f_qty"></div>
-        <div class="fld"><label for="f_risk">Risk (₹/$ at stop)</label><input type="number" step="any" id="f_risk"></div>
+        <div class="fld"><label for="f_risk">Risk (amount at stop)</label><input type="number" step="any" id="f_risk"></div>
         <div class="fld"><label for="f_pnl">P&L (realized)</label><input type="number" step="any" id="f_pnl"></div>
         <div class="fld"><label for="f_fee">Platform fee</label><input type="number" step="any" id="f_fee" placeholder="Fees paid"></div>
         <div class="fld"><label for="f_tags">Tags</label><input id="f_tags" placeholder="comma,separated"></div>
@@ -904,7 +906,7 @@ $$('.navitem[data-view]').forEach(n=>n.onclick=event=>{event.preventDefault();se
 $('#sidebarMembership').onclick=event=>{event.preventDefault();setView('billing');};
 function setView(v){
   view=v;
-  if(['month','settings','edge','performance','focus','feedback','billing'].includes(v))history.replaceState(null,'',location.pathname+location.search+(v==='month'?'':'#'+v));
+  if(['month','settings','edge','performance','news','focus','feedback','billing'].includes(v))history.replaceState(null,'',location.pathname+location.search+(v==='month'?'':'#'+v));
   $$('.navitem').forEach(n=>n.classList.toggle('on',n.dataset.view===v));
   $$('.pane').forEach(p=>p.classList.remove('on'));
   $('#pane-'+v).classList.add('on');
@@ -920,6 +922,7 @@ function setView(v){
   if(v==='feedback')renderFeedback();
   if(v==='billing')window.renderBilling?.();
   if(v==='edge')renderEdge();
+  if(v==='news')window.renderNews?.();
   if(window.renderWorkspaceView)window.renderWorkspaceView(v);
   if(typeof routineState!=='undefined')renderRoutinePanel();
 }
@@ -1456,7 +1459,7 @@ let routineState=null,routineDraft=null,routineRevision=0,routineBusy=false,rout
 // One request at a time: a click during boot waits on the boot request instead of starting another.
 let routineLoading=null;
 function loadRoutine(){return routineLoading||(routineLoading=loadRoutineNow().finally(()=>{routineLoading=null;}));}
-async function loadRoutineNow(){try{const response=await fetch('/api/routine');if(!response.ok)throw Error();routineState=await response.json();routineAfterReset();renderRoutinePanel();return true;}catch{if(!routineState)$('#routineOpen').textContent='Pre-Market Routine';return false;}}
+async function loadRoutineNow(){try{const response=await fetch('/api/routine');if(!response.ok)throw Error();routineState=await response.json();routineAfterReset();renderRoutinePanel();return true;}catch{if(!routineState)$('#routineOpen .rt-label').textContent='Pre-Market Routine';return false;}}
 function routineChanged(){$('#routineStatus').textContent='Unsaved changes';}
 function readRoutineEditor(){if(!routineDraft||!$('#routineEnabled'))return;routineDraft.enabled=$('#routineEnabled').checked;routineDraft.showAll=$('#routineAll').checked;routineDraft.autoHide=$('#routineHide').checked;routineDraft.popup=$('#routinePopup').checked;routineDraft.resetTime=$('#routineReset').value;
   $$('#routineSteps .rs-row').forEach((row,i)=>{routineDraft.steps[i].title=row.querySelector('.rs-title').value.trim();});  // icon + link live in the draft (set from the tile popover)
@@ -1479,7 +1482,7 @@ function renderRoutineEditor(){const el=$('#routineEditor');if($('#routineEnable
 }
 // Step editor: drag handle, coloured icon tile (opens icon + link popover), title, delete.
 const ROUTINE_SVG={calendar:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".8"/>',chart:'<path d="M4 19l5-6 4 3 7-9"/><path d="M15 7h5v5"/>',calm:'<path d="M12 4c-2.2 2.6-2.2 5.4 0 8 2.2-2.6 2.2-5.4 0-8zM4 11c1.8 3.8 4.6 5.6 8 5.6s6.2-1.8 8-5.6M8 20h8"/>'};
-const ROUTINE_LINKS=[['none','No link'],['journal','Open journal'],['preferences','Trade plan checklist'],['performance','Open stats'],['focus','Open meditation']];
+const ROUTINE_LINKS=[['none','No link'],['journal','Open journal'],['preferences','Trade plan checklist'],['performance','Open stats'],['focus','Open meditation'],['news','Open news']];
 const routineTile=(icon,cls='')=>`<span class="rs-tile rs-${icon} ${cls}" aria-hidden="true"><svg viewBox="0 0 24 24">${ROUTINE_SVG[icon]||ROUTINE_SVG.target}</svg></span>`;
 function renderRoutineSteps(){const el=$('#routineSteps'),steps=routineDraft.steps;
   el.innerHTML=steps.map((step,i)=>{const link=(ROUTINE_LINKS.find(x=>x[0]===step.action)||ROUTINE_LINKS[0])[1];return `<div class="rs-row" data-i="${i}">
@@ -1519,7 +1522,7 @@ async function saveRoutine(){if(routineBusy)return;readRoutineEditor();routineBu
   finally{routineBusy=false;$('#routineEditor').querySelectorAll('input,select,button').forEach(input=>input.disabled=false);renderRoutineSteps();}
 }
 // A trade after the latest tick resets the routine on the server; show it fresh for the next trade.
-function routineAfterReset(){const r=routineState&&routineState.reset;if(!r)return;routineHiddenPeriod=null;routineArtIntro=true;routineOpenSec=null;try{localStorage.removeItem('tj_routine_popup');}catch{}
+function routineAfterReset(){const r=routineState&&routineState.reset;if(!r)return;routineHiddenPeriod=null;routineArtIntro=true;routineClosedSecs.clear();try{localStorage.removeItem('tj_routine_popup');}catch{}
   toast(`Trade detected${r.symbol?' ('+r.symbol+')':''} · pre-market routine reset for your next trade`);}
 // Trades placed on the broker are only in the journal after a sync. When something is ticked, sync quietly
 // so a broker trade taken after the ticks is detected and the routine resets.
@@ -1542,12 +1545,12 @@ function routineActivePlan(){const items=(typeof WS!=='undefined'&&WS.items.stra
 // Accordion sections of the plan. Checkable ones carry a key prefix (c/e/x/m) stored with the routine.
 const ROUTINE_PLAN_SECTIONS=[['charting','c','Charting Process','<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'],['criteria','e','Entry Criteria','<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'],['exit','x','Exit Criteria','<rect x="4" y="4" width="16" height="16" rx="2"/><path d="m8 12 3 3 5-6"/>'],['management','m','Trade Management','<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>'],['notes',null,'Trading Notes','<path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/>']];
 function routinePlanKeys(step){const p=routineActivePlan();return ROUTINE_PLAN_SECTIONS.filter(x=>x[1]).flatMap(([key,pre])=>p[key].map((_,i)=>step.id+'::'+pre+i));}
-let routineOpenSec=null;
+// Every plan section starts open; sections the trader collapses stay collapsed until the routine resets.
+let routineClosedSecs=new Set();
 // One-line summary shown beside the "Review your trade plan" heading.
 function routinePlanSub(step){const p=routineActivePlan(),done=new Set(routineState.planChecked||[]),keys=routinePlanKeys(step);return `${esc(p.name)} · ${keys.filter(k=>done.has(k)).length}/${keys.length} checked`;}
 function routinePlanChecklist(step){const p=routineActivePlan(),done=new Set(routineState.planChecked||[]),keys=routinePlanKeys(step),n=keys.filter(k=>done.has(k)).length;
   const secs=ROUTINE_PLAN_SECTIONS.filter(([key])=>p[key].length||(key==='charting'&&p.images.length));
-  if(!routineOpenSec||!secs.some(x=>x[0]===routineOpenSec))routineOpenSec=(secs.find(([key,pre])=>pre&&p[key].some((_,i)=>!done.has(step.id+'::'+pre+i)))||secs[0]||[])[0];
   const body=([key,pre])=>key==='images'?`<div class="rp-shots">${p.images.slice(0,4).map(src=>`<img src="/${esc(src)}" alt="Entry model example">`).join('')}</div>`:key==='notes'?`<ul class="rp-notes">${p.notes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:p[key].map((text,i)=>{const k=step.id+'::'+pre+i;return `<label class="rp-item" for="rp_${esc(k)}"><input id="rp_${esc(k)}" type="checkbox" data-complete-step="${esc(k)}" ${done.has(k)?'checked':''}><span>${esc(text)}</span></label>`;}).join('');
   const count=([key,pre])=>pre&&p[key].length?`<span class="rp-count">${p[key].filter((_,i)=>done.has(step.id+'::'+pre+i)).length}/${p[key].length}</span>`:'';
   const shots=(label,list)=>list.length?`<div class="rp-ref-group"><span>${label}</span><div class="rp-ref-row">${list.slice(0,8).map((src,i)=>`<button type="button" class="rp-ref" data-ref="${esc(src)}" data-ref-label="${esc(label)} ${i+1}" aria-label="Open ${esc(label)} chart ${i+1}"><img src="/${esc(src)}" alt="${esc(label)} chart ${i+1}"></button>`).join('')}</div></div>`:'';
@@ -1555,16 +1558,23 @@ function routinePlanChecklist(step){const p=routineActivePlan(),done=new Set(rou
   // Setup and entry reference charts sit above the Charting Process checklist.
   const hasCharting=secs.some(x=>x[0]==='charting'),refsInline=refs?`<div class="rp-refs inline">${refs}</div>`:'',refsBlock=!hasCharting&&refs?`<div class="rp-refs"><div class="rp-refs-title">Reference charts</div>${refs}</div>`:'';
   return `<div class="rp-plan">
-   ${secs.map(sec=>`<details class="rp-acc" data-sec="${sec[0]}" ${sec[0]===routineOpenSec?'open':''}><summary><svg viewBox="0 0 24 24" aria-hidden="true">${sec[3]}</svg><span>${sec[2]}</span>${count(sec)}<i class="rp-chev" aria-hidden="true"></i></summary><div class="rp-acc-body"><div class="rp-acc-inner">${sec[0]==='charting'?refsInline:''}${body(sec)}</div></div></details>`).join('')}${refsBlock}</div>`;}
+   ${secs.map(sec=>`<details class="rp-acc" data-sec="${sec[0]}" ${routineClosedSecs.has(sec[0])?'':'open'}><summary><svg viewBox="0 0 24 24" aria-hidden="true">${sec[3]}</svg><span>${sec[2]}</span>${count(sec)}<i class="rp-chev" aria-hidden="true"></i></summary><div class="rp-acc-body"><div class="rp-acc-inner">${sec[0]==='charting'?refsInline:''}${body(sec)}</div></div></details>`).join('')}${refsBlock}</div>`;}
 // Left column of the full-screen routine: a sunrise over a small candle chart.
 // One candle per routine step lights up when that step is done; the sun rises with overall progress.
 let routineJust=null;
 // ---------- Meditation inside the routine popup (left column) ----------
 const RM={active:false,stepId:null,minutes:5,remaining:300,running:false,deadline:0,done:false,timer:null};
+// News inside the routine popup (left column); the view itself lives in news.js.
+const RN={active:false,stepId:null};
+function rnOpen(stepId){RM.active=false;Object.assign(RN,{active:true,stepId});renderRoutinePanel();window.newsLoad?.(false);}
+// Tick instantly and save in the background, like the routine checkboxes (routineSetLocal + routineSave).
+function rnDone(){const id=RN.stepId;
+  if(!routineState.checked.includes(id)){routineSetLocal(id,true);routineJustArt=id;routineSave(routineState.period,id,true);}
+  RN.active=false;routineArtIntro=true;renderRoutinePanel();}
 const rmFmt=sec=>`${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
 function rmOpen(stepId){const step=routineState.settings.steps.find(x=>x.id===stepId),tpl=typeof medTemplate==='function'&&step?.meditation?medTemplate(step.meditation):null,m=tpl?tpl.minutes:(Number((step?.title.match(/(\d+)\s*min/i)||[])[1])||5);RM.tpl=tpl;
   if(!RM.active||RM.done||RM.stepId!==stepId){Object.assign(RM,{stepId,minutes:Math.min(60,m),remaining:Math.min(60,m)*60,running:false,deadline:0,done:false});}
-  RM.active=true;renderRoutinePanel();}
+  RN.active=false;RM.active=true;renderRoutinePanel();}
 function rmView(){const total=RM.minutes*60,frac=total?1-RM.remaining/total:0,C=2*Math.PI*96;
   return `<aside class="rp-art rm ${RM.running?'running':''} ${RM.done?'done':''}"><div class="rp-art-copy"><span class="rp-date">Pre-market routine</span><h2>${RM.done?'Session complete':esc(RM.tpl?RM.tpl.name:'Meditation')}</h2><p>${RM.done?'Nicely done. Carry this calm into your first trade.':(RM.tpl?esc(RM.tpl.desc):'Sit comfortably. Breathe slowly. Bring your attention back to the plan.')}</p></div>
    <div class="rm-stage"><svg class="rm-ring" viewBox="0 0 220 220" aria-hidden="true"><circle class="rm-track" cx="110" cy="110" r="96"/><circle class="rm-progress" id="rmRing" cx="110" cy="110" r="96" style="stroke-dasharray:${C};stroke-dashoffset:${C*(1-frac)}"/></svg>
@@ -1595,7 +1605,7 @@ let routineArtIntro=true;
 function routineChecks(state){const out=[],planChecked=new Set(state.planChecked||[]),p=routineActivePlan();
   state.settings.steps.forEach(step=>{if(step.action==='preferences')ROUTINE_PLAN_SECTIONS.filter(x=>x[1]).forEach(([key,pre])=>p[key].forEach((text,i)=>{const k=step.id+'::'+pre+i;out.push({key:k,text,done:planChecked.has(k)});}));else out.push({key:step.id,text:step.title,done:state.checked.includes(step.id)});});
   return out;}
-function routineArt(state){if(RM.active)return rmView();const steps=state.settings.steps,doneSteps=steps.filter(x=>state.checked.includes(x.id)).length,ready=doneSteps>=steps.length;
+function routineArt(state){if(RM.active)return rmView();if(RN.active&&window.newsRoutineView)return window.newsRoutineView(state);const steps=state.settings.steps,doneSteps=steps.filter(x=>state.checked.includes(x.id)).length,ready=doneSteps>=steps.length;
   const checks=routineChecks(state),n=checks.length||1,ticked=checks.filter(c=>c.done).length,p=ticked/n;
   const hour=new Date().getHours(),first=(typeof PF!=='undefined'&&PF.data.settings.firstName)||'',greet=`${hour<12?'Good morning':hour<17?'Good afternoon':'Good evening'}${first?', '+esc(first):''}`;
   const left=20,right=218,gap=(right-left)/Math.max(1,n-1),w=Math.max(5,Math.min(14,gap*.62)),wiggle=[0,-9,5,-4,8,-6,3,-7,6,-3];
@@ -1614,25 +1624,26 @@ function routineArt(state){if(RM.active)return rmView();const steps=state.settin
 let routineJustArt=null;
 function routinePopupDismissed(){try{return localStorage.getItem('tj_routine_popup');}catch{return null;}}
 function renderRoutinePanel(){const el=$('#routinePanel');if(!routineState){el.hidden=true;return;}const {settings,period,checked}=routineState,complete=settings.steps.every(step=>checked.includes(step.id));
-  [$('#routineOpen'),$('#routineMobileOpen')].forEach(button=>{button.textContent='Pre-Market Routine';button.title=`${checked.length} of ${settings.steps.length} steps complete`;});
+  [$('#routineOpen'),$('#routineMobileOpen')].forEach(button=>{button.querySelector('.rt-label').textContent='Pre-Market Routine';button.title=`${checked.length} of ${settings.steps.length} steps complete`;});
   // Popup mode opens only from the routine button or Preview, never automatically on login.
   const popup=settings.popup===true,dismissed=routineHiddenPeriod===period||(popup&&routinePopupDismissed()===period);
   const visible=routineForced||(!popup&&settings.enabled&&!dismissed&&!(complete&&settings.autoHide)&&(settings.showAll||view==='journal'||view==='month'));el.hidden=!visible;
   el.classList.toggle('popup',popup);$('#routineBackdrop').hidden=!(visible&&popup);if(popup){el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');}else{el.removeAttribute('role');el.removeAttribute('aria-modal');}$('#routineOpen').setAttribute('aria-expanded',String(visible));if(!visible)return;
-  el.innerHTML=`<div class="routine-panel-head"><b id="routineHeading">Pre-Market Routine</b><button type="button" id="routineClose" aria-label="Close pre-market routine" title="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>${settings.steps.map(step=>`<div class="routine-item ${step.action==='preferences'?'rp-plan-step':''}">${step.action==='preferences'?'':`<input id="routine_check_${step.id}" class="rp-check" type="checkbox" data-complete-step="${step.id}" aria-label="${esc(step.title)}" ${checked.includes(step.id)?'checked':''}>`}${routineTile(step.icon,"routine-icon")}<div style="flex:1">${step.action==='preferences'?`<span class="rp-plan-title"><span>${esc(step.title)}</span><small class="rp-plan-sub">${routinePlanSub(step)}</small>${checked.includes(step.id)?'<i class="rp-done">Done</i>':''}</span>`:`<label for="routine_check_${step.id}"><span>${esc(step.title)}</span></label>`}${step.action==='preferences'?routinePlanChecklist(step):step.action!=='none'?`<button type="button" data-routine-action="${step.action}" data-step="${step.id}">${step.action==='journal'?'Open journal':step.action==='focus'?(popup?'Start meditation':'Open meditation'):'Open performance'}</button>`:''}</div></div>`).join('')}<p class="routine-foot">${complete?'All steps complete.':`${checked.length} of ${settings.steps.length} complete.`} Resets daily at ${esc(settings.resetTime)} UTC.</p><div id="routinePanelStatus" role="status" aria-live="polite"></div>`;
+  el.innerHTML=`<div class="routine-panel-head"><b id="routineHeading">Pre-Market Routine</b><button type="button" id="routineClose" aria-label="Close pre-market routine" title="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>${settings.steps.map(step=>`<div class="routine-item ${step.action==='preferences'?'rp-plan-step':''}">${step.action==='preferences'?'':`<input id="routine_check_${step.id}" class="rp-check" type="checkbox" data-complete-step="${step.id}" aria-label="${esc(step.title)}" ${checked.includes(step.id)?'checked':''}>`}${routineTile(step.icon,"routine-icon")}<div style="flex:1">${step.action==='preferences'?`<span class="rp-plan-title"><span>${esc(step.title)}</span><small class="rp-plan-sub">${routinePlanSub(step)}</small>${checked.includes(step.id)?'<i class="rp-done">Done</i>':''}</span>`:`<label for="routine_check_${step.id}"><span>${esc(step.title)}</span></label>`}${step.action==='preferences'?routinePlanChecklist(step):step.action!=='none'?`<button type="button" data-routine-action="${step.action}" data-step="${step.id}">${step.action==='journal'?'Open journal':step.action==='focus'?(popup?'Start meditation':'Open meditation'):step.action==='news'?'Open news':'Open performance'}</button>`:''}</div></div>`).join('')}<p class="routine-foot">${complete?'All steps complete.':`${checked.length} of ${settings.steps.length} complete.`} Resets daily at ${esc(settings.resetTime)} UTC.</p><div id="routinePanelStatus" role="status" aria-live="polite"></div>`;
   el.classList.toggle('rp-fs',popup);
   if(popup){const doneN=settings.steps.filter(x=>checked.includes(x.id)).length;
     el.innerHTML=routineArt(routineState)+`<div class="rp-main">${el.innerHTML}<div class="rp-footer"><span>${complete?'All steps complete':`${doneN} of ${settings.steps.length} steps done`}</span><div class="rp-footer-actions"><button type="button" class="btn ghost rp-cancel-btn" id="routineCancel">Cancel</button><button type="button" class="btn rp-done-btn" id="routineDone">${complete?'Done · Start trading':'Done'}</button></div></div></div>`;}
-  // Accordion: animate height open/closed; opening one section smoothly closes the others.
+  // Sections open and close on their own (all open by default), with an animated height.
   el.querySelectorAll('details.rp-acc').forEach(d=>d.querySelector('summary').addEventListener('click',e=>{e.preventDefault();if(d.dataset.anim)return;
-    if(d.open){routineAccAnimate(d,false);return;}routineOpenSec=d.dataset.sec;el.querySelectorAll('details.rp-acc[open]').forEach(o=>routineAccAnimate(o,false));routineAccAnimate(d,true);}));
+    if(d.open){routineClosedSecs.add(d.dataset.sec);routineAccAnimate(d,false);return;}routineClosedSecs.delete(d.dataset.sec);routineAccAnimate(d,true);}));
   rmWire();
+  window.newsRoutineWire?.();
   el.querySelectorAll('[data-ref]').forEach(b=>b.onclick=()=>{if(window.tfPreview)tfPreview(b.dataset.ref,b.dataset.refLabel);else window.open('/'+b.dataset.ref,'_blank');});
   if(routineJust){el.querySelector(`[data-complete-step="${CSS.escape(routineJust)}"]`)?.closest('.rp-item,.routine-item')?.classList.add('just');routineJust=null;}
   $('#routineCancel')?.addEventListener('click',()=>$('#routineClose').click());
   $('#routineDone')?.addEventListener('click',()=>{$('#routineClose').click();if(complete)toast('Routine complete. Trade your plan.');});
   $('#routineClose').onclick=()=>{routineArtIntro=true;routineForced=false;routineHiddenPeriod=period;if(popup)try{localStorage.setItem('tj_routine_popup',period);}catch{}renderRoutinePanel();};
-  el.querySelectorAll('[data-routine-action]').forEach(button=>button.onclick=()=>{if(popup&&button.dataset.routineAction==='focus'){rmOpen(button.dataset.step);return;}if(popup)$('#routineClose').click();if(button.dataset.routineAction==='preferences'){settingsTab='playbook';setView('edge');}else setView(button.dataset.routineAction);});
+  el.querySelectorAll('[data-routine-action]').forEach(button=>button.onclick=()=>{if(popup&&button.dataset.routineAction==='focus'){rmOpen(button.dataset.step);return;}if(popup&&button.dataset.routineAction==='news'){rnOpen(button.dataset.step);return;}if(popup)$('#routineClose').click();if(button.dataset.routineAction==='preferences'){settingsTab='playbook';setView('edge');}else setView(button.dataset.routineAction);});
   // Ticks update instantly; saves run in order in the background (no disabling, no waiting on the network).
   el.querySelectorAll('[data-complete-step]').forEach(input=>input.onchange=()=>{const id=input.dataset.completeStep,on=input.checked;
     routineSetLocal(id,on);
@@ -1676,13 +1687,14 @@ async function boot(){
   if(booted)return;booted=true;
   selectedDate=TODAY();
   $('#dvTitle').textContent=fmtDateLong(selectedDate);
-  setView(['#settings','#edge','#performance','#focus','#feedback','#billing'].includes(location.hash)?location.hash.slice(1):'month');
+  setView(['#settings','#edge','#performance','#news','#focus','#feedback','#billing'].includes(location.hash)?location.hash.slice(1):'month');
   // Load everything at once; each round trip to the hosted database is slow, so running them one by one stacked the waits.
   try{await Promise.all([loadPlanSettings(),loadRoutine(),loadWorkspace(),loadAll(),loadDays(false)]);if(routineState)renderRoutinePanel();}
   catch(error){booted=false;toast(error.message||'Could not load your journal. Please try again.');return;}
   // The first paint happens before data loads; redraw data-driven views opened straight from the URL (e.g. #edge).
-  if(view==='month')renderMonth();else if(['edge','trades','settings'].includes(view))setView(view);
+  if(view==='month')renderMonth();else if(['edge','trades','settings','news'].includes(view))setView(view);
   routineQuietSync();
+  window.preloadNews?.();
   window.maybeOnboarding?.();
   if(routineTimer)clearInterval(routineTimer);routineTimer=setInterval(()=>{if(booted)loadRoutine();},60000);
 }
@@ -1702,6 +1714,7 @@ async function initJournal(){
 <script src="/profile.js"></script>
 <script src="/feedback-page.js"></script>
 <script src="/meditation.js"></script>
+<script src="/news.js"></script>
 <script src="/onboarding.js"></script>
 </body>
 </html>

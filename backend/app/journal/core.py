@@ -251,7 +251,7 @@ def validate_routine(value):
             raise ValueError('Invalid routine step ID')
         if not isinstance(title, str) or not title.strip() or len(title)>200:
             raise ValueError('Each routine step needs a title of up to 200 characters')
-        if step.get('action') not in ('none','journal','preferences','performance','focus') or step.get('icon') not in ('calendar','target','chart','calm'):
+        if step.get('action') not in ('none','journal','preferences','performance','focus','news') or step.get('icon') not in ('calendar','target','chart','calm'):
             raise ValueError('Choose a valid routine icon and action')
         med=step.get('meditation') or ''
         if not isinstance(med,str) or (med and not re.fullmatch(r'[a-z0-9-]{1,40}',med)):

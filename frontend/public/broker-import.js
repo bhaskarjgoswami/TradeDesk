@@ -47,7 +47,9 @@
   }
   function numberValue(raw,decimal,field){
     let value=String(raw??'').trim();if(!value)return null;
-    value=value.replace(/^(?:USD|INR)\s*/i,'').replace(/[₹$\s]/g,'');
+    // Accept a currency code before or after the number and common symbols (₹ $ € £ ¥, A$ C$ S$ HK$).
+    const codes=/^(?:USDT|USD|INR|EUR|GBP|AUD|CAD|JPY|SGD|AED|CHF|HKD|CNY|ZAR)\s*|\s*(?:USDT|USD|INR|EUR|GBP|AUD|CAD|JPY|SGD|AED|CHF|HKD|CNY|ZAR)$/gi;
+    value=value.replace(codes,'').replace(/(?:HK|[ACS])?\$|[₹€£¥\s\u00a0]/g,'');
     if(/^\(.*\)$/.test(value))value='-'+value.slice(1,-1);
     if(value[0]==='+')value=value.slice(1);
     const separator=decimal==='comma'?',':'.';if(value.startsWith(separator))value='0'+value;else if(value.startsWith('-'+separator))value='-0'+value.slice(1);

@@ -3,10 +3,10 @@
 //  - page loads: network first, cached shell only when offline
 //  - /assets/* (content-hashed): cache first
 //  - everything else (API, Supabase, other origins): not intercepted
-const CACHE = "tradedesk-v3";
+const CACHE = "tradedesk-v4";
 const SHELL = "/index.html";
 
-const JOURNAL_ASSETS=['/cloud-boot.js','/language.js','/onboarding.js','/feedback-page.js','/trade-drafts.js','/broker-import.js','/workspace.js','/calendar.js','/trade.js','/playbook.js','/profile.js','/meditation.js','/workspace.css','/theme.css','/theme-mercury.css'];
+const JOURNAL_ASSETS=['/cloud-boot.js','/language.js','/onboarding.js','/feedback-page.js','/trade-drafts.js','/broker-import.js','/workspace.js','/calendar.js','/trade.js','/playbook.js','/profile.js','/meditation.js','/news.js','/workspace.css','/theme.css','/theme-mercury.css'];
 self.addEventListener("install",(event)=>{
   event.waitUntil((async()=>{
     const cache=await caches.open(CACHE);
@@ -45,7 +45,7 @@ self.addEventListener("fetch", (e) => {
   }
 
   // journal UI scripts/styles are not content-hashed: network first, cache for offline
-  if (/^\/locales\/(en|hi|es|fr|de|pt|ar|zh-CN)\.json$/.test(url.pathname) || /^\/(cloud-boot|language|onboarding|feedback-page|trade-drafts|broker-import|workspace|calendar|trade|playbook|profile|meditation)\.js$|^\/(workspace|theme|theme-mercury)\.css$/.test(url.pathname)) {
+  if (/^\/locales\/(en|hi|es|fr|de|pt|ar|zh-CN)\.json$/.test(url.pathname) || /^\/(cloud-boot|language|onboarding|feedback-page|trade-drafts|broker-import|workspace|calendar|trade|playbook|profile|meditation|news)\.js$|^\/(workspace|theme|theme-mercury)\.css$/.test(url.pathname)) {
     e.respondWith(
       fetch(req).then((res) => {
         if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }

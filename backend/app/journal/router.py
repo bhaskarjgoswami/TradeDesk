@@ -22,7 +22,7 @@ from ..config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 from ..database import get_conn
 from ..ratelimit import limit
 from ..secretbox import encrypt
-from . import core, workspace, portable
+from . import core, workspace, portable, news
 from .pgcompat import current_schema, current_user_id, db, ensure_schema, schema_for, install_trade_guards
 
 router = APIRouter(prefix="/j", tags=["journal"])
@@ -289,6 +289,37 @@ def delta_sync(request: Request, user=Depends(limit("delta", 6))):
             return ok(core.delta_sync(body(request).get("timezone")))
         except Exception as e:
             return _delta_error(e)
+
+
+# ── market news & economic calendar (public feeds, cached per process) ──
+@router.get("/api/news")
+def get_news(cat: str = "all", country: str = "global", user=Depends(limit("news", 30))):
+    try:
+        return ok(news.headlines(cat, country))
+    except ValueError as e:
+        return err(str(e), 400)
+    except Exception:
+        return err("News is unavailable right now. Try again in a minute.", 502)
+
+
+@router.get("/api/news/indices")
+def get_news_indices(country: str = "global", user=Depends(limit("news", 30))):
+    try:
+        return ok(news.index_news(country))
+    except ValueError as e:
+        return err(str(e), 400)
+    except Exception:
+        return err("Index news is unavailable right now. Try again in a minute.", 502)
+
+
+@router.get("/api/news/calendar")
+def get_news_calendar(impact: str = "medium", user=Depends(limit("news", 30))):
+    try:
+        return ok(news.calendar(impact))
+    except ValueError as e:
+        return err(str(e), 400)
+    except Exception:
+        return err("The economic calendar is unavailable right now. Try again in a few minutes.", 502)
 
 
 # ── chart images ─────────────────────────────────────────

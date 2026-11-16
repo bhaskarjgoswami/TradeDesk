@@ -25,7 +25,7 @@ function walk(n,file,parent){if(!n||typeof n!=='object')return;
  }
  for(const [key,value]of Object.entries(n))if(!['loc','start','end','extra','comments','tokens'].includes(key)){if(Array.isArray(value))value.forEach(x=>walk(x,file,n));else if(value&&typeof value==='object')walk(value,file,n);}
 }
-const files=['workspace.js','trade.js','calendar.js','profile.js','playbook.js','meditation.js','onboarding.js','feedback-page.js','broker-import.js','frontend/src/cloud/shim.js','frontend/src/cloud/EmbeddedBilling.jsx','frontend/src/pages/Legal.jsx','frontend/src/pages/Landing.jsx','frontend/src/pages/Billing.jsx','frontend/src/lib/PlanCards.jsx','frontend/src/components/ErrorBoundary.jsx','frontend/src/components/LanguageSelector.jsx','frontend/src/lib/api.js','frontend/src/lib/feedback.jsx'];
+const files=['workspace.js','trade.js','calendar.js','profile.js','playbook.js','meditation.js','news.js','onboarding.js','feedback-page.js','broker-import.js','frontend/src/cloud/shim.js','frontend/src/cloud/EmbeddedBilling.jsx','frontend/src/pages/Legal.jsx','frontend/src/pages/Landing.jsx','frontend/src/pages/Billing.jsx','frontend/src/lib/PlanCards.jsx','frontend/src/components/ErrorBoundary.jsx','frontend/src/components/LanguageSelector.jsx','frontend/src/lib/api.js','frontend/src/lib/feedback.jsx'];
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');html(index,'index.html');
 for(const script of new JSDOM(index).window.document.querySelectorAll('script:not([src])'))if(script.textContent.trim())walk(parser.parse(script.textContent,{sourceType:'unambiguous',plugins:['jsx']}),'index.html');
 for(const file of files)walk(parser.parse(fs.readFileSync(path.join(root,file),'utf8'),{sourceType:'unambiguous',plugins:['jsx']}),file);
