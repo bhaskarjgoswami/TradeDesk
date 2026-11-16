@@ -1448,7 +1448,10 @@ function showSettingsTab(key){settingsTab=key;
 $$('[data-settings-tab]').forEach(button=>{button.onclick=()=>showSettingsTab(button.dataset.settingsTab);button.onkeydown=event=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(event.key))return;event.preventDefault();const tabs=$$('[data-settings-tab]'),i=tabs.indexOf(button);const target=event.key==='Home'?tabs[0]:event.key==='End'?tabs.at(-1):tabs[(i+((event.key==='ArrowRight'?1:-1)*(document.documentElement.dir==='rtl'?-1:1))+tabs.length)%tabs.length];target.click();target.focus();};});
 const ROUTINE_ICONS={calendar:'◷',target:'◎',chart:'↗',calm:'❋'};
 let routineState=null,routineDraft=null,routineRevision=0,routineBusy=false,routineTimer=null,routineHiddenPeriod=null,routineForced=false;
-async function loadRoutine(){try{const response=await fetch('/api/routine');if(!response.ok)throw Error();routineState=await response.json();routineAfterReset();renderRoutinePanel();return true;}catch{if(!routineState)$('#routineOpen').textContent='Pre-Market Routine';return false;}}
+// One request at a time: a click during boot waits on the boot request instead of starting another.
+let routineLoading=null;
+function loadRoutine(){return routineLoading||(routineLoading=loadRoutineNow().finally(()=>{routineLoading=null;}));}
+async function loadRoutineNow(){try{const response=await fetch('/api/routine');if(!response.ok)throw Error();routineState=await response.json();routineAfterReset();renderRoutinePanel();return true;}catch{if(!routineState)$('#routineOpen').textContent='Pre-Market Routine';return false;}}
 function routineChanged(){$('#routineStatus').textContent='Unsaved changes';}
 function readRoutineEditor(){if(!routineDraft||!$('#routineEnabled'))return;routineDraft.enabled=$('#routineEnabled').checked;routineDraft.showAll=$('#routineAll').checked;routineDraft.autoHide=$('#routineHide').checked;routineDraft.popup=$('#routinePopup').checked;routineDraft.resetTime=$('#routineReset').value;
   $$('#routineSteps .rs-row').forEach((row,i)=>{routineDraft.steps[i].title=row.querySelector('.rs-title').value.trim();});  // icon + link live in the draft (set from the tile popover)
@@ -1665,7 +1668,8 @@ async function boot(){
   selectedDate=TODAY();
   $('#dvTitle').textContent=fmtDateLong(selectedDate);
   setView(['#settings','#edge','#performance','#focus','#feedback','#billing'].includes(location.hash)?location.hash.slice(1):'month');
-  try{await loadPlanSettings();await loadRoutine();await loadWorkspace();await loadAll();await loadDays(false);}
+  // Load everything at once; each round trip to the hosted database is slow, so running them one by one stacked the waits.
+  try{await Promise.all([loadPlanSettings(),loadRoutine(),loadWorkspace(),loadAll(),loadDays(false)]);if(routineState)renderRoutinePanel();}
   catch(error){booted=false;toast(error.message||'Could not load your journal. Please try again.');return;}
   // The first paint happens before data loads; redraw data-driven views opened straight from the URL (e.g. #edge).
   if(view==='month')renderMonth();else if(['edge','trades','settings'].includes(view))setView(view);
