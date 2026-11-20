@@ -404,3 +404,25 @@ def test_reclaim_reaches_unused_images_after_a_thousand_referenced_files(databas
                 conn.execute("INSERT INTO trades(date,symbol,direction,images) VALUES (?,?,?,?)",('2026-11-06','TEST','Long',images))
         assert storage.reclaim(UIDS[0])['removed']==2
     assert set(removed)=={UIDS[0]+'/unused.png',UIDS[0]+'/unused2.png'}
+
+
+def test_free_import_keeps_full_history_and_caps_only_recent_days(database):
+    from datetime import date
+    from app.journal import router, workspace
+    public_connect, (schema, _) = database
+    with public_connect() as conn:
+        with conn.cursor() as cur: cur.execute(f'DROP SCHEMA "{schema}" CASCADE')
+    pgcompat.forget_schema(schema)
+    today = date.today().isoformat()
+    row = lambda day, n: {"date": day, "symbol": "SPY", "direction": "Long", "pnl": n}
+    rows = [row("2025-01-02", n) for n in range(1, 6)] + [row(today, n) for n in range(1, 5)]
+    with router.scoped({"user_id": UIDS[0]}):
+        result = workspace.import_trades(pgcompat.db, {"rows": rows})
+        assert result == {"imported": 7, "skipped": 0, "over_limit": 2}
+        with pgcompat.db() as conn:
+            counts = {r["date"]: r["n"] for r in conn.execute("SELECT date, count(*) AS n FROM trades GROUP BY date")}
+        assert counts == {"2025-01-02": 5, today: 2}
+        # The bypass is only for bulk imports: a manual insert on the old day is still capped.
+        with pytest.raises(psycopg2.errors.RaiseException, match="free-daily-limit"):
+            with pgcompat.db() as conn:
+                conn.execute("INSERT INTO trades(date,symbol,direction) VALUES (?,?,?)", ("2025-01-02", "SPY", "Long"))

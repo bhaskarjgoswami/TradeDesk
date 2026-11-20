@@ -816,3 +816,4 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 /* Journal preferences: compact fields, auto-saved */
 #wsPrefsForm .ws-form-grid{grid-template-columns:minmax(0,420px);gap:16px}
 #wsPrefsForm .ws-form-status{display:block;margin-top:8px;min-height:16px}
+.cal-first{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px 24px;margin-bottom:18px;border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}.cal-first h2{font-size:17px;font-weight:600}.cal-first p{color:var(--mut);font-size:13px;line-height:1.6;margin-top:6px;max-width:58ch}.cal-first-actions{display:flex;flex-wrap:wrap;gap:8px}.cal-first-actions .btn{min-height:40px}

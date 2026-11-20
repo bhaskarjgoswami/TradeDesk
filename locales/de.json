@@ -1401,5 +1401,21 @@
   "Nothing market-moving in your topics yet. Check the other tabs or refresh in a few minutes.": "Noch nichts Marktbewegendes in Ihren Themen. Sehen Sie in den anderen Tabs nach oder aktualisieren Sie in ein paar Minuten.",
   "High-impact events today": "Ereignisse mit hoher Wirkung heute",
   "No more high-impact events today.": "Heute keine weiteren Ereignisse mit hoher Wirkung.",
-  "Journal name is required": "Journalname ist erforderlich"
+  "Journal name is required": "Journalname ist erforderlich",
+  "Add your first trade": "Füge deinen ersten Trade hinzu",
+  "Log a trade by hand, or bring in your history from a broker CSV. Your calendar, P&L and stats fill in from there.": "Erfasse einen Trade von Hand oder importiere deinen Verlauf aus einer Broker-CSV. Kalender, P&L und Statistiken füllen sich dann automatisch.",
+  "Log your first trade": "Ersten Trade erfassen",
+  "Connect an exchange": "Börse verbinden",
+  "Log up to 2 trades a day": "Bis zu 2 Trades pro Tag erfassen",
+  "Import your full trade history": "Gesamten Trade-Verlauf importieren",
+  "Daily journal, calendar and stats": "Journal, Kalender und Statistiken",
+  "Screenshots on every trade": "Screenshots zu jedem Trade",
+  "$9 / 30 days": "9 $ / 30 Tage",
+  "Unlimited trades every day": "Unbegrenzte Trades jeden Tag",
+  "No daily cap on recent imports": "Kein Tageslimit bei aktuellen Importen",
+  "365 days for $90 (2 months free)": "365 Tage für 90 $ (2 Monate gratis)",
+  "India-based accounts pay ₹99 / ₹699": "Konten mit Sitz in Indien zahlen ₹99 / ₹699",
+  "Prices in {value1}, set by your Account country": "Preise in {value1}, festgelegt durch das Land deines Kontos",
+  "30 days": "30 Tage",
+  "365 days": "365 Tage"
 }

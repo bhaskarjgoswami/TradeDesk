@@ -25,12 +25,12 @@ export function AuthProvider({ children }) {
   const [tier, setTier] = useState(null);
   const [tierStatus, setTierStatus] = useState("loading");
   const requestVersion = useRef(0);
-  const [sub, setSub] = useState({ plan: null, expiresAt: null });
+  const [sub, setSub] = useState({ plan: null, expiresAt: null, currency: null });
 
   const applyStatus = (s) => {
     setTier(s.tier);
     setTierStatus("ready");
-    setSub({ plan: s.plan || null, expiresAt: s.expires_at || null });
+    setSub({ plan: s.plan || null, expiresAt: s.expires_at || null, currency: s.currency || null });
   };
 
   useEffect(() => {
@@ -99,6 +99,7 @@ export function AuthProvider({ children }) {
     isPro: tier === "pro",
     plan: sub.plan,
     expiresAt: sub.expiresAt,
+    billingCurrency: sub.currency,
     loading,
     refreshTier,
     signOut: () => supabase.auth.signOut(),

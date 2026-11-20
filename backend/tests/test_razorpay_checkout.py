@@ -14,6 +14,28 @@ def test_keys(monkeypatch):
     monkeypatch.setattr(payments,"RAZORPAY_KEY_ID","rzp_test_example")
     monkeypatch.setattr(payments,"RAZORPAY_KEY_SECRET","unit-test-payment-secret")
     monkeypatch.setattr(payments,"RAZORPAY_WEBHOOK_SECRET","")
+    monkeypatch.setattr(payments,"account_currency",lambda uid:"INR")
+
+def _profile_conn(profile):
+    """A fake connection whose journal holds the given Account profile (None = no journal yet)."""
+    import json
+    rows=[{"t":"journal_settings" if profile is not None else None}]
+    if profile is not None:rows.append({"value":json.dumps(profile)} if profile else None)
+    cursor=Mock();cursor.__enter__=Mock(return_value=cursor);cursor.__exit__=Mock(return_value=False)
+    cursor.fetchone=Mock(side_effect=rows)
+    conn=Mock();conn.cursor.return_value=cursor
+    return conn
+
+@pytest.mark.parametrize("profile,currency",[({"country":"IN"},"INR"),({"country":"in"},"INR"),({"country":"US"},"USD"),({"country":"GB"},"USD"),({},"USD"),({"country":""},"USD"),(None,"USD")])
+def test_currency_comes_from_account_country(profile,currency):
+    assert payments.billing_currency(_profile_conn(profile),USER["user_id"])==currency
+
+def test_browser_cannot_choose_india_pricing(monkeypatch):
+    monkeypatch.setattr(payments,"account_currency",lambda uid:"USD")
+    provider=Mock();monkeypatch.setattr(payments.httpx,"post",provider)
+    with pytest.raises(HTTPException) as error:payments.create_checkout({"plan":"annual","currency":"INR"},USER)
+    assert error.value.status_code==400 and "USD" in error.value.detail
+    provider.assert_not_called()
 
 @pytest.mark.parametrize("amount",[0,99,-1,True,1.5,"9900"])
 def test_invalid_amount_never_creates_an_order(monkeypatch,amount):

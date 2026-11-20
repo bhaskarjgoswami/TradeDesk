@@ -1401,5 +1401,21 @@
   "Nothing market-moving in your topics yet. Check the other tabs or refresh in a few minutes.": "لا شيء مؤثر في مواضيعك بعد. تحقق من التبويبات الأخرى أو حدّث بعد دقائق.",
   "High-impact events today": "الأحداث عالية التأثير اليوم",
   "No more high-impact events today.": "لا مزيد من الأحداث عالية التأثير اليوم.",
-  "Journal name is required": "اسم الدفتر مطلوب"
+  "Journal name is required": "اسم الدفتر مطلوب",
+  "Add your first trade": "أضف صفقتك الأولى",
+  "Log a trade by hand, or bring in your history from a broker CSV. Your calendar, P&L and stats fill in from there.": "سجّل صفقة يدويًا أو استورد سجلك من ملف CSV من الوسيط. سيمتلئ التقويم والأرباح والخسائر والإحصاءات بعد ذلك.",
+  "Log your first trade": "سجّل صفقتك الأولى",
+  "Connect an exchange": "اربط منصة تداول",
+  "Log up to 2 trades a day": "سجّل حتى صفقتين يوميًا",
+  "Import your full trade history": "استورد سجل صفقاتك كاملًا",
+  "Daily journal, calendar and stats": "يوميات وتقويم وإحصاءات",
+  "Screenshots on every trade": "لقطات شاشة لكل صفقة",
+  "$9 / 30 days": "9 $ / 30 يومًا",
+  "Unlimited trades every day": "صفقات غير محدودة كل يوم",
+  "No daily cap on recent imports": "لا حد يومي على عمليات الاستيراد الحديثة",
+  "365 days for $90 (2 months free)": "365 يومًا مقابل 90 $ (شهران مجانًا)",
+  "India-based accounts pay ₹99 / ₹699": "الحسابات في الهند تدفع ₹99 / ₹699",
+  "Prices in {value1}, set by your Account country": "الأسعار بعملة {value1} حسب بلد حسابك",
+  "30 days": "30 يومًا",
+  "365 days": "365 يومًا"
 }

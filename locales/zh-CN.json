@@ -1401,5 +1401,21 @@
   "Nothing market-moving in your topics yet. Check the other tabs or refresh in a few minutes.": "您的主题暂无影响市场的新闻。请查看其他标签或几分钟后刷新。",
   "High-impact events today": "今日高影响事件",
   "No more high-impact events today.": "今天没有更多高影响事件。",
-  "Journal name is required": "日志名称为必填项"
+  "Journal name is required": "日志名称为必填项",
+  "Add your first trade": "添加你的第一笔交易",
+  "Log a trade by hand, or bring in your history from a broker CSV. Your calendar, P&L and stats fill in from there.": "手动记录一笔交易，或从券商 CSV 导入历史记录。日历、盈亏和统计会随之自动生成。",
+  "Log your first trade": "记录第一笔交易",
+  "Connect an exchange": "连接交易所",
+  "Log up to 2 trades a day": "每天最多记录 2 笔交易",
+  "Import your full trade history": "导入完整交易历史",
+  "Daily journal, calendar and stats": "交易日志、日历和统计",
+  "Screenshots on every trade": "每笔交易可附截图",
+  "$9 / 30 days": "$9 / 30 天",
+  "Unlimited trades every day": "每天不限交易笔数",
+  "No daily cap on recent imports": "近期导入不设每日上限",
+  "365 days for $90 (2 months free)": "365 天 $90（送 2 个月）",
+  "India-based accounts pay ₹99 / ₹699": "印度账户支付 ₹99 / ₹699",
+  "Prices in {value1}, set by your Account country": "价格以 {value1} 计，由账户所在国家决定",
+  "30 days": "30 天",
+  "365 days": "365 天"
 }

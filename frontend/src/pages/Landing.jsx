@@ -72,13 +72,13 @@ export default function Landing() {
           <div className="pub-plans">
             <div className="pub-card">
               <h3>Free</h3>
-              <div className="pub-price">₹0 / $0</div>
-              <ul><li>Up to 2 trades entry / day</li><li>Daily journal and calendar</li><li>Performance stats</li><li>Broker CSV imports and screenshots</li></ul>
+              <div className="pub-price">$0</div>
+              <ul><li>Log up to 2 trades a day</li><li>Import your full trade history</li><li>Daily journal, calendar and stats</li><li>Screenshots on every trade</li></ul>
             </div>
             <div className="pub-card featured">
               <h3>Pro</h3>
-              <div className="pub-price">₹99/mo · $9/mo</div>
-              <ul><li>Unlimited trades entry per day</li><li>No daily cap on trade imports</li><li>Annual: ₹699 / $90 (USD: 2 months free)</li><li>One-time payment, no auto-renew</li></ul>
+              <div className="pub-price">$9 / 30 days</div>
+              <ul><li>Unlimited trades every day</li><li>No daily cap on recent imports</li><li>365 days for $90 (2 months free)</li><li>One-time payment, no auto-renew</li><li>India-based accounts pay ₹99 / ₹699</li></ul>
             </div>
           </div>
         </section>

@@ -222,6 +222,10 @@ DEFAULT_ROUTINE = dict(enabled=True, showAll=True, autoHide=True, popup=True, re
     dict(id='meditate', title='Meditate (15 mins)', action='focus', icon='calm', meditation='visualize-plan')])
 
 
+# Journals with fewer trades than this, and no saved routine, start with the routine off.
+FIRST_RUN_TRADES = 3
+
+
 def init_routine():
     with db() as conn:
         conn.execute('CREATE TABLE IF NOT EXISTS routine_progress (period TEXT PRIMARY KEY, checked TEXT NOT NULL)')
@@ -269,6 +273,9 @@ def routine_state():
         rows={r['key']:r for r in conn.execute("SELECT key,value,revision FROM journal_settings WHERE key IN ('routine','pending_checklist','workspace_profile')").fetchall()}
         row,pend=rows.get('routine'),rows.get('pending_checklist')
         settings=validate_routine(json.loads(row['value'])) if row else json.loads(json.dumps(DEFAULT_ROUTINE))
+        if not row and conn.execute('SELECT COUNT(*) AS n FROM trades').fetchone()['n'] < FIRST_RUN_TRADES:
+            # A brand-new journal opens on its first trade, not on a checklist the user never set up.
+            settings.update(enabled=False,popup=False)
         hours,minutes=map(int,settings['resetTime'].split(':'))
         profile=json.loads(rows['workspace_profile']['value']) if 'workspace_profile' in rows else {}
         now=datetime.now(journal_zone(profile.get('timezone') or 'UTC'))
@@ -512,6 +519,16 @@ def validate_trade(data):
             raise ValueError("Invalid " + key)
     if clean.get("outcome") not in (None, "", "Win", "Loss", "BE", "Open"):
         raise ValueError("Invalid outcome")
+    if clean.get("images"):
+        # Stored as a JSON list of paths this journal uploaded; anything else could be
+        # rendered as markup by an older client.
+        try:
+            paths = json.loads(clean["images"])
+        except (TypeError, ValueError):
+            raise ValueError("Invalid images")
+        if not isinstance(paths, list) or len(paths) > 24 or any(
+                not isinstance(p, str) or not re.fullmatch(r'/?images/[a-zA-Z0-9_.-]+\.(png|jpg|jpeg|webp|gif)', p, re.I) for p in paths):
+            raise ValueError("Trade images must be uploaded to this journal")
     return clean
 
 

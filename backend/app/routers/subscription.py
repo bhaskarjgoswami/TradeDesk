@@ -14,11 +14,12 @@ Works for India + international (enable International Payments in the dashboard)
 """
 from starlette.concurrency import run_in_threadpool
 from fastapi import APIRouter, Depends, HTTPException, Request
-import httpx, hmac, hashlib, uuid, re
+import httpx, hmac, hashlib, uuid, re, json
 from ..auth import get_current_user
 from ..ratelimit import limit
 from ..database import get_conn
 from ..billing import extend, PLAN_DAYS, _tier
+from ..journal.pgcompat import schema_for
 from ..config import (
     RAZORPAY_KEY_ID,
     RAZORPAY_KEY_SECRET,
@@ -37,6 +38,32 @@ AMOUNTS = {
     "INR": {"monthly": RAZORPAY_PRICE_INR_MONTHLY, "annual": RAZORPAY_PRICE_INR_ANNUAL},
     "USD": {"monthly": RAZORPAY_PRICE_USD_MONTHLY, "annual": RAZORPAY_PRICE_USD_ANNUAL},
 }
+
+
+def account_country(conn, uid: str) -> str:
+    """The ISO country saved in the user's Account profile, or '' if none."""
+    schema = schema_for(uid)  # validated j_<hex> name, safe to quote
+    with conn.cursor() as cur:
+        cur.execute("SELECT to_regclass(%s) AS t", (f'"{schema}".journal_settings',))
+        if not (cur.fetchone() or {}).get("t"):
+            return ""  # journal not created yet
+        cur.execute(f'SELECT value FROM "{schema}".journal_settings WHERE key=%s', ("workspace_profile",))
+        row = cur.fetchone()
+    try:
+        country = json.loads(row["value"]).get("country", "") if row else ""
+    except (ValueError, TypeError, AttributeError):
+        return ""
+    return country.upper() if isinstance(country, str) else ""
+
+
+def billing_currency(conn, uid: str) -> str:
+    """The server decides the currency: INR prices are for India-based accounts only."""
+    return "INR" if account_country(conn, uid) == "IN" else "USD"
+
+
+def account_currency(uid: str) -> str:
+    with get_conn(readonly=True) as conn:
+        return billing_currency(conn, uid)
 
 
 def _auth():
@@ -101,9 +128,11 @@ def status(user=Depends(get_current_user)):
                 (uid,),
             )
             row = cur.fetchone()
+        currency = billing_currency(conn, uid)
     tier = _tier(row)
     exp = row["subscription_expires_at"] if row else None
     return {
+        "currency": currency,
         "tier": tier,
         "is_pro": tier == "pro",
         "plan": (row["subscription_plan"] if row else None),
@@ -116,12 +145,13 @@ def create_checkout(body: dict, user=Depends(limit("checkout", 10))):
     if not _checkout_ready():
         raise HTTPException(503, "Payments not configured")
     plan = body.get("plan", "monthly")
-    raw_currency = body.get("currency", "INR")
     if not isinstance(plan, str) or plan not in PLAN_DAYS:
         raise HTTPException(400, "Invalid plan")
-    if not isinstance(raw_currency, str) or raw_currency.strip().upper() not in AMOUNTS:
-        raise HTTPException(400, "Invalid currency")
-    currency = raw_currency.strip().upper()
+    # Never trust a currency from the browser: it would let anyone pay India pricing.
+    currency = account_currency(user["user_id"])
+    raw_currency = body.get("currency", currency)
+    if not isinstance(raw_currency, str) or raw_currency.strip().upper() != currency:
+        raise HTTPException(400, f"Prices for your account are in {currency}. Reload the page to see them.")
     amount = AMOUNTS[currency][plan]
     requested = body.get("amount", amount)
     if isinstance(requested, bool) or not isinstance(requested, int) or requested < 100:

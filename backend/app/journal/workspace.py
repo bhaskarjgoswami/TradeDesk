@@ -314,15 +314,25 @@ def import_trades(connect,data):
         net=(row['pnl'] or 0)-(row['fee'] or 0)
         row['outcome']=('Win' if net>0 else 'Loss' if net<0 else 'BE') if row['pnl'] is not None else None
         row['created_at']=stamp();rows.append(row)
-    added=0
+    added=0;over_limit=0
     with connect() as conn:
         conn.execute('BEGIN IMMEDIATE')
+        # Imported history is never cut by the free daily limit: the quota trigger lets
+        # bulk-imported trades older than yesterday through. Recent rows over the limit
+        # are skipped one by one (savepoint) instead of failing the whole import.
+        if hasattr(conn,'_set_path'):conn.execute("SELECT set_config('tradedesk.bulk_import','on',true)")  # hosted Postgres only
         for row in rows:
             legacy=row.pop('_legacy_source')
             if conn.execute('SELECT 1 FROM trades WHERE source_id IN (?,?)',(row['source_id'],legacy)).fetchone():continue
             cols=list(row)
-            conn.execute('INSERT INTO trades('+','.join(cols)+') VALUES('+','.join('?' for _ in cols)+')',[row[col] for col in cols]);added+=1
-    return dict(imported=added,skipped=len(rows)-added)
+            conn.execute('SAVEPOINT import_row')
+            try:
+                conn.execute('INSERT INTO trades('+','.join(cols)+') VALUES('+','.join('?' for _ in cols)+')',[row[col] for col in cols])
+            except Exception as error:
+                if getattr(getattr(error,'diag',None),'message_primary',None)!='free-daily-limit':raise
+                conn.execute('ROLLBACK TO SAVEPOINT import_row');over_limit+=1;continue
+            conn.execute('RELEASE SAVEPOINT import_row');added+=1
+    return dict(imported=added,skipped=len(rows)-added-over_limit,over_limit=over_limit)
 
 
 def save_review(connect,ident,data):

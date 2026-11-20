@@ -6,16 +6,17 @@ import { Icon } from "./ui";
 // Prices shown to the user. Keep in sync with backend RAZORPAY_PRICE_* config.
 const PRICING = {
   INR: {
-    monthly: { amt: "₹99", unit: ["INR / month", "billed monthly"], desc: "Pro — Monthly" },
-    annual: { amt: "₹699", unit: ["INR / year", "billed annually"], desc: "Pro — Annual" },
+    monthly: { amt: "₹99", unit: ["INR / 30 days", "one-time payment"], desc: "Pro, 30 days" },
+    annual: { amt: "₹699", unit: ["INR / 365 days", "one-time payment"], desc: "Pro, 365 days" },
   },
   USD: {
-    monthly: { amt: "$9", unit: ["USD / month", "billed monthly"], desc: "Pro — Monthly" },
-    annual: { amt: "$90", unit: ["USD / year", "2 months free"], desc: "Pro — Annual" },
+    monthly: { amt: "$9", unit: ["USD / 30 days", "one-time payment"], desc: "Pro, 30 days" },
+    annual: { amt: "$90", unit: ["USD / 365 days", "2 months free"], desc: "Pro, 365 days" },
   },
 };
 
-// Default to ₹ for India, $ everywhere else — user can switch.
+// Signed-out visitors can preview either currency. Signed-in accounts see the currency the
+// server will charge, which comes from the Account country (INR is for India only).
 function defaultCurrency() {
   try {
     const saved = localStorage.getItem("tradedesk_billing_currency");
@@ -27,12 +28,12 @@ function defaultCurrency() {
 
 const FREE = {
   name: "Free", tagline: "A clear foundation for your daily routine.", icon: "book",
-  features: ["Up to 2 trades entry / day", "Daily journal & calendar", "Performance stats", "CSV imports from any broker", "Screenshot attachments"],
+  features: ["Log up to 2 trades a day", "Import your full trade history", "Daily journal & calendar", "Performance stats", "Screenshot attachments"],
 };
 // Keep in sync with what the backend actually gates (trades.py FREE_DAILY_LIMIT).
 const PRO_FEATURES = [
-  "Unlimited trades entry per day",
-  "No daily cap on trade imports",
+  "Unlimited trades every day",
+  "No daily cap on recent imports",
   "Daily journal & calendar",
   "Performance stats",
   "CSV imports from any broker",
@@ -51,8 +52,10 @@ function loadRazorpay() {
 }
 
 export default function PlanCards() {
-  const { session, tier, tierStatus, refreshTier } = useAuth();
-  const [currency, setCurrency] = useState(defaultCurrency());
+  const { session, tier, tierStatus, refreshTier, billingCurrency } = useAuth();
+  const [chosenCurrency, setCurrency] = useState(defaultCurrency());
+  const accountCurrency = session && PRICING[billingCurrency] ? billingCurrency : null;
+  const currency = accountCurrency || chosenCurrency;
   const [cycle, setCycle] = useState("annual"); // 'monthly' | 'annual'
   const [catalog, setCatalog] = useState(null);
   const [catalogError, setCatalogError] = useState(false);
@@ -128,7 +131,7 @@ export default function PlanCards() {
               Annual <span className="bill-save">{currency === "INR" ? "SAVE 41%" : "SAVE 16%"}</span>
             </button>
           </div></div>
-          <div className="bill-controls">{catalog?.mode === "test" && <span className="billing-test-mode" role="status" aria-label="Test mode: simulated payments only" title="Simulated payments only">Test mode</span>}<div className="bill-seg" role="group" aria-label="Billing currency">{["USD", "INR"].map(code => <button key={code} type="button" className={currency === code ? "on" : ""} aria-pressed={currency === code} disabled={busy} onClick={() => { setCurrency(code); try { localStorage.setItem("tradedesk_billing_currency",code); } catch {} }}>{code === "USD" ? "$ USD" : "₹ INR"}</button>)}</div></div>
+          <div className="bill-controls">{catalog?.mode === "test" && <span className="billing-test-mode" role="status" aria-label="Test mode: simulated payments only" title="Simulated payments only">Test mode</span>}{accountCurrency ? <span className="bill-currency-note">{`Prices in ${accountCurrency}, set by your Account country`}</span> : <div className="bill-seg" role="group" aria-label="Billing currency">{["USD", "INR"].map(code => <button key={code} type="button" className={currency === code ? "on" : ""} aria-pressed={currency === code} disabled={busy} onClick={() => { setCurrency(code); try { localStorage.setItem("tradedesk_billing_currency",code); } catch {} }}>{code === "USD" ? "$ USD" : "₹ INR"}</button>)}</div>}</div>
       </div>
 
       <div className="plan-grid">
@@ -158,7 +161,7 @@ export default function PlanCards() {
               <ul className="pc-feats">{PRO_FEATURES.map((f) => <li key={f}><span className="pc-check" aria-hidden="true">{Icon.check}</span>{f}</li>)}</ul>
             </div>
             <div className="pc-bottom">
-              <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{price.amt}</span><span className="pc-unit">/ {cycle === "monthly" ? "month" : "year"}</span></div>
+              <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{price.amt}</span><span className="pc-unit">/ {cycle === "monthly" ? "30 days" : "365 days"}</span></div>
                 {!session ? <a className="pc-btn primary" href="/app?signup=1">Get Pro <span aria-hidden="true">→</span></a> : !isPro && <button className="pc-btn primary" onClick={upgrade} disabled={isPro || busy || !membershipReady || !checkoutAvailable}>{busy ? "Opening checkout…" : <>{!checkoutAvailable ? "Checkout unavailable" : "Get Pro"} <span aria-hidden="true">→</span></>}</button>}
               </div>
             </div>

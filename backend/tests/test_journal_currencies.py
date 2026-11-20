@@ -31,8 +31,8 @@ def test_base_currency_can_be_chosen_before_first_trade_but_not_relabel_history(
 
 def test_broker_import_preserves_currency_values_and_deduplicates(journal):
     row={'date':'2026-11-04','symbol':'SPY','direction':'Long','pnl':105,'fee':5,'tags':'Broker: Example Broker'}
-    assert workspace.import_trades(journal,{'rows':[row]})=={'imported':1,'skipped':0}
-    assert workspace.import_trades(journal,{'rows':[row]})=={'imported':0,'skipped':1}
+    assert workspace.import_trades(journal,{'rows':[row]})=={'imported':1,'skipped':0,'over_limit':0}
+    assert workspace.import_trades(journal,{'rows':[row]})=={'imported':0,'skipped':1,'over_limit':0}
     assert core.stats()['net_pnl']==100
 
 

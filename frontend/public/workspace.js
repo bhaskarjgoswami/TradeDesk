@@ -112,7 +112,7 @@ function wsOpenImport(){
   };
   $('#wsImportConfirm').onclick=async()=>{
     if(!rows.length)return;WS.dialogBusy=true;const inputs=[...document.querySelectorAll('#wsImportMapping select,#wsImportMapping input,#wsImportFile,#wsImportBroker,#wsImportConfirm')];inputs.forEach(input=>input.disabled=true);$('#wsImportStatus').textContent='Importing…';
-    try{const result=await wsApi('import','POST',{rows});await loadAll();await loadDays(false);$('#wsImportStatus').textContent=`Imported ${result.imported}. Skipped ${result.skipped} identical rows.`;rows=[];WS.dialogDirty=false;renderWorkspaceView(view);}
+    try{const result=await wsApi('import','POST',{rows});await loadAll();await loadDays(false);const imported=`Imported ${result.imported}. Skipped ${result.skipped} identical rows.`,overLimit=result.over_limit?`${result.over_limit} recent trades were over the free plan's 2 trades a day. Upgrade to Pro to import them.`:'';$('#wsImportStatus').textContent=overLimit?imported+' '+overLimit:imported;rows=[];WS.dialogDirty=false;renderWorkspaceView(view);}
     catch(error){$('#wsImportStatus').textContent=error.message;}
     finally{WS.dialogBusy=false;inputs.forEach(input=>input.disabled=false);$('#wsImportConfirm').disabled=!rows.length;}
   };

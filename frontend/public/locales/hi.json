@@ -1401,5 +1401,21 @@
   "Nothing market-moving in your topics yet. Check the other tabs or refresh in a few minutes.": "आपके विषयों में अभी कुछ बड़ा नहीं। दूसरे टैब देखें या कुछ मिनट बाद रीफ़्रेश करें।",
   "High-impact events today": "आज के उच्च-प्रभाव इवेंट",
   "No more high-impact events today.": "आज और कोई उच्च-प्रभाव इवेंट नहीं।",
-  "Journal name is required": "जर्नल का नाम आवश्यक है"
+  "Journal name is required": "जर्नल का नाम आवश्यक है",
+  "Add your first trade": "अपना पहला ट्रेड जोड़ें",
+  "Log a trade by hand, or bring in your history from a broker CSV. Your calendar, P&L and stats fill in from there.": "ट्रेड हाथ से दर्ज करें या ब्रोकर CSV से अपना इतिहास इम्पोर्ट करें। आपका कैलेंडर, P&L और आँकड़े वहीं से भर जाएँगे।",
+  "Log your first trade": "अपना पहला ट्रेड दर्ज करें",
+  "Connect an exchange": "एक्सचेंज कनेक्ट करें",
+  "Log up to 2 trades a day": "प्रतिदिन 2 ट्रेड तक दर्ज करें",
+  "Import your full trade history": "अपना पूरा ट्रेड इतिहास इम्पोर्ट करें",
+  "Daily journal, calendar and stats": "दैनिक जर्नल, कैलेंडर और आँकड़े",
+  "Screenshots on every trade": "हर ट्रेड पर स्क्रीनशॉट",
+  "$9 / 30 days": "$9 / 30 दिन",
+  "Unlimited trades every day": "हर दिन असीमित ट्रेड",
+  "No daily cap on recent imports": "हाल के इम्पोर्ट पर कोई दैनिक सीमा नहीं",
+  "365 days for $90 (2 months free)": "365 दिन $90 में (2 महीने मुफ़्त)",
+  "India-based accounts pay ₹99 / ₹699": "भारत स्थित खाते ₹99 / ₹699 देते हैं",
+  "Prices in {value1}, set by your Account country": "कीमतें {value1} में, आपके अकाउंट के देश के अनुसार",
+  "30 days": "30 दिन",
+  "365 days": "365 दिन"
 }

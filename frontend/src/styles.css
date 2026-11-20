@@ -291,6 +291,7 @@ tbody tr:hover td{background:var(--panel2)}
 .bill-seg{display:inline-flex;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:4px}
 .bill-seg button{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border:none;border-radius:9px;background:transparent;color:var(--mut);font:inherit;font-weight:600;font-size:13px;line-height:1;cursor:pointer;white-space:nowrap;transition:background .15s ease,color .15s ease}
 .bill-seg button:hover:not(.on){color:var(--txt)}
+.bill-currency-note{font-size:13px;color:var(--mut)}
 .bill-seg button.on{background:var(--accent);color:#fff}
 .bill-save{font-size:10px;font-weight:700;letter-spacing:.3px;padding:2px 7px;border-radius:999px;background:var(--accent-weak);color:var(--accent)}
 .bill-seg button.on .bill-save{background:rgba(255,255,255,.22);color:#fff}

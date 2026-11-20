@@ -300,6 +300,10 @@ def install_trade_guards(schema: str):
                 WHERE id=substring(TG_TABLE_SCHEMA from 3)::uuid;
             IF NOT FOUND THEN RAISE EXCEPTION 'account-unavailable'; END IF;
             IF COALESCE(paid,false) THEN RETURN NEW; END IF;
+            -- Bulk imports bring in history: only today's and yesterday's trades count
+            -- against the free limit (yesterday covers time zones ahead of UTC).
+            IF current_setting('tradedesk.bulk_import', true) = 'on'
+               AND NEW.date < to_char(current_date - 1, 'YYYY-MM-DD') THEN RETURN NEW; END IF;
             SELECT count(*) INTO used FROM "{schema}".trades WHERE date=NEW.date AND id IS DISTINCT FROM NEW.id;
             IF used >= 2 THEN RAISE EXCEPTION 'free-daily-limit'; END IF;
             RETURN NEW;

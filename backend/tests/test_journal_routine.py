@@ -21,13 +21,27 @@ def journal(monkeypatch, tmp_path):
             conn.close()
 
     monkeypatch.setattr(core, "db", db)
+    core.init_db()
     core.init_plan_settings()
     core.init_routine()
     return core
 
 
+def _add_trades(journal, n):
+    with journal.db() as conn:
+        for i in range(n):
+            conn.execute("INSERT INTO trades(date,symbol,direction) VALUES(?,?,?)", (f"2026-01-0{i+1}", "SPY", "Long"))
+
+
+def test_brand_new_journal_starts_without_the_routine(journal):
+    settings = journal.routine_state()["settings"]
+    assert settings["enabled"] is False and settings["popup"] is False
+
+
 def test_new_cloud_journal_opens_desktop_popup(journal):
+    _add_trades(journal, journal.FIRST_RUN_TRADES)
     state = journal.routine_state()
+    assert state["settings"]["enabled"] is True
     assert state["settings"]["popup"] is True
     plan, meditation = state["settings"]["steps"]
     assert plan["action"] == "preferences"

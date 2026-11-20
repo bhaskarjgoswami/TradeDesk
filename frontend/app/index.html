@@ -856,7 +856,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const fmt=(n,d=2)=>n==null||n===''||isNaN(n)?'—':Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
 const money=n=>window.workspaceMoney?window.workspaceMoney(n):(n==null||n===''||isNaN(n)?'—':(n<0?'-':'')+'$'+Number(Math.abs(n)).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));
-const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const trim=(s,n)=>{s=String(s??'');return s.length>n?s.slice(0,n)+'…':s;};
 const debounce=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};};
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1700);}
@@ -1208,12 +1208,14 @@ window.toggleTrade=id=>{
   const t=dayData&&dayData.trades.find(x=>x.id===id);if(!t)return;
   openTradeId=id;renderDayTrades();openModal(t,true);
 };
-function imgThumb(json){let a=[];try{a=json?JSON.parse(json):[];}catch{}return a.length?`<img class="tablethumb" src="/${a[0]}" onclick="event.stopPropagation();window.open('/${a[0]}')">`:'';}
+const SAFE_IMAGE=/^images\/[A-Za-z0-9_.-]+\.(png|jpe?g|webp|gif)$/i;
+function imgThumb(json){let a=[];try{a=json?JSON.parse(json):[];}catch{}const src=Array.isArray(a)?a.map(p=>typeof p==='string'?p.replace(/^\/+/,''):'').find(p=>SAFE_IMAGE.test(p)):null;return src?`<img class="tablethumb" src="/${esc(src)}" alt="Trade screenshot" data-open-image="${esc(src)}">`:'';}
+document.addEventListener('click',e=>{const img=e.target.closest?.('[data-open-image]');if(!img||!SAFE_IMAGE.test(img.dataset.openImage))return;e.stopPropagation();window.open('/'+img.dataset.openImage,'_blank','noopener');},true);
 function chkBadge(json,planJson){let a=[],plan={};try{a=json?JSON.parse(json):[];}catch{}try{plan=planJson?JSON.parse(planJson):{};}catch{}if(plan.active===false)return '<span class="pill setup">Plan paused</span>';const total=Array.isArray(plan.template?.criteria)?plan.template.criteria.length:(plan.type==='golden'?GOLDEN_RULES.length:CHECKLIST.length);return a.length?`<span class="pill setup">✓ ${a.length}/${Math.max(total,a.length)}</span>`:'';}
 
 
 // ---------- all trades table ----------
-async function loadAll(){const response=await fetch('/api/trades');const rows=await response.json().catch(()=>null);if(!response.ok||!Array.isArray(rows))throw Error(rows?.error||'Could not load your journal. Please try again.');allTrades=rows;window.TDLocale?.protect(allTrades);renderTags();return rows;}
+async function loadAll(){const response=await fetch('/api/trades');const rows=await response.json().catch(()=>null);if(!response.ok||!Array.isArray(rows))throw Error(rows?.error||'Could not load your journal. Please try again.');allTrades=rows;window.tradesLoaded=true;window.TDLocale?.protect(allTrades);renderTags();return rows;}
 let searchTerm='';
 function renderAllTable(){
   const list=searchTerm?allTrades.filter(t=>[t.symbol,t.setup,t.notes,t.logic,t.tags,t.direction,t.outcome].some(v=>String(v||'').toLowerCase().includes(searchTerm))):allTrades;
@@ -1660,7 +1662,7 @@ function routineSave(period,id,checked){routineSavesPending++;
     .catch(async error=>{routineSavesPending=0;routineSaveChain=Promise.resolve();await loadRoutine();renderRoutinePanel();const status=$('#routinePanelStatus');if(status)status.textContent=error.message;else toast(error.message);});}
 $('#routineMobileOpen').onclick=()=>$('#routineOpen').click();
 $('#routineBackdrop').onclick=()=>$('#routineClose')?.click();
-window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#routineBackdrop').hidden&&!document.querySelector('#tfLightbox[open]')){e.stopPropagation();$('#routineClose')?.click();}},true);  // before the trade form's Escape handler
+window.addEventListener('keydown',e=>{if(e.key!=='Escape'||document.querySelector('#tfLightbox[open]'))return;const panel=$('#routinePanel'),popup=!$('#routineBackdrop').hidden,focusHere=panel.contains(document.activeElement)||document.activeElement===document.body;if(popup||(!panel.hidden&&focusHere&&!document.querySelector('dialog[open]'))){e.stopPropagation();$('#routineClose')?.click();}},true);  // before the trade form's Escape handler
 let routineReturnFocus=null,routineFocusOpen=false;
 const routineFocusObserver=new MutationObserver(()=>{const panel=$('#routinePanel'),open=!panel.hidden&&panel.getAttribute('aria-modal')==='true';if(open&&!routineFocusOpen){routineReturnFocus=document.activeElement;$('#app').inert=true;$('.mobilebar').inert=true;panel.querySelector('button,input,a[href]')?.focus();}if(!open&&routineFocusOpen){$('#app').inert=false;$('.mobilebar').inert=false;routineReturnFocus?.focus();}routineFocusOpen=open;});
 routineFocusObserver.observe($('#routinePanel'),{attributes:true,attributeFilter:['hidden','aria-modal']});

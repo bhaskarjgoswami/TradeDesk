@@ -18,13 +18,11 @@ test('single-question cards retain choices and save every answer to the existing
   assert.equal(active(),'country');d.querySelector('input[name=countryChoice][value=IN]').click();
   d.querySelector('#welcomeNext').click();assert.equal(active(),'language');d.querySelector('input[name=language][value=hi]').click();await tick();
   d.querySelector('#welcomeNext').click();assert.equal(active(),'tradingLevel');d.querySelector('input[name=tradingLevel][value=professional]').click();
-  d.querySelector('#welcomeNext').click();assert.equal(active(),'ageGroup');d.querySelector('input[name=ageGroup][value="25-34"]').click();
-  d.querySelector('#welcomeNext').click();assert.equal(active(),'gender');d.querySelector('input[name=gender][value=woman]').click();
-  d.querySelector('#welcomeBack').click();assert.equal(active(),'ageGroup');assert.equal(d.querySelector('input[name=ageGroup]:checked').value,'25-34');
-  d.querySelector('#welcomeNext').click();assert.equal(d.querySelector('input[name=gender]:checked').value,'woman');assert.equal(d.querySelector('.welcome-progress').getAttribute('aria-valuenow'),'5');
-  d.querySelector('#welcomeNext').click();assert.equal(active(),'name');d.querySelector('[name=displayName]').value='Alex T';
+  d.querySelector('#welcomeBack').click();assert.equal(active(),'language');assert.equal(d.querySelector('input[name=language]:checked').value,'hi');
+  d.querySelector('#welcomeNext').click();assert.equal(d.querySelector('input[name=tradingLevel]:checked').value,'professional');assert.equal(d.querySelector('.welcome-progress').getAttribute('aria-valuenow'),'3');
+  assert.equal(d.querySelector('[data-question="ageGroup"]'),null);assert.equal(d.querySelector('[data-question="gender"]'),null);assert.equal(d.querySelector('[data-question="name"]'),null);
   d.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));await tick();assert.equal(writes.length,1);
-  const {body}=writes[0];assert.equal(body.revision,4);assert.equal(body.settings.bio,'My strategy');assert.equal(body.settings.displayName,'Alex T');assert.equal(body.settings.lastName,'Trader');assert.equal(body.settings.country,'IN');assert.equal(body.settings.language,'hi');assert.equal(body.settings.tradingLevel,'professional');assert.equal(body.settings.gender,'woman');assert.equal(body.settings.ageGroup,'25-34');assert.equal(body.settings.onboardingCompleted,true);assert.equal('countryChoice' in body.settings,false);assert.equal(w.document.querySelector('#welcomeDialog'),null);w.maybeOnboarding();assert.equal(w.document.querySelector('#welcomeDialog'),null);
+  const {body}=writes[0];assert.equal(body.revision,4);assert.equal(body.settings.bio,'My strategy');assert.equal(body.settings.displayName,'Alex Trader');assert.equal(body.settings.lastName,'Trader');assert.equal(body.settings.country,'IN');assert.equal(body.settings.language,'hi');assert.equal(body.settings.tradingLevel,'professional');assert.equal(body.settings.gender,'');assert.equal(body.settings.ageGroup,'');assert.equal(body.settings.onboardingCompleted,true);assert.equal('countryChoice' in body.settings,false);assert.equal(w.document.querySelector('#welcomeDialog'),null);w.maybeOnboarding();assert.equal(w.document.querySelector('#welcomeDialog'),null);
  }finally{dom.window.close();}
 });
 test('searching countries preserves the selected country when its row is filtered out',async()=>{
@@ -35,10 +33,12 @@ test('searching countries preserves the selected country when its row is filtere
   d.querySelector('[data-welcome-skip]').click();await tick();assert.equal(writes[0].body.settings.country,'IN');
  }finally{dom.window.close();}
 });
-test('choosing not to share age clears a previously saved age group',async()=>{
- const {dom,w,writes}=setup({initialProfile:{ageGroup:'25-34'}});try{
-  const d=w.document.querySelector('#welcomeDialog');for(let i=0;i<3;i++)d.querySelector('#welcomeNext').click();
-  d.querySelector('input[name=ageGroup][value=""]').click();d.querySelector('[data-welcome-skip]').click();await tick();assert.equal(writes[0].body.settings.ageGroup,'');
+test('onboarding asks no demographic questions and asks for a name only when signup had none',async()=>{
+ const {dom,w,writes}=setup({signupName:'',initialProfile:{firstName:''}});try{
+  const d=w.document.querySelector('#welcomeDialog'),steps=[...d.querySelectorAll('[data-question]')].map(x=>x.dataset.question);
+  assert.deepEqual(steps,['country','language','tradingLevel','name']);
+  d.querySelector('[data-welcome-peek="3"]').click();d.querySelector('[name=firstName]').value='Sam';
+  d.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true,bubbles:true}));await tick();assert.equal(writes[0].body.settings.firstName,'Sam');
  }finally{dom.window.close();}
 });
 test('skip saves optional blanks once and does not ask again',async()=>{const {dom,w,writes}=setup();try{w.document.querySelector('[data-welcome-skip]').click();await tick();assert.equal(writes.length,1);assert.equal(writes[0].body.settings.gender,'');assert.equal(writes[0].body.settings.ageGroup,'');assert.equal(writes[0].body.settings.onboardingCompleted,true);assert.equal(w.PF.data.settings.firstName,'Alex');assert.equal(w.document.querySelector('#welcomeDialog'),null);}finally{dom.window.close();}});
@@ -60,10 +60,10 @@ test('carousel has no visible top bar and exposes only the active card to keyboa
  const {dom,w,writes}=setup();try{
   const d=w.document.querySelector('#welcomeDialog');
   assert.equal(d.querySelector('.welcome-head'),null);assert.equal(d.querySelector('.welcome-brand'),null);assert.equal(d.querySelector('.welcome-close'),null);
-  assert.equal(d.querySelectorAll('.welcome-slide').length,6);assert.equal(d.querySelector('#welcomeBack').disabled,true);assert.equal(d.dataset.edge,'start');
+  assert.equal(d.querySelectorAll('.welcome-slide').length,3);assert.equal(d.querySelector('#welcomeBack').disabled,true);assert.equal(d.dataset.edge,'start');
   d.querySelector('#welcomeAdvance').click();assert.equal(d.querySelector('[data-active="true"]').dataset.question,'language');
   assert.equal(d.querySelector('[data-question="country"]').inert,true);assert.equal(d.querySelector('[data-question="language"]').inert,false);
-  d.querySelector('[data-welcome-peek="5"]').click();assert.equal(d.querySelector('[data-active="true"]').dataset.question,'name');assert.equal(d.querySelector('#welcomeAdvance').disabled,true);assert.equal(d.dataset.edge,'end');assert.equal(writes.length,0);
+  d.querySelector('[data-welcome-peek="2"]').click();assert.equal(d.querySelector('[data-active="true"]').dataset.question,'tradingLevel');assert.equal(d.querySelector('#welcomeAdvance').disabled,true);assert.equal(d.dataset.edge,'end');assert.equal(writes.length,0);
  }finally{dom.window.close();}
 });
 test('carousel arrow keys navigate cards without taking over text-input arrow keys',()=>{
@@ -75,4 +75,4 @@ test('carousel arrow keys navigate cards without taking over text-input arrow ke
  }finally{dom.window.close();}
 });
 
-test('long signup names can be skipped without exceeding profile limits',async()=>{const {dom,w,writes}=setup({signupName:'A'.repeat(100)});try{assert.equal(w.document.querySelector('[name=displayName]').value.length,60);assert.ok(w.document.querySelector('[name=firstName]').value.length<=60);w.document.querySelector('[data-welcome-skip]').click();await tick();assert.equal(writes.length,1);assert.equal(writes[0].body.settings.displayName.length,60);}finally{dom.window.close();}});
+test('long signup names can be skipped without exceeding profile limits',async()=>{const {dom,w,writes}=setup({signupName:'A'.repeat(100)});try{assert.equal(w.document.querySelector('[name=displayName]'),null);w.document.querySelector('[data-welcome-skip]').click();await tick();assert.equal(writes.length,1);assert.equal(writes[0].body.settings.displayName.length,60);assert.equal(writes[0].body.settings.firstName,'Alex');}finally{dom.window.close();}});

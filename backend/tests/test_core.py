@@ -235,8 +235,23 @@ def test_checkout_prices(monkeypatch, plan, currency, amount):
     def checkout_conn(**kwargs):
         yield FakeConn(None)
     monkeypatch.setattr(subscription, "get_conn", checkout_conn)
+    monkeypatch.setattr(subscription, "account_currency", lambda uid: currency)
     response = client.post("/api/subscription/checkout", json={"plan": plan, "currency": currency})
     assert response.status_code == 200
     assert captured["amount"] == amount  # Razorpay expects paise.
     assert captured["currency"] == currency
     assert response.json()["amount"] == amount
+
+
+@pytest.mark.parametrize("images", ['["images/1700000000_ab12cd34.png"]', '["images/old_shot.JPG","images/b.webp"]', None, ""])
+def test_trade_images_accept_uploaded_paths(images):
+    from app.journal import core
+    trade = {"date": "2026-11-20", "symbol": "SPY", "direction": "Long", "images": images}
+    assert core.validate_trade(trade)["images"] == images
+
+
+@pytest.mark.parametrize("images", ['["x\' onerror=alert(1) \'.png"]', '["javascript:alert(1)"]', '["https://evil.example/a.png"]', '["../images/a.png"]', '{"a":1}', 'not json', '[1]'])
+def test_trade_images_reject_anything_but_uploaded_paths(images):
+    from app.journal import core
+    with pytest.raises(ValueError, match="images"):
+        core.validate_trade({"date": "2026-11-20", "symbol": "SPY", "direction": "Long", "images": images})
