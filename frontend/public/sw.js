@@ -3,7 +3,7 @@
 //  - page loads: network first, cached shell only when offline
 //  - /assets/* (content-hashed): cache first
 //  - everything else (API, Supabase, other origins): not intercepted
-const CACHE = "tradedesk-v4";
+const CACHE = "tradedesk-v5";
 const SHELL = "/index.html";
 
 const JOURNAL_ASSETS=['/cloud-boot.js','/language.js','/onboarding.js','/feedback-page.js','/trade-drafts.js','/broker-import.js','/workspace.js','/calendar.js','/trade.js','/playbook.js','/profile.js','/meditation.js','/news.js','/workspace.css','/theme.css','/theme-mercury.css'];
@@ -58,7 +58,8 @@ self.addEventListener("fetch", (e) => {
   if (url.pathname.startsWith("/assets/")) {
     e.respondWith(
       caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-        if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
+        const type = res.headers.get("content-type") || "";
+        if (res.ok && !type.includes("text/html")) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
         return res;
       }))
     );

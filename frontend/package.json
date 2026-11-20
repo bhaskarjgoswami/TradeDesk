@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm test && vite build",
     "preview": "vite preview",
     "test": "node --test src/lib/*.test.js",
     "sync:journal": "node scripts/sync-journal-ui.mjs",
@@ -17,13 +17,12 @@
     "@supabase/supabase-js": "^2.45.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^7.18.5",
-    "recharts": "^2.12.7"
+    "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
+    "@babel/parser": "7.29.7",
     "@vitejs/plugin-react": "^4.7.0",
     "jsdom": "26.1.0",
-    "vite": "^6.4.5",
-    "@babel/parser": "7.29.7"
+    "vite": "^6.4.5"
   }
 }

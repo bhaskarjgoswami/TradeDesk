@@ -9,6 +9,16 @@ const FEATURES = [
   { icon: "bolt", title: "Bring any broker", text: "Map your broker’s CSV columns or log trades manually. Keep your trading history together across markets and accounts." },
   { icon: "chart", title: "Performance", text: "Equity curve, average R, best and worst trades, and a breakdown by setup so you can see where your edge actually is." },
   { icon: "card", title: "Screenshots", text: "Paste a chart straight into the trade. Stored privately and shown only to you." },
+  { icon: "check", title: "Pre-market routine", text: "A checklist you run before the open: review your plan, mark levels, set your max loss. Your process, not just your P&L." },
+  { icon: "folder", title: "Playbook", text: "Write down each setup with its rules and example charts, then tag trades to it and see which setups pay." },
+];
+
+const FAQ = [
+  ["Is my journal private?", "Yes. Your trades, notes and screenshots are visible only to you. We never sell or share journal data."],
+  ["Can I export or delete my data?", "Any time. Download a full backup of your journal from Settings, or delete your account and everything in it."],
+  ["Does Pro renew automatically?", "No. Pro is a one-time payment for 30 or 365 days. When it ends you go back to Free and keep all your trades."],
+  ["Which brokers are supported?", "Any broker or exchange that exports a CSV of your trades. Delta Exchange can also sync fills directly with a read-only API key."],
+  ["Can I get a refund?", "Yes. Ask within 7 days of paying for a full refund."],
 ];
 
 export function PublicFooter() {
@@ -50,7 +60,7 @@ export default function Landing() {
       <main>
         <section className="pub-hero">
           <h1>Review every trade.<br />Sharpen your edge.</h1>
-          <p>A private trading journal for traders worldwide. Bring trades from any broker, review your setups and screenshots, and understand your performance.</p>
+          <p>A private trading journal that checks your process, not just your P&amp;L. Bring trades from any broker, run your pre-market routine, and see which setups actually make money.</p>
           <div className="pub-cta">
             <a href="/app?signup=1" className="btn">Start journaling free</a>
             <a href="#features" className="btn ghost">See features</a>
@@ -74,13 +84,25 @@ export default function Landing() {
               <h3>Free</h3>
               <div className="pub-price">$0</div>
               <ul><li>Log up to 2 trades a day</li><li>Import your full trade history</li><li>Daily journal, calendar and stats</li><li>Screenshots on every trade</li></ul>
+              <a href="/app?signup=1" className="btn ghost pub-plan-cta">Start free</a>
             </div>
             <div className="pub-card featured">
               <h3>Pro</h3>
               <div className="pub-price">$9 / 30 days</div>
               <ul><li>Unlimited trades every day</li><li>No daily cap on recent imports</li><li>365 days for $90 (2 months free)</li><li>One-time payment, no auto-renew</li><li>India-based accounts pay ₹99 / ₹699</li></ul>
+              <a href="/app?signup=1" className="btn pub-plan-cta">Get Pro</a>
             </div>
           </div>
+        </section>
+
+        <section id="faq" className="pub-faq" aria-labelledby="faqTitle">
+          <h2 id="faqTitle">Questions</h2>
+          {FAQ.map(([q, a]) => (
+            <details key={q}>
+              <summary>{q}</summary>
+              <p>{a}{q === "Can I get a refund?" && <> <Link to="/refunds">Refund policy</Link></>}</p>
+            </details>
+          ))}
         </section>
       </main>
       <PublicFooter />

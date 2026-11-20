@@ -13,7 +13,7 @@
       "destination": "/app/index.html"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/).*)",
       "destination": "/index.html"
     }
   ],

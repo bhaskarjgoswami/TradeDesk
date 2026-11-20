@@ -11,7 +11,9 @@ async function authHeader() {
 
 async function request(method, path, body) {
   const headers = { "Content-Type": "application/json", ...(await authHeader()) };
-  const send = () => fetch(`${BASE}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  // Reads time out after 45s (a sleeping API needs ~30-50s to wake); writes never do.
+  const timed = method === "GET" && typeof AbortSignal !== "undefined" && AbortSignal.timeout;
+  const send = () => fetch(`${BASE}${path}`, { method, headers, signal: timed ? AbortSignal.timeout(45000) : undefined, body: body ? JSON.stringify(body) : undefined });
   let res;
   try {
     res = await send();

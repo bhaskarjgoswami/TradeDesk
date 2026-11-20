@@ -52,7 +52,7 @@ function loadRazorpay() {
 }
 
 export default function PlanCards() {
-  const { session, tier, tierStatus, refreshTier, billingCurrency } = useAuth();
+  const { session, tier, tierStatus, refreshTier, billingCurrency, expiresAt } = useAuth();
   const [chosenCurrency, setCurrency] = useState(defaultCurrency());
   const accountCurrency = session && PRICING[billingCurrency] ? billingCurrency : null;
   const currency = accountCurrency || chosenCurrency;
@@ -62,6 +62,8 @@ export default function PlanCards() {
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const isPro = tier === "pro";
+  // Pro does not renew by itself: in its last 7 days a new purchase extends it (days stack server-side).
+  const canExtend = isPro && Boolean(expiresAt) && (new Date(expiresAt) - Date.now()) <= 7 * 86400000;
   const display = PRICING[currency][cycle];
   const price = catalog?.prices?.[currency]?.[cycle] != null ? {...display,amt:new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US",{style:"currency",currency,maximumFractionDigits:0}).format(catalog.prices[currency][cycle]/100)} : display;
   const checkoutAvailable = catalog?.checkout_available === true;
@@ -70,7 +72,7 @@ export default function PlanCards() {
   const membershipReady = !session || tierStatus === "ready";
 
   async function upgrade() {
-    if (!session || isPro || !membershipReady || !checkoutAvailable) return;
+    if (!session || (isPro && !canExtend) || !membershipReady || !checkoutAvailable) return;
     setBusy(true);
     setMsg("Starting secure checkout…");
     try {
@@ -162,7 +164,7 @@ export default function PlanCards() {
             </div>
             <div className="pc-bottom">
               <div className="pc-bottom-row"><div className="pc-price"><span className="pc-amt">{price.amt}</span><span className="pc-unit">/ {cycle === "monthly" ? "30 days" : "365 days"}</span></div>
-                {!session ? <a className="pc-btn primary" href="/app?signup=1">Get Pro <span aria-hidden="true">→</span></a> : !isPro && <button className="pc-btn primary" onClick={upgrade} disabled={isPro || busy || !membershipReady || !checkoutAvailable}>{busy ? "Opening checkout…" : <>{!checkoutAvailable ? "Checkout unavailable" : "Get Pro"} <span aria-hidden="true">→</span></>}</button>}
+                {!session ? <a className="pc-btn primary" href="/app?signup=1">Get Pro <span aria-hidden="true">→</span></a> : (!isPro || canExtend) && <button className="pc-btn primary" onClick={upgrade} disabled={(isPro && !canExtend) || busy || !membershipReady || !checkoutAvailable}>{busy ? "Opening checkout…" : <>{!checkoutAvailable ? "Checkout unavailable" : canExtend ? "Extend Pro" : "Get Pro"} <span aria-hidden="true">→</span></>}</button>}
               </div>
             </div>
           </article>

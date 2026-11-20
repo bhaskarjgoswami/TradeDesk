@@ -26,23 +26,22 @@ function renderTradePage(){const t=TF.trade||TF.draft||{},review=wsReview(t),[en
   const f=(label,name,value,type='number',extra='')=>`<label class="tf-field">${label}<input name="${name}" type="${type}" value="${esc(value??'')}" ${type==='number'?'step="any"':''} ${extra}></label>`;
   const sel=(label,name,options,current,placeholder='Select')=>`<label class="tf-field">${label}<select name="${name}"><option value="">${placeholder}</option>${options.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return `<option value="${esc(v)}" ${String(current??'')===String(v)?'selected':''}>${esc(l)}</option>`;}).join('')}</select></label>`;
   const item=TF.queue[TF.queueIdx];
-  $('#ws-trade').innerHTML=`<div class="tf-head"><div class="tf-title"><h1>${TF.trade?'Edit Trade':'Add Trade'}</h1><p>Record the trade after you exit. Write it by hand or pull your fills from Delta.</p></div>${TF.trade?`<span class="ws-tag">${esc(t.symbol||'')} · ${esc(t.date||'')}</span>`:`<button type="button" class="btn ghost" id="tfPull">↧ Pull from Delta</button>`}</div>
+  $('#ws-trade').innerHTML=`<div class="tf-head"><div class="tf-title"><h1>${TF.trade?'Edit Trade':'Add Trade'}</h1><p>Record the trade after you exit.</p></div>${TF.trade?`<span class="ws-tag">${esc(t.symbol||'')} · ${esc(t.date||'')}</span>`:`<button type="button" class="btn ghost" id="tfPull" data-needs-delta ${window.tdDeltaConnected?'':'hidden'}>↧ Pull from Delta</button>`}</div>
   ${item?`<div class="tf-import"><b>Delta import · ${TF.queueIdx+1} of ${TF.queue.length}</b><span>${esc(item.symbol||'')}${item.time?' · '+esc(item.time):''}</span>${item.open?'<span class="ws-tag amber">Still open · journal it after you exit</span>':''}<button type="button" class="ws-link" id="tfSkip">Skip ›</button></div>`:''}
   <form id="tfForm" class="tf-grid" novalidate>
    <section class="ws-card tf-left"><h2>Trade Details</h2><p class="tf-hint">${esc(TF.timezone||tfZoneName())} · Leave times blank if unknown.</p>
     <div class="tf-row">${f('Entry Date','date',TF.date,'date','required')}${f('Entry Time','entry_clock',entryTime||'','time')}</div>
     <div class="tf-row">${f('Exit Date','exit_date',exitDate||'','date')}${f('Exit Time','exit_clock',exitTime||'','time')}</div>
     <div class="tf-row"><label class="tf-field">Instrument<input name="symbol" list="tfSymbols" value="${esc(t.symbol||'')}" placeholder="Search for a symbol" autocomplete="off" required><datalist id="tfSymbols">${symbols.map(s=>`<option value="${esc(s)}">`).join('')}</datalist></label>${sel('Direction','direction',['Long','Short'],t.direction)}</div>
-    <div class="tf-row">${f('Quantity / lots','qty',t.qty,'number','min="0" placeholder="0.00"')}${f('Units per lot / contract','contract_value',tfContract(t.symbol),'number','min="0.00000001" placeholder="e.g. 1 or 100000"')}</div><p class="tf-hint">Use 1 for shares or units. For contracts, enter the instrument’s units per lot.</p>
+    <div class="tf-row">${f('Quantity / lots','qty',t.qty,'number','min="0"')}${f('Units per lot / contract','contract_value',tfContract(t.symbol),'number','min="0.00000001" placeholder="e.g. 1 or 100000"')}</div><p class="tf-hint">Use 1 for shares or units. For contracts, enter the instrument’s units per lot.</p>
     <h3>Execution</h3>
-    <div class="tf-row">${f('Entry Price','entry',t.entry,'number','placeholder="0.00000"')}${f('Exit Price','exit',t.exit,'number','placeholder="0.00000"')}</div>
-    <div class="tf-row">${f('Stop Loss','stop',t.stop,'number','placeholder="0.00000"')}${f('Take Profit','target',t.target,'number','placeholder="0.00000"')}</div>
-    ${f('PnL','pnl',t.pnl,'number','placeholder="0.00"')}<p class="tf-hint" id="tfPnlHint"></p>
+    <div class="tf-row">${f('Entry Price','entry',t.entry,'number','')}${f('Exit Price','exit',t.exit,'number','')}</div>
+    <div class="tf-row">${f('Stop Loss','stop',t.stop,'number','')}${f('Take Profit','target',t.target,'number','')}</div>
+    ${f('PnL','pnl',t.pnl,'number','')}<p class="tf-hint" id="tfPnlHint"></p>
     <h3>Performance</h3>
-    <div class="tf-row">${f('Risk ('+esc(WS.prefs.settings.currency)+')','risk',t.risk,'number','min="0" placeholder="0.00"')}${f('Return (R)','r_multiple',t.r_multiple,'number','placeholder="0.0R"')}</div>
+    <div class="tf-row">${f('Risk ('+esc(WS.prefs.settings.currency)+')','risk',t.risk,'number','min="0"')}${f('Return (R)','r_multiple',t.r_multiple,'number','')}</div>
     <h3>Costs</h3>
-    <div class="tf-row">${f('Swap','swap',t.swap??'','number','placeholder="0.00"')}${f('Commission','commission',commission,'number','min="0" placeholder="0.00"')}</div>
-    <div class="tf-foot">${TF.trade?'<button type="button" class="tf-delete" id="tfDelete">Delete</button>':''}<button type="button" class="btn ghost" id="tfCancel">Cancel</button><button type="submit" class="btn" id="tfSave">${TF.trade?'Save Changes':'Save Manual Trade'}</button></div>
+    <div class="tf-row">${f('Swap','swap',t.swap??'','number','')}${f('Commission','commission',commission,'number','min="0"')}</div>
     <p class="tf-status" id="tfStatus" role="status" aria-live="polite"></p>
    </section>
    <div class="tf-right">
@@ -56,13 +55,13 @@ function renderTradePage(){const t=TF.trade||TF.draft||{},review=wsReview(t),[en
       <label class="tf-field">Mistakes<input name="mistakes" list="tfMistakes" value="${esc(review.mistakes||'')}" placeholder="Start typing" autocomplete="off"><datalist id="tfMistakes">${mistakes.map(m=>`<option value="${esc(m)}">`).join('')}</datalist></label></div>
      <div class="tf-row">${sel('Entry Emotion','emotionIn',TF_EMOTION_IN,review.emotionIn)}${sel('Exit Emotion','emotionOut',TF_EMOTION_OUT,review.emotionOut)}</div>
      <label class="tf-field">Add a note or reflection<textarea name="notes" rows="4" placeholder="What went well? What will you do differently next time?">${esc(t.notes||'')}</textarea></label>
-    </section></div></form>`;
+    </section></div><div class="tf-foot">${TF.trade?'<button type="button" class="tf-delete" id="tfDelete">Delete</button>':''}<button type="button" class="btn ghost" id="tfCancel">Cancel</button><button type="submit" class="btn" id="tfSave">${TF.trade?'Save changes':'Save trade'}</button></div></form>`;
   const form=$('#tfForm');
   if(TF.restore){for(const [name,value] of Object.entries(TF.restore.fields)){const control=form.elements.namedItem(name);if(!control||!['INPUT','TEXTAREA','SELECT'].includes(control.tagName))continue;if(control.type==='checkbox')control.checked=!!value;else control.value=String(value??'');}for(const key of ['autoPnl','autoRisk','autoR'])if(typeof TF.restore.auto?.[key]==='boolean')TF[key]=TF.restore.auto[key];TF.restore=null;$('#tfStatus').textContent='Unsaved draft restored on this device.';}
   TF.strategy=form.elements.strategy.value;TF_CHARTS.forEach(([key])=>tfRenderChart(key));tfRecalc();
   form.oninput=event=>{TF.dirty=true;const name=event.target.name;if(name==='symbol'){form.elements.contract_value.value=tfContract(event.target.value)??'';TF.contractEdited=false;}if(name==='contract_value')TF.contractEdited=true;if(name==='pnl')TF.autoPnl=event.target.value==='';if(name==='risk')TF.autoRisk=event.target.value==='';if(name==='r_multiple')TF.autoR=event.target.value==='';if(name==='date'&&!form.exit_date.value)form.exit_date.placeholder=form.date.value;tfRecalc();tfPersistDraft();};
   form.strategy.onchange=()=>{TF.strategy=form.strategy.value;};
-  if($('#tfPull'))$('#tfPull').onclick=tfPull;if($('#tfSkip'))$('#tfSkip').onclick=tfNextImport;
+  if($('#tfPull'))$('#tfPull').onclick=tfPull;window.tdCheckDelta?.();if($('#tfSkip'))$('#tfSkip').onclick=tfNextImport;
   form.onsubmit=event=>{event.preventDefault();tfSave();};
   $('#tfCancel').onclick=()=>tfLeave();
   if($('#tfDelete'))$('#tfDelete').onclick=tfDelete;

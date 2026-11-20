@@ -48,6 +48,7 @@ def triage(uid,ident,status,reply=None):
 
 def metrics():
     result=dict(accounts=0,onboarding_completed=0,journals_with_trades=0,active_journals_7d=0,trades=0)
+    funnel=dict(imported_csv=0,logged_2_plus_trades_in_a_day=0)
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute('SET TRANSACTION READ ONLY')
@@ -59,11 +60,23 @@ def metrics():
             for schema in tenants(cur):
                 account=accounts.get(owner(schema))
                 if not account:continue
-                cur.execute(sql.SQL("SELECT (SELECT count(*) FROM {}.trades) AS trades,(SELECT count(*) FROM {}.trades WHERE created_at::timestamptz >= now()-interval '7 days') AS recent,(SELECT value FROM {}.journal_settings WHERE key='workspace_profile') AS profile,EXISTS(SELECT 1 FROM {}.trades WHERE created_at::timestamptz >= %s::timestamptz+interval '7 days' AND created_at::timestamptz < %s::timestamptz+interval '14 days') AS retained").format(*[sql.Identifier(schema)]*4),(account['created_at'],account['created_at']))
+                cur.execute(sql.SQL("SELECT (SELECT count(*) FROM {}.trades) AS trades,(SELECT count(*) FROM {}.trades WHERE created_at::timestamptz >= now()-interval '7 days') AS recent,(SELECT value FROM {}.journal_settings WHERE key='workspace_profile') AS profile,EXISTS(SELECT 1 FROM {}.trades WHERE created_at::timestamptz >= %s::timestamptz+interval '7 days' AND created_at::timestamptz < %s::timestamptz+interval '14 days') AS retained,(SELECT COALESCE(max(n),0) FROM (SELECT count(*) AS n FROM {}.trades GROUP BY date) AS d) AS busiest_day,EXISTS(SELECT 1 FROM {}.trades WHERE source_id LIKE 'csv%%') AS imported").format(*[sql.Identifier(schema)]*6),(account['created_at'],account['created_at']))
                 row=cur.fetchone();result['trades']+=row['trades'];result['journals_with_trades']+=int(row['trades']>0);result['active_journals_7d']+=int(row['recent']>0)
                 retained+=int(bool(account['mature']) and row['retained'])
+                funnel['imported_csv']+=int(bool(row['imported']))
+                funnel['logged_2_plus_trades_in_a_day']+=int(row['busiest_day']>=2)
                 if row['profile'] and json.loads(row['profile']).get('onboardingCompleted'):result['onboarding_completed']+=1
+            # Billing steps come from the payment ledger, so no browser tracking is needed.
+            cur.execute("""SELECT
+                (SELECT count(DISTINCT o.user_id) FROM public.billing_orders o JOIN public.user_profiles p ON p.id=o.user_id WHERE p.deletion_started_at IS NULL) AS checkout_started,
+                (SELECT count(DISTINCT b.user_id) FROM public.billing_payments b JOIN public.user_profiles p ON p.id=b.user_id WHERE p.deletion_started_at IS NULL) AS paid,
+                (SELECT count(*) FROM (SELECT b.user_id FROM public.billing_payments b JOIN public.user_profiles p ON p.id=b.user_id WHERE p.deletion_started_at IS NULL GROUP BY b.user_id HAVING count(*)>1) AS r) AS paid_again""")
+            billing=cur.fetchone()
     result['activation_rate']=round(result['journals_with_trades']/result['accounts'],4) if result['accounts'] else 0
+    steps=[('signed_up',result['accounts']),('completed_onboarding',result['onboarding_completed']),('logged_first_trade',result['journals_with_trades']),
+           ('imported_csv',funnel['imported_csv']),('logged_2_plus_trades_in_a_day',funnel['logged_2_plus_trades_in_a_day']),
+           ('started_checkout',billing['checkout_started']),('paid',billing['paid']),('paid_again',billing['paid_again'])]
+    result['funnel']=[dict(step=name,accounts=n,share_of_signups=round(n/result['accounts'],4) if result['accounts'] else None) for name,n in steps]
     result['week_one_retention']=dict(eligible_accounts=mature,retained_accounts=retained,
         rate=round(retained/mature,4) if mature else None,
         definition='Accounts at least 14 days old with a trade logged at account age [7,14) days. Accounts without journals count in the denominator; recently created accounts are excluded. Deleted trades are not retained as analytics events.')

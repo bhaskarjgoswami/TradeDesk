@@ -20,9 +20,8 @@ DELTA_BASE = "https://api.india.delta.exchange"
 # ── Exchange key CRUD ────────────────────────────────────
 
 # Exchanges whose credentials we accept (mirrors the frontend selector).
-SUPPORTED_EXCHANGES = {
-    "delta", "binance", "bybit", "okx", "coinbase", "kucoin", "kraken", "bitget", "mexc",
-}
+# Only exchanges with a working fills sync: storing secrets we never use is pure liability.
+SUPPORTED_EXCHANGES = {"delta"}
 
 
 def _norm_exchange(name: str) -> str:

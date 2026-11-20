@@ -8,7 +8,7 @@
 <style>
   :root{
     --bg:#ffffff; --sidebar:#fafafb; --panel:#ffffff; --panel2:#f4f5f7; --line:#ececef;
-    --txt:#1b1c20; --mut:#8a8f98; --dim:#aeb4bd;
+    --txt:#1b1c20; --mut:#5f6672; --dim:#aeb4bd;
     --accent:#6c5ce7; --accent-weak:#efedfd;
     --grn:#16a34a; --red:#e0414a; --amb:#d97706;
     --missing-bg:#fdfaf2; --missing-line:#f0e3c6; --missing-txt:#c08a1c;
@@ -96,7 +96,7 @@
   .set-chk button:hover{color:var(--red)}
   .set-select{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 12px;color:var(--txt);font:inherit;min-width:210px;outline:none;cursor:pointer}
   .set-select:focus{border-color:var(--accent)}
-  .ex-creds label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);font-weight:600;margin:13px 0 6px}
+  .ex-creds label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);font-weight:600;margin:13px 0 6px}
   .ex-creds input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--txt);outline:none;font-size:13.5px}
   .ex-creds input:focus{border-color:var(--accent)}
   .ex-note{font-size:12px;color:var(--dim);margin-top:12px;line-height:1.55}
@@ -112,16 +112,16 @@
   .login-left .sub{font-size:14px;line-height:1.5;color:#858394;margin-bottom:32px}
   .login-left label{display:block;font-size:12px;color:#737184;margin:0 0 8px;font-weight:420}
   .login-left .ic-field{display:flex;align-items:center;gap:10px;background:transparent;border:1px solid #e3e1ee;border-radius:32px;padding:0 18px;margin-bottom:20px;height:42px;min-height:42px;transition:border-color .15s,box-shadow .15s}
-  .login-left .ic-field>svg{display:none}.login-left .ic-field input{flex:1;min-width:0;width:100%;background:none;border:none;outline:none;color:#353247;font-family:var(--auth-font);font-size:14px;font-weight:400;line-height:1.4}.login-left .ic-field input::placeholder{color:#a19dac}.login-left .ic-field input:focus,.login-left .ic-field input:focus-visible{outline:none!important;box-shadow:none}
+  .login-left .ic-field>svg{display:none}.login-left .ic-field input{flex:1;min-width:0;width:100%;background:none;border:none;outline:none;color:#353247;font-family:var(--auth-font);font-size:14px;font-weight:400;line-height:1.4}.login-left .ic-field input::placeholder{color:#6f6b7d}.login-left .ic-field input:focus,.login-left .ic-field input:focus-visible{outline:none!important;box-shadow:none}
 .login-left .ic-field:focus-within{border-color:var(--auth-primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--auth-primary) 10%,transparent)}
   .login-left .eye{display:flex;align-items:center;justify-content:center;background:none;border:0;padding:2px;color:#8a879b;cursor:pointer}.login-left .eye svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.5}
   .login-left .forgot{display:block;text-align:right;font-size:12px;color:var(--auth-primary);text-decoration:none;margin:-9px 0 25px}.login-left .forgot:hover{color:color-mix(in srgb,var(--auth-primary) 80%,black)}
   .login-err{color:#b44b45;font-size:12px;line-height:1.6;min-height:0;margin:0 0 16px}.login-err:empty{display:none}
   .login-left .login-btn{width:100%;min-height:42px;height:42px;margin-top:16px;padding:0 20px;border:0;border-radius:40px;background:var(--auth-primary);color:#fff;font-family:var(--font-display,var(--auth-font));font-weight:480;font-size:14px;letter-spacing:.07px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s}.login-left .login-btn:hover{background:color-mix(in srgb,var(--auth-primary) 88%,black)}.login-left .login-btn:disabled{opacity:.6;cursor:wait}.login-left .login-btn svg{display:none}
-  .login-left .login-foot{margin-top:28px;padding-top:20px;border-top:1px solid #e8e6f1;font-size:10px;line-height:1.8;text-align:center;color:#92909e}.login-left .login-foot a{color:var(--auth-primary);text-decoration:none}.login-left .login-foot a:hover{text-decoration:underline}
+  .login-left .login-foot{margin-top:28px;padding-top:20px;border-top:1px solid #e8e6f1;font-size:12px;line-height:1.8;text-align:center;color:#5f5b6e}.login-left .login-foot a{color:var(--auth-primary);text-decoration:none}.login-left .login-foot a:hover{text-decoration:underline}
   .login-right{grid-column:1;grid-row:1;position:relative;overflow:hidden;background:#fff;display:flex;align-items:flex-start;padding:48px clamp(28px,5vw,78px);min-height:640px}.login-right .right-content{position:relative;z-index:2;color:#28253b;width:100%}.login-right .brand2{margin:0 0 85px}.login-right h2{font-family:var(--font-display,var(--auth-font));font-size:clamp(29px,3vw,40px);font-weight:480;letter-spacing:-.5px;line-height:1.22;margin-bottom:20px;max-width:430px}.login-right p{font-size:13px;color:#767283;max-width:370px;line-height:1.9}
-  .auth-art{position:absolute;left:-6%;right:-6%;bottom:-2%;height:46%;min-height:260px;pointer-events:none}.auth-globe{width:100%;height:100%;overflow:visible;opacity:.8}.auth-promo-card{position:absolute;width:170px;padding:16px 18px;border:1px solid #eeedf5;border-radius:5px;background:#ffffffed;box-shadow:0 8px 35px #352b670b;color:#353247}.auth-promo-card:first-of-type{left:17%;bottom:19%;transform:rotate(-3deg)}.auth-promo-card:last-of-type{right:11%;bottom:58%;transform:rotate(3deg)}.auth-promo-card small{display:block;font-size:8px;letter-spacing:1px;color:#9994ab;margin-bottom:7px}.auth-promo-card strong{display:block;font-family:var(--font-display,var(--auth-font));font-size:12px;line-height:1.6;font-weight:500}.auth-promo-check{position:absolute;bottom:-13px;right:14px;width:26px;height:26px;border:4px solid #fff;border-radius:50%;background:var(--auth-primary);color:#fff;display:grid;place-items:center;font-size:10px}
-  .login-left .td-mode{margin-top:28px;text-align:center;font-size:12px;color:#777287;line-height:1.8}.login-left .td-mode a{color:var(--auth-primary);text-decoration:none;font-weight:500}.login-left .td-mode a:hover{text-decoration:underline}.login-left .td-mode span{display:block;margin-top:13px;font-size:10px;line-height:1.8;color:#918b9e}
+  .auth-art{position:absolute;left:-6%;right:-6%;bottom:-2%;height:46%;min-height:260px;pointer-events:none}.auth-globe{width:100%;height:100%;overflow:visible;opacity:.8}.auth-promo-card{position:absolute;width:170px;padding:16px 18px;border:1px solid #eeedf5;border-radius:5px;background:#ffffffed;box-shadow:0 8px 35px #352b670b;color:#353247}.auth-promo-card:first-of-type{left:17%;bottom:19%;transform:rotate(-3deg)}.auth-promo-card:last-of-type{right:11%;bottom:58%;transform:rotate(3deg)}.auth-promo-card small{display:block;font-size:11px;letter-spacing:1px;color:#9994ab;margin-bottom:7px}.auth-promo-card strong{display:block;font-family:var(--font-display,var(--auth-font));font-size:12px;line-height:1.6;font-weight:500}.auth-promo-check{position:absolute;bottom:-13px;right:14px;width:26px;height:26px;border:4px solid #fff;border-radius:50%;background:var(--auth-primary);color:#fff;display:grid;place-items:center;font-size:11px}
+  .login-left .td-mode{margin-top:28px;text-align:center;font-size:12px;color:#777287;line-height:1.8}.login-left .td-mode a{color:var(--auth-primary);text-decoration:none;font-weight:500}.login-left .td-mode a:hover{text-decoration:underline}.login-left .td-mode span{display:block;margin-top:13px;font-size:11px;line-height:1.8;color:#918b9e}
   .login button:focus-visible,.login a:focus-visible{outline:2px solid color-mix(in srgb,var(--auth-primary) 88%,black);outline-offset:4px}
   @media(max-width:900px){.login-left{padding:64px 36px}.login-right{padding:40px 32px}.login-right .brand2{margin-bottom:75px}.login-right h2{font-size:32px}.auth-promo-card{width:145px;padding:13px}.auth-promo-card:last-of-type{right:6%}}
   @media(max-width:680px){.login-card2{grid-template-columns:1fr;min-height:100dvh}.login-left{grid-column:1;padding:44px 26px;min-height:100dvh;justify-content:center}.login-left>.brand2{display:flex;width:100%;max-width:370px;margin:0 auto 46px}.login-left h1{font-size:30px}.login-right{display:none}}
@@ -152,9 +152,9 @@
   .sidefoot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line)}
   .tk-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
   .tk{flex:1;min-width:62px}
-  .tk .s{font-size:10px;color:var(--mut);font-weight:600}
+  .tk .s{font-size:11px;color:var(--mut);font-weight:600}
   .tk .p{font-size:13px;font-weight:650}
-  .tk .c{font-size:10px}
+  .tk .c{font-size:11px}
   .themebtn{display:flex;align-items:center;gap:8px;width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:8px 10px;cursor:pointer;font-weight:500}
   .themebtn:hover{border-color:var(--accent)}
 
@@ -330,7 +330,7 @@
   .cell .d{font-size:11px;color:var(--dim);font-weight:600}
   .cell.today .d{color:var(--accent)}
   .cell .cpnl{font-size:12px;font-weight:680}
-  .cell .ct{font-size:10px;color:var(--mut)}
+  .cell .ct{font-size:11px;color:var(--mut)}
   .cell.has{cursor:pointer}.cell.has:hover{border-color:var(--accent)}
   .cell.win{background:rgba(34,197,94,var(--i,.15))}.cell.loss{background:rgba(224,65,74,var(--i,.15))}
   .cell.win .cpnl{color:var(--grn)}.cell.loss .cpnl{color:var(--red)}
@@ -351,7 +351,7 @@
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:13px 16px;align-content:start}
   .grid .full{grid-column:1/-1}
   .fld{display:flex;flex-direction:column;gap:6px}
-  .fld label{font-size:10.5px;color:var(--mut);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+  .fld label{font-size:11px;color:var(--mut);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
   .tradeform input,.tradeform select,.tradeform textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none;font-size:13.5px;transition:border-color .12s,box-shadow .12s}
   .tradeform input:hover,.tradeform textarea:hover,.tradeform select:hover{border-color:var(--dim)}
   .tradeform input:focus,.tradeform textarea:focus,.tradeform select:focus{border-color:var(--accent)}
@@ -363,7 +363,7 @@
   .calc .ci-ic{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg);border:1px solid var(--line);color:var(--accent)}
   .calc .ci-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .calc .ci-tx{display:flex;flex-direction:column;gap:2px;min-width:0}
-  .calc .cl{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--mut)}
+  .calc .cl{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--mut)}
   .calc .ci-tx b{font-size:18px;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums;letter-spacing:-.3px}
   .calc .ci-tx b.pos{color:var(--grn)}.calc .ci-tx b.neg{color:var(--red)}
   @media(max-width:560px){.calc{flex-direction:column}.calc .ci{border-right:none;border-bottom:1px solid var(--line)}.calc .ci:last-of-type{border-bottom:none}}
@@ -452,11 +452,11 @@
   .plan-type label{font-size:11px;color:var(--mut)}
   .tradeform .plan-type select{width:auto;max-width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:4px 22px 6px 0;background:transparent;font-size:13px;cursor:pointer}
   .plan-section{margin:0 0 26px}
-  .plan-label{display:flex;align-items:center;gap:7px;margin-bottom:12px;font-size:10px;font-weight:600;letter-spacing:.7px;color:var(--mut);text-transform:uppercase}
+  .plan-label{display:flex;align-items:center;gap:7px;margin-bottom:12px;font-size:11px;font-weight:600;letter-spacing:.7px;color:var(--mut);text-transform:uppercase}
   .plan-label svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
   .charting-steps{list-style:none;counter-reset:plan-step;display:grid;gap:10px;font-size:12px;line-height:1.6}
   .charting-steps li{display:flex;align-items:flex-start;gap:9px;counter-increment:plan-step}
-  .charting-steps li::before{content:counter(plan-step);display:flex;align-items:center;justify-content:center;flex-shrink:0;width:18px;height:18px;margin-top:1px;border-radius:50%;background:var(--accent-weak);color:var(--accent);font-size:10px;font-weight:600}
+  .charting-steps li::before{content:counter(plan-step);display:flex;align-items:center;justify-content:center;flex-shrink:0;width:18px;height:18px;margin-top:1px;border-radius:50%;background:var(--accent-weak);color:var(--accent);font-size:11px;font-weight:600}
   .plan-criteria{border:0;min-width:0;padding:0;margin:0}
   .plan-criteria:disabled{opacity:.5}
   .plan-entry{display:flex;gap:9px;align-items:center;padding:6px 0;cursor:pointer;font-size:12px;line-height:1.5}
@@ -469,9 +469,9 @@
   .model-upload{display:flex;flex-direction:column;width:100%;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:8px;cursor:pointer;color:var(--mut);text-align:left;overflow:hidden;transition:border-color .15s}
   .model-upload:hover,.model-upload.drag{border-color:var(--accent);background:var(--accent-weak)}
   .model-upload svg{display:block;width:100%;height:auto;aspect-ratio:2.15}
-  .model-upload .model-upload-cta{display:flex;justify-content:space-between;width:100%;gap:6px;padding:7px 3px 2px;font-size:10px;color:var(--mut)}
+  .model-upload .model-upload-cta{display:flex;justify-content:space-between;width:100%;gap:6px;padding:7px 3px 2px;font-size:11px;color:var(--mut)}
   .model-upload .model-upload-cta b{font-weight:500;color:var(--accent)}
-  .model-help{display:flex;justify-content:space-between;gap:8px;margin-top:9px;font-size:10.5px;color:var(--mut)}
+  .model-help{display:flex;justify-content:space-between;gap:8px;margin-top:9px;font-size:11px;color:var(--mut)}
   .management-copy{font-size:12px;line-height:1.8;color:var(--txt)}
   .management-copy b{font-weight:600}
   .tradeform .exit-rules{border:0;border-left:2px solid var(--line);border-radius:0;resize:vertical;padding:4px 12px;min-height:58px;font-size:12px;background:transparent;line-height:1.7}
@@ -482,11 +482,11 @@
   .execution-hint{font-size:11px;color:var(--mut);margin-bottom:18px}
   .tradeform .cols{grid-template-columns:1fr;gap:18px}
   .tradeform .grid{gap:15px 16px}
-  .tradeform .fld label{font-size:10px}
+  .tradeform .fld label{font-size:11px}
   .tradeform .modal-actions{padding:16px 0 4px;margin-top:20px;border-top:1px solid var(--line)}
   .tradeform .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;min-width:110px}
   .tradeform :is(button,input,select,textarea):focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-  @media(max-width:560px){.trade-head{flex-direction:column;gap:12px}.trade-head .btn{align-self:flex-start}.plan-progress progress{display:none}.plan-status .status-help{font-size:10px;max-width:145px;text-align:right}.entry-models{gap:10px}.model-upload .model-upload-cta{flex-direction:column}.tradeform .grid{column-gap:12px}.tradeform .calc .ci-tx b{font-size:16px}}
+  @media(max-width:560px){.trade-head{flex-direction:column;gap:12px}.trade-head .btn{align-self:flex-start}.plan-progress progress{display:none}.plan-status .status-help{font-size:11px;max-width:145px;text-align:right}.entry-models{gap:10px}.model-upload .model-upload-cta{flex-direction:column}.tradeform .grid{column-gap:12px}.tradeform .calc .ci-tx b{font-size:16px}}
 
   .entry-models{grid-template-columns:repeat(2,minmax(0,1fr))}.entry-models>div{min-width:0}
 
@@ -582,13 +582,13 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
 </div>
 <div class="mobilebar">
   <button type="button" class="hamb" id="hamb" aria-label="Menu" aria-controls="sidebar" aria-expanded="false"><svg class="hi" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-  <div class="mbrand"><span class="logo-ic"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></span> Trade Journal</div><button type="button" class="btn ghost" id="routineMobileOpen"><svg class="rt-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M4.9 8.9l1.4 1.4M19.1 8.9l-1.4 1.4M3 17h2M19 17h2M7.5 17a4.5 4.5 0 0 1 9 0M2 21h20"/></svg><span class="rt-label">Pre-Market Routine</span></button>
+  <div class="mbrand"><span class="logo-ic"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></span> <span translate="no">TradeDesk</span></div><button type="button" class="btn ghost" id="routineMobileOpen"><svg class="rt-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M4.9 8.9l1.4 1.4M19.1 8.9l-1.4 1.4M3 17h2M19 17h2M7.5 17a4.5 4.5 0 0 1 9 0M2 21h20"/></svg><span class="rt-label">Pre-Market Routine</span></button>
 </div>
 <div class="backdrop" id="backdrop"></div>
 <div class="app" id="app">
   <!-- TOP BAR -->
   <div class="topbar">
-    <div class="tb-brand"><div class="logo"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></div> Trade Journal</div>
+    <div class="tb-brand"><div class="logo"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></div> <span translate="no">TradeDesk</span></div>
     <div class="tb-right"><button type="button" class="btn ghost" id="routineOpen" aria-controls="routinePanel" aria-expanded="false"><svg class="rt-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M4.9 8.9l1.4 1.4M19.1 8.9l-1.4 1.4M3 17h2M19 17h2M7.5 17a4.5 4.5 0 0 1 9 0M2 21h20"/></svg><span class="rt-label">Pre-Market Routine</span></button><div class="tb-bell"><svg class="hi" viewBox="0 0 24 24"><path d="M6 9.5a6 6 0 0 1 12 0c0 4.5 1.8 5.5 1.8 5.5H4.2S6 14 6 9.5"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></div>
       <div class="tb-acct">
         <button type="button" class="tb-avatar" id="tbAvatar" title="Account" aria-label="Account menu" aria-haspopup="menu" aria-controls="avatarMenu" aria-expanded="false">B</button>
@@ -599,6 +599,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
       </div></div>
   </div>
   <div class="offline-notice" id="offlineNotice" role="status" hidden>You are offline. New changes will not sync until your connection returns. Unsaved trade drafts stay in this tab.</div>
+  <div class="expiry-notice" id="expiryNotice" role="status" hidden><span id="expiryText"></span> <a href="#billing" id="expiryLink">Extend Pro</a></div>
   <div class="appbody">
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar" tabindex="-1" aria-label="Navigation">
@@ -729,7 +730,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
                   <option value="avatrade">AvaTrade</option>
                 </optgroup>
                 <optgroup label="Crypto exchanges">
-                  <option value="delta" selected>Delta Exchange (India)</option>
+                  <option value="delta">Delta Exchange</option>
                   <option value="binance">Binance</option>
                   <option value="bybit">Bybit</option>
                   <option value="coinbase">Coinbase</option>
@@ -782,7 +783,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
 <div id="tradeForm" class="tradeform" style="display:none">
   <div class="trade-head">
     <div><h2 id="mTitle">Add trade</h2><div class="hint">Plan the setup. Record the execution. Review the outcome.</div></div>
-    <button class="btn ghost" type="button" id="pullBtn">↧ Pull from Delta</button>
+    <button class="btn ghost" type="button" id="pullBtn" data-needs-delta hidden>↧ Pull from Delta</button>
   </div>
   <div id="importBar" class="importbar" style="display:none"></div>
   <form id="form">
@@ -973,7 +974,7 @@ $('#tbAvatar').onclick=e=>{e.stopPropagation();const open=$('#avatarMenu').class
 $('#avatarMenu').addEventListener('keydown',e=>{const items=[$('#menuSettings'),$('#menuLogout')];if(e.key==='Escape'){closeAccountMenu();$('#tbAvatar').setAttribute('aria-expanded','false');$('#tbAvatar').focus();}if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();items[(items.indexOf(document.activeElement)+(e.key==='ArrowDown'?1:-1)+items.length)%items.length].focus();}});
 document.addEventListener('click',e=>{if(!e.target.closest('.tb-acct'))closeAccountMenu();});
 $('#menuSettings').onclick=()=>{closeAccountMenu();openSettings();};
-$('#menuLogout').onclick=()=>{closeAccountMenu();if(confirm('Log out of Trade Journal?'))doLogout();};
+$('#menuLogout').onclick=()=>{closeAccountMenu();if(confirm('Log out of TradeDesk?'))doLogout();};
 
 // ---------- settings ----------
 let settingsTab='account';
@@ -1035,6 +1036,8 @@ $('#setDeltaTest').onclick=async()=>{$('#setDelta').textContent='Testing…';
 
 // ---------- exchange chooser ----------
 const EX_PULL={delta:true};
+// Broker pull/sync buttons only show once exchange keys are saved; checked once per page load.
+window.tdCheckDelta=()=>{const apply=()=>document.querySelectorAll('[data-needs-delta]').forEach(b=>b.hidden=!window.tdDeltaConnected);if(window.tdDeltaConnected!==undefined){apply();return;}if(window.tdDeltaCheck)return;window.tdDeltaCheck=fetch('/api/exchange').then(r=>r.ok?r.json():null).then(r=>{if(r){window.tdDeltaConnected=Boolean(r.has_creds);apply();}}).catch(()=>{}).finally(()=>{window.tdDeltaCheck=null;});};
 function exchangeNote(){
   const ex=$('#exSelect').value,direct=!!EX_PULL[ex];
   $('.ex-creds').hidden=!direct;
@@ -1045,7 +1048,8 @@ function exchangeNote(){
 async function renderExchange(){
   try{
     const r=await(await fetch('/api/exchange')).json();
-    let chosen=r.exchange||'delta';
+    window.tdDeltaConnected=Boolean(r.has_creds);window.tdCheckDelta();
+    let chosen=r.has_creds?(r.exchange||'delta'):'other';
     try{chosen=localStorage.getItem('tj_selected_broker')||chosen;}catch{}
     $('#exSelect').value=chosen;
     if(!$('#exSelect').value)$('#exSelect').value='other';
@@ -1204,13 +1208,15 @@ window.toggleTrade=id=>{
   openTradeId=id;renderDayTrades();openModal(t,true);
 };
 const SAFE_IMAGE=/^images\/[A-Za-z0-9_.-]+\.(png|jpe?g|webp|gif)$/i;
+// Free plan: show today's usage of the daily trade limit on the sidebar membership card.
+window.tdRenderUsage=()=>{const detail=$('#sidebarMemberDetail');if(!detail||window.tdTier!=='free'||!window.tradesLoaded)return;const today=typeof wsLocalDate==='function'?wsLocalDate():new Date().toISOString().slice(0,10),used=Math.min(2,allTrades.filter(t=>t.date===today).length);detail.textContent=`${used} of 2 trades logged today`;};
 function imgThumb(json){let a=[];try{a=json?JSON.parse(json):[];}catch{}const src=Array.isArray(a)?a.map(p=>typeof p==='string'?p.replace(/^\/+/,''):'').find(p=>SAFE_IMAGE.test(p)):null;return src?`<img class="tablethumb" src="/${esc(src)}" alt="Trade screenshot" data-open-image="${esc(src)}">`:'';}
 document.addEventListener('click',e=>{const img=e.target.closest?.('[data-open-image]');if(!img||!SAFE_IMAGE.test(img.dataset.openImage))return;e.stopPropagation();window.open('/'+img.dataset.openImage,'_blank','noopener');},true);
 function chkBadge(json,planJson){let a=[],plan={};try{a=json?JSON.parse(json):[];}catch{}try{plan=planJson?JSON.parse(planJson):{};}catch{}if(plan.active===false)return '<span class="pill setup">Plan paused</span>';const total=Array.isArray(plan.template?.criteria)?plan.template.criteria.length:(plan.type==='golden'?GOLDEN_RULES.length:CHECKLIST.length);return a.length?`<span class="pill setup">✓ ${a.length}/${Math.max(total,a.length)}</span>`:'';}
 
 
 // ---------- all trades table ----------
-async function loadAll(){const response=await fetch('/api/trades');const rows=await response.json().catch(()=>null);if(!response.ok||!Array.isArray(rows))throw Error(rows?.error||'Could not load your journal. Please try again.');allTrades=rows;window.tradesLoaded=true;window.TDLocale?.protect(allTrades);renderTags();return rows;}
+async function loadAll(){const response=await fetch('/api/trades');const rows=await response.json().catch(()=>null);if(!response.ok||!Array.isArray(rows))throw Error(rows?.error||'Could not load your journal. Please try again.');allTrades=rows;window.tradesLoaded=true;window.TDLocale?.protect(allTrades);window.tdRenderUsage?.();renderTags();return rows;}
 let searchTerm='';
 function renderAllTable(){
   const list=searchTerm?allTrades.filter(t=>[t.symbol,t.setup,t.notes,t.logic,t.tags,t.direction,t.outcome].some(v=>String(v||'').toLowerCase().includes(searchTerm))):allTrades;

@@ -358,11 +358,16 @@ def test_retention_uses_mature_accounts_and_includes_nonactivated_accounts(datab
             cur.execute("UPDATE public.user_profiles SET created_at=now()-interval '20 days'")
             cur.execute("INSERT INTO public.user_profiles(id,created_at) VALUES ('cccccccc-cccc-cccc-cccc-cccccccccccc',now()-interval '2 days')")
             for schema in schemas:
-                cur.execute(f'ALTER TABLE "{schema}".trades ADD COLUMN created_at text')
+                cur.execute(f'ALTER TABLE "{schema}".trades ADD COLUMN created_at text, ADD COLUMN source_id text')
                 cur.execute(f'CREATE TABLE "{schema}".journal_settings(key text PRIMARY KEY,value text)')
                 cur.execute(f'CREATE TABLE "{schema}".workspace_items(id bigint PRIMARY KEY)')
             cur.execute(f"INSERT INTO \"{schemas[0]}\".trades(title,date,created_at) VALUES ('retained','2026-11-06',(now()-interval '12 days')::text)")
+            cur.execute(f"INSERT INTO \"{schemas[0]}\".trades(title,date,created_at,source_id) VALUES ('imported','2026-11-06',(now()-interval '12 days')::text,'csv2:abc')")
+            cur.execute("INSERT INTO public.billing_orders(id,user_id,plan,currency,amount) VALUES ('order_a',%s,'annual','USD',9000),('order_b',%s,'monthly','USD',900)",(UIDS[0],UIDS[1]))
+            cur.execute("INSERT INTO public.billing_payments(payment_id,order_id,user_id,granted_until) VALUES ('pay_a','order_a',%s,now()+interval '1 year')",(UIDS[0],))
     report=operations.metrics()
+    funnel={step['step']:step['accounts'] for step in report['funnel']}
+    assert funnel=={'signed_up':3,'completed_onboarding':0,'logged_first_trade':1,'imported_csv':1,'logged_2_plus_trades_in_a_day':1,'started_checkout':2,'paid':1,'paid_again':0}
     assert report['accounts']==3
     assert report['journals_with_trades']==1
     assert report['activation_rate']==0.3333

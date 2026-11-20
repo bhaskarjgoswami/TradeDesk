@@ -59,6 +59,9 @@ async function refreshSidebarMembership(session, force = false) {
     plan.textContent = pro ? "TradeDesk Pro" : "TradeDesk Free";
     detail.textContent = pro ? "Unlimited daily trades" : "Up to 2 trades per day";
     upgrade.hidden = pro;
+    window.tdTier = membership.tier;
+    window.tdRenderUsage?.();
+    renderExpiryNotice(membership);
     card.title = `${plan.textContent} · ${detail.textContent}`;
     card.setAttribute("aria-label", pro ? "TradeDesk Pro: view plan and billing" : "Upgrade your TradeDesk Free account");
   } catch {
@@ -70,6 +73,22 @@ async function refreshSidebarMembership(session, force = false) {
     card.title = "View plan and billing";
     card.setAttribute("aria-label", "View plan and billing");
   }
+}
+
+// Pro is a one-time payment, so remind people before it ends (7 days) and for two weeks
+// after it lapses. Nothing renews by itself, so this is the only renewal prompt in the app.
+function renderExpiryNotice(membership) {
+  const notice = document.getElementById("expiryNotice");
+  const text = document.getElementById("expiryText");
+  if (!notice || !text) return;
+  const ends = membership.expires_at ? new Date(membership.expires_at) : null;
+  const days = ends ? Math.ceil((ends - Date.now()) / 86400000) : null;
+  let message = "";
+  if (membership.tier === "pro" && days !== null && days <= 7) message = days <= 1 ? "Your Pro access ends today. It does not renew automatically." : `Your Pro access ends in ${days} days. It does not renew automatically.`;
+  else if (membership.tier !== "pro" && membership.plan && days !== null && days > -14) message = "Your Pro access has ended. You are on Free (2 trades a day) and all your trades are kept.";
+  notice.hidden = !message;
+  text.textContent = message;
+  document.getElementById("expiryLink").textContent = membership.tier === "pro" ? "Extend Pro" : "Renew Pro";
 }
 
 async function token() {
@@ -90,6 +109,15 @@ function showDeletionRecovery(){
   overlay.querySelector('#tdDeletionLogout').onclick=async()=>{window.TradeDeskDrafts?.clearAll();await supabase.auth.signOut();location.reload();};
   const retry=overlay.querySelector('#tdDeletionRetry');retry.onclick=async()=>{retry.disabled=true;const status=overlay.querySelector('#tdDeletionStatus');status.textContent='Removing remaining account data…';try{await api.deleteAccount();window.TradeDeskDrafts?.clearAll();await supabase.auth.signOut();location.replace('/');}catch(error){status.textContent=error.message||'Deletion is not complete. Please retry.';}finally{retry.disabled=false;}};
   retry.focus();
+}
+
+// Reads give up after 45s (long enough for a sleeping API to wake) so the UI can show a
+// retry instead of spinning forever. Writes are never timed out client-side.
+const READ_TIMEOUT_MS = 45000;
+function readInit(init) {
+  if (typeof AbortSignal === "undefined" || !AbortSignal.timeout) return init;
+  const timeout = AbortSignal.timeout(READ_TIMEOUT_MS);
+  return { ...init, signal: init.signal && AbortSignal.any ? AbortSignal.any([init.signal, timeout]) : (init.signal || timeout) };
 }
 
 async function handle(url, init, nativeFetch) {
@@ -132,7 +160,7 @@ async function handle(url, init, nativeFetch) {
       search.set("limit","500");
       const rows=[];
       while (true) {
-        const page = await nativeFetch(API + "/api/trades/page?" + search, {...init,headers});
+        const page = await nativeFetch(API + "/api/trades/page?" + search, readInit({...init,headers}));
         if (!page.ok) { if(page.status===423)showDeletionRecovery(); if(page.status===401)window.sessionExpired?.(); return page; }
         const data=await page.json();
         rows.push(...data.rows);
@@ -142,12 +170,12 @@ async function handle(url, init, nativeFetch) {
       rows.sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")) || b.id-a.id);
       return json(rows);
     }
-    res = await nativeFetch(API + url, { ...init, headers });
+    res = await nativeFetch(API + url, method === "GET" ? readInit({ ...init, headers }) : { ...init, headers });
   } catch (e) {
     if (path === "/api/trades" && method === "GET") return json({error:"Could not load your journal. Please try again."},503);
     if (method !== "GET") throw e; // never retry writes
     await new Promise((r) => setTimeout(r, 800)); // API redeploying: retry reads once
-    res = await nativeFetch(API + url, { ...init, headers });
+    res = await nativeFetch(API + url, readInit({ ...init, headers }));
   }
   if(res.status===423)showDeletionRecovery();
   if (res.status === 401) {
@@ -320,7 +348,10 @@ window.renderBilling=async()=>{
     host.replaceChildren();
     mountBilling(host,()=>supabase.auth.getSession().then(({data})=>refreshSidebarMembership(data.session,true)));
     host.dataset.mounted='true';
-  }catch{
+  }catch(error){
+    let reloaded=false;
+    try{reloaded=sessionStorage.getItem('td_chunk_reload')==='1';sessionStorage.setItem('td_chunk_reload','1');}catch{}
+    if(/dynamically imported module|Importing a module script failed|Failed to fetch/i.test(String(error?.message||error))&&!reloaded){location.reload();return;}
     host.innerHTML='<div class="billing-pane-status" role="alert"><p>Could not load billing. Please try again.</p><button type="button" class="btn">Try again</button></div>';
     host.querySelector('button').onclick=()=>window.renderBilling();
     window.TDLocale?.apply(host);

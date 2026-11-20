@@ -1,6 +1,6 @@
 :root{
   --bg:#ffffff; --sidebar:#fafafb; --panel:#ffffff; --panel2:#f4f5f7; --line:#ececef;
-  --txt:#1b1c20; --mut:#8a8f98; --dim:#aeb4bd;
+  --txt:#1b1c20; --mut:#5f6672; --dim:#aeb4bd;
   --accent:#6c5ce7; --accent-weak:#efedfd;
   --grn:#16a34a; --red:#e0414a; --amb:#d97706;
   --missing-bg:#fdfaf2; --missing-line:#f0e3c6; --missing-txt:#c08a1c;
@@ -438,7 +438,14 @@ tbody tr:hover td{background:var(--panel2)}
 .pub-foot nav{display:flex;gap:16px}
 .pub-foot a{color:var(--mut);text-decoration:none}
 .pub-foot a:hover{color:var(--txt)}
-@media(max-width:560px){.pub-head nav>a:not(.btn){display:none}.pub-hero{padding:44px 0 36px}}
+@media(max-width:560px){.pub-head nav{gap:8px}.pub-head nav .btn.ghost{display:none}.pub-hero{padding:44px 0 36px}}
+.pub-plan-cta{display:flex;justify-content:center;margin-top:16px;min-height:40px}
+.pub-faq{max-width:700px;margin:0 auto;padding:8px 0 64px}
+.pub-faq h2{text-align:center;margin-bottom:16px}
+.pub-faq details{border-bottom:1px solid var(--line);padding:14px 0}
+.pub-faq summary{cursor:pointer;font-weight:600;font-size:15px}
+.pub-faq summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.pub-faq p{margin:8px 0 0;color:var(--mut);font-size:14px;line-height:1.6}
 
 /* ---------- CSV import dialog ---------- */
 .imp-card{max-width:560px;text-align:left}
