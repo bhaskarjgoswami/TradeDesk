@@ -9,6 +9,7 @@ from .config import FRONTEND_URL
 from .observability import scrub_event,request_diagnostics
 from .routers import trades, stats, daylogs, exchange, subscription, account, playbooks
 from .journal.router import router as journal_router
+from .client_errors import router as client_errors_router
 
 if os.environ.get("SENTRY_DSN"):
     import sentry_sdk
@@ -50,6 +51,7 @@ app.include_router(subscription.router)
 app.include_router(account.router)
 app.include_router(playbooks.router)
 app.include_router(journal_router)
+app.include_router(client_errors_router)
 
 
 @app.get("/health")
@@ -135,17 +137,25 @@ async def parse_journal_body(request, call_next):
 app.middleware("http")(request_diagnostics)
 
 # CORS wraps generated error responses as well as successful requests.
+# Render sets RENDER=true; local development and tests do not.
+PRODUCTION = bool(os.environ.get("RENDER"))
+DEV_ORIGINS = [
+    "http://localhost:5173",   # Vite dev
+    "http://localhost:3000",   # alt dev
+    "capacitor://localhost",   # Capacitor mobile
+    "http://localhost",        # Expo mobile
+]
+# Only this Vercel project and team: the production alias plus its per-deploy
+# (9-character hash) and per-branch preview URLs.
+VERCEL_ORIGIN_REGEX = (
+    r"https://trade-desk-dl66(?:\.vercel\.app"
+    r"|-(?:[a-z0-9]{9}|git-[a-z0-9-]{1,63})-bhaskarjgoswami-5079s-projects\.vercel\.app)"
+)
+CORS_ORIGINS = [FRONTEND_URL] + ([] if PRODUCTION else DEV_ORIGINS)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        FRONTEND_URL,
-        "http://localhost:5173",   # Vite dev
-        "http://localhost:3000",   # alt dev
-        "capacitor://localhost",   # Capacitor mobile
-        "http://localhost",        # Expo mobile
-    ],
-    # Allow this project's Vercel domains (stable production alias + per-deploy preview URLs)
-    allow_origin_regex=r"https://trade-desk-dl66[a-z0-9-]*\.vercel\.app",
+    allow_origins=CORS_ORIGINS,
+    allow_origin_regex=VERCEL_ORIGIN_REGEX,
     allow_credentials=True,
     expose_headers=["X-Request-ID"],
     allow_methods=["*"],

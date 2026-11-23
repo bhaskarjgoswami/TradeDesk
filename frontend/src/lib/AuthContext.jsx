@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, useRef } from "react";
-import { supabase } from "./supabase";
+import { loadSupabase, needsAuthClient } from "./supabaseLoader";
+import { initialAuthReturn } from "./authReturn";
 import { api } from "./api";
 import { setCurrency } from "./calc";
 import { CHECKLIST_DEFAULT, legacyChecklist } from "./ui";
@@ -34,14 +35,25 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
+    // Signed-out visitors with nothing for Auth to consume never download the
+    // Auth client. Sign-in happens in the journal at /app, a separate page load.
+    let storage = null;
+    try { storage = window.localStorage; } catch {}
+    if (!needsAuthClient(storage, initialAuthReturn)) {
       setLoading(false);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      setSession(s);
-    });
-    return () => sub.subscription.unsubscribe();
+      return;
+    }
+    let active = true, sub = null;
+    loadSupabase().then((supabase) => {
+      if (!active) return;
+      supabase.auth.getSession().then(({ data }) => {
+        if (!active) return;
+        setSession(data.session);
+        setLoading(false);
+      });
+      sub = supabase.auth.onAuthStateChange((_e, s) => { if (active) setSession(s); }).data;
+    }).catch(() => { if (active) setLoading(false); });
+    return () => { active = false; sub?.subscription.unsubscribe(); };
   }, []);
 
   async function refreshTier() {
@@ -84,6 +96,7 @@ export function AuthProvider({ children }) {
   setCurrency(prefs.currency);
 
   async function savePrefs(patch) {
+    const supabase = await loadSupabase();
     const { data, error } = await supabase.auth.updateUser({ data: { ...prefs, ...patch } });
     if (error) throw error;
     setSession((s) => (s ? { ...s, user: data.user } : s));
@@ -102,7 +115,7 @@ export function AuthProvider({ children }) {
     billingCurrency: sub.currency,
     loading,
     refreshTier,
-    signOut: () => supabase.auth.signOut(),
+    signOut: () => loadSupabase().then((supabase) => supabase.auth.signOut()),
   };
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }

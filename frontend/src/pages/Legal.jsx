@@ -5,6 +5,23 @@ import { PublicHeader, PublicFooter } from "./Landing";
 
 const mail = <a href={SUPPORT_URL}>{SUPPORT_LABEL}</a>;
 
+// PLACEHOLDER: the owner has not supplied the legal entity yet. Set
+// VITE_LEGAL_ENTITY and VITE_LEGAL_ADDRESS (or edit here) before relying on
+// this policy; until then the page shows bracketed placeholders.
+const LEGAL_ENTITY = import.meta.env.VITE_LEGAL_ENTITY || "";
+const LEGAL_ADDRESS = import.meta.env.VITE_LEGAL_ADDRESS || "";
+const entity = LEGAL_ENTITY || "[Company name]";
+const address = LEGAL_ADDRESS || "[Registered address]";
+
+// Only providers the code actually uses. Keep in sync with backend/app and vercel.json.
+const PROCESSORS = [
+  ["Supabase", "Database, sign-in, sign-up and password emails, private screenshot storage", "Japan (Tokyo, AWS ap-northeast-1)"],
+  ["Render", "Application server (API)", "United States (Oregon)"],
+  ["Vercel", "Website hosting and delivery", "Global edge network, United States"],
+  ["Razorpay", "Payments for Pro", "India"],
+  ["Sentry", "Error monitoring, when enabled (no journal data, tokens or email addresses)", "United States"],
+];
+
 const PAGES = {
   terms: {
     title: "Terms of Service",
@@ -33,7 +50,9 @@ const PAGES = {
     title: "Privacy Policy",
     body: (
       <>
-        <p>{`This policy explains what ${BRAND} collects and how it is used.`}</p>
+        <p>{`This policy explains what ${BRAND} collects, why, where it is processed and the choices you have. ${BRAND} is used by traders worldwide.`}</p>
+        <h3>Who is responsible</h3>
+        <p>The data controller is {entity}, {address}. Contact: {mail}.</p>
         <h3>What we store</h3>
         <ul>
           <li>Account: email address and a securely hashed password (managed by Supabase Auth).</li>
@@ -41,16 +60,40 @@ const PAGES = {
           <li>Optional profile details and feedback you submit, including attached images. Unsaved trade drafts stay in session storage in your current browser tab and are cleared on sign-out.</li>
           <li>Exchange API keys you save, encrypted by the application before storage.</li>
           <li>Plan status and payment reference IDs. Card and UPI details are handled by Razorpay and never reach us.</li>
+          <li>Technical data: server logs (time, route, status, no request bodies) and reports of errors in your browser (error text, page path, browser version). Values that look like emails or tokens are removed before storage.</li>
         </ul>
         <h3>How we use it</h3>
-        <p>Only to provide the service: show your journal, compute your statistics, import your fills and manage your plan. We do not sell your data or use it for advertising.</p>
-        <h3>Where it lives</h3>
-        <p>Data is stored with Supabase (database, authentication, private file storage). The application runs on Render and Vercel. Payments are processed by Razorpay. Screenshots are private and served through short-lived signed links.</p>
-        <h3>Your rights</h3>
-        <p>In Settings → Your data you can download all your data or permanently delete your account, which removes your trades, journal, playbooks, screenshots and profile. You can also contact {mail}.</p>
+        <p>Only to provide the service: show your journal, compute your statistics, import your fills, manage your plan, keep the service secure and fix errors. We do not sell your data or use it for advertising.</p>
+        <h3>Legal basis (EU, EEA and UK users)</h3>
+        <ul>
+          <li>Contract: your account, journal, imports and Pro plan.</li>
+          <li>Legitimate interests: security, abuse prevention, error monitoring and fixing bugs.</li>
+          <li>Consent: optional profile details such as photo, age group and gender. You can remove them at any time in Settings.</li>
+          <li>Legal obligation: payment records we must keep for tax and accounting law.</li>
+        </ul>
+        <h3>Where it is processed</h3>
+        <p>Screenshots are private and served through short-lived signed links. When you connect an exchange, we contact that exchange with the read-only key you provided. We use these providers (sub-processors):</p>
+        <div className="pub-table">
+          <table>
+            <thead><tr><th scope="col">Provider</th><th scope="col">Purpose</th><th scope="col">Location</th></tr></thead>
+            <tbody>{PROCESSORS.map(([name, purpose, place]) => <tr key={name}><td>{name}</td><td>{purpose}</td><td>{place}</td></tr>)}</tbody>
+          </table>
+        </div>
+        <h3>International transfers</h3>
+        <p>Your data may be processed outside your country, including in Japan, the United States and India. Japan has an EU adequacy decision. For other transfers we rely on the Standard Contractual Clauses (and the UK Addendum) in our providers’ data processing terms.</p>
         <h3>Retention</h3>
-        <p>We keep your data while your account exists. Deleting your account removes your active account, journal records, and uploaded images. Infrastructure backups follow the storage providers’ retention schedules; we do not promise a specific removal period for those backups.</p>
-        <p>Contact: {mail}</p>
+        <p>We keep your data while your account exists. Deleting your account removes your active account, journal records and uploaded images straight away. Copies in provider backups roll off on the provider’s backup schedule, within up to 30 days. Payment records are kept as long as tax law requires. Server logs and error reports are deleted automatically by our providers, within 90 days.</p>
+        <h3>Your rights</h3>
+        <ul>
+          <li>Access and export: Settings → Your data → download all your data.</li>
+          <li>Correction: edit your profile and journal at any time.</li>
+          <li>Deletion: Settings → Your data → delete your account.</li>
+          <li>Objection and withdrawal of consent: contact us, or remove optional profile details yourself.</li>
+          <li>Complaint: you can complain to your local data protection supervisory authority.</li>
+        </ul>
+        <p>For any request, contact {mail}. We reply within one month.</p>
+        <h3>Changes</h3>
+        <p>We will update the date below when this policy changes.</p>
       </>
     ),
   },

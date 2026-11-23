@@ -132,7 +132,9 @@
   @media(max-width:680px){.login-card2{grid-template-columns:1fr;min-height:100dvh}.login-left{grid-column:1;padding:44px 26px;min-height:100dvh;justify-content:center}.login-left>.brand2{display:flex;width:100%;max-width:370px;margin:0 auto 46px}.login-left h1{font-size:30px}.login-right{display:none}}
   .login-left .td-mode a[data-m]{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;height:40px;padding:0 20px;border-radius:40px;background:var(--auth-soft);color:#353247;font-family:var(--auth-font);font-size:14px;font-weight:480;line-height:1.2}.login-left .td-mode a[data-m]:hover{background:color-mix(in srgb,var(--auth-primary) 14%,white);text-decoration:none}
   .login-left input:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px #fbfbff inset;-webkit-text-fill-color:#353247;caret-color:#353247}
-  @media(max-width:980px){.topbar{display:none}}
+  .nav-account{display:none}
+.nav-account .side-h:first-child{margin-top:18px}
+@media(max-width:980px){.nav-account{display:block}#sideToggle{display:none}.topbar{display:none}}
 
   /* ---------- sidebar ---------- */
   .sidebar{width:228px;flex-shrink:0;background:transparent;padding:6px 6px 6px 4px;display:flex;flex-direction:column;overflow:auto}
@@ -599,6 +601,8 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
         <button type="button" class="tb-avatar" id="tbAvatar" title="Account" aria-label="Account menu" aria-haspopup="menu" aria-controls="avatarMenu" aria-expanded="false">B</button>
         <div class="tb-menu" id="avatarMenu" role="menu" aria-label="Account">
           <button type="button" class="tb-menu-item" id="menuSettings" role="menuitem"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V20a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H4a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H10a1.6 1.6 0 0 0 1-1.5V4a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V10a1.6 1.6 0 0 0 1.5 1H20a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg> Settings</button>
+          <button type="button" class="tb-menu-item" id="menuBilling" role="menuitem"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3"/></svg> Plan &amp; billing</button>
+          <button type="button" class="tb-menu-item" id="menuFeedback" role="menuitem"><svg viewBox="0 0 24 24"><path d="M21 11a8 8 0 0 1-8 8H6l-4 3V11a9 9 0 0 1 19 0Z"/></svg> Feedback</button>
           <button type="button" class="tb-menu-item danger" id="menuLogout" role="menuitem"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Log out</button>
         </div>
       </div></div>
@@ -609,16 +613,19 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar" tabindex="-1" aria-label="Navigation">
 <button type="button" id="drawerClose" aria-label="Close navigation">×</button>
+<nav aria-label="Main">
 <div class="side-h">Journal</div>
-<div class="navitem" data-view="month" role="button" tabindex="0" title="Journal" aria-label="Journal"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6zM9 7h6M9 11h6M9 15h4"/></svg></span>Journal</div>
-<div class="navitem" data-view="performance" role="button" tabindex="0" title="Stats" aria-label="Stats"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16h16M7 15l4-5 4 3 5-7"/></svg></span>Stats</div>
-<div class="navitem" data-view="edge" role="button" tabindex="0" title="Trading Edge" aria-label="Trading Edge"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></span>Trading Edge</div>
-<div class="navitem" data-view="news" role="button" tabindex="0" title="News" aria-label="News"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h13v14H6a2 2 0 0 1-2-2zM17 9h3v8a2 2 0 0 1-2 2M7 9h7M7 13h7M7 16h4"/></svg></span>News</div>
-<div class="navitem" data-view="focus" role="button" tabindex="0" title="Meditation" aria-label="Meditation"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4c-2.5 3-2.5 6 0 9 2.5-3 2.5-6 0-9zM4 12c2 3.5 5 5 8 5s6-1.5 8-5M7 20h10"/></svg></span>Meditation</div>
-<div class="navitem" data-view="feedback" role="button" tabindex="0" title="Feedback" aria-label="Feedback"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11a8 8 0 0 1-8 8H6l-4 3V11a9 9 0 0 1 19 0Z"/><path d="M7 9h9M7 13h6"/></svg></span>Feedback</div>
-<div class="navitem" data-view="settings" role="button" tabindex="0" title="Settings" aria-label="Settings"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>Settings</div>
-
-<a class="navitem" data-view="billing" href="#billing" title="Plan &amp; billing" aria-label="Plan and billing"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3"/></svg></span>Plan &amp; billing</a>
+<a class="navitem" data-view="month" href="#" title="Journal"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6zM9 7h6M9 11h6M9 15h4"/></svg></span>Journal</a>
+<a class="navitem" data-view="performance" href="#performance" title="Performance"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16h16M7 15l4-5 4 3 5-7"/></svg></span>Performance</a>
+<a class="navitem" data-view="edge" href="#edge" title="Playbook"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></span>Playbook</a>
+<div class="side-h">Tools</div>
+<a class="navitem" data-view="news" href="#news" title="News"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h13v14H6a2 2 0 0 1-2-2zM17 9h3v8a2 2 0 0 1-2 2M7 9h7M7 13h7M7 16h4"/></svg></span>News</a>
+<a class="navitem" data-view="focus" href="#focus" title="Meditation"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4c-2.5 3-2.5 6 0 9 2.5-3 2.5-6 0-9zM4 12c2 3.5 5 5 8 5s6-1.5 8-5M7 20h10"/></svg></span>Meditation</a>
+<div class="nav-account"><div class="side-h">Account</div>
+<a class="navitem" data-view="settings" href="#settings"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>Settings</a>
+<a class="navitem" data-view="billing" href="#billing"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3"/></svg></span>Plan &amp; billing</a>
+<a class="navitem" data-view="feedback" href="#feedback"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11a8 8 0 0 1-8 8H6l-4 3V11a9 9 0 0 1 19 0Z"/></svg></span>Feedback</a></div>
+</nav>
 
     <div class="sidefoot">
       <a class="sidebar-membership" id="sidebarMembership" href="#billing" aria-label="View membership and billing" hidden>
@@ -663,8 +670,8 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
     </div>
 
 <div class="pane" id="pane-edge"><div class="pane-pad ws-page" id="ws-edge">
-  <div class="ws-head"><div><h1>Trading Edge</h1><p class="ws-subtitle">Your playbook, your daily pre-market routine and the A+ checklist that defines a valid entry.</p></div></div>
-  <div class="settings-card"><div class="settings-tabs" role="tablist" aria-label="Trading Edge sections"><button type="button" role="tab" id="settings-tab-playbook" data-settings-tab="playbook" aria-controls="settings-panel-playbook">Playbook</button><button type="button" role="tab" id="settings-tab-routine" data-settings-tab="routine" aria-controls="settings-panel-routine">Pre-Market Routine</button></div>
+  <div class="ws-head"><div><h1>Playbook</h1><p class="ws-subtitle">Your playbook, your daily pre-market routine and the A+ checklist that defines a valid entry.</p></div></div>
+  <div class="settings-card"><div class="settings-tabs" role="tablist" aria-label="Playbook sections"><button type="button" role="tab" id="settings-tab-playbook" data-settings-tab="playbook" aria-controls="settings-panel-playbook">Playbook</button><button type="button" role="tab" id="settings-tab-routine" data-settings-tab="routine" aria-controls="settings-panel-routine">Pre-Market Routine</button></div>
 <section class="set-sec settings-panel edge-playbook" data-settings-panel="playbook" role="tabpanel" hidden><div class="ws-page" id="ws-strategies"></div></section>
 <section class="set-sec settings-panel" data-settings-panel="routine" role="tabpanel" hidden><div id="routineEditor"></div></section>
           <div class="set-sec settings-panel" data-settings-panel="preferences" role="tabpanel" hidden>
@@ -851,7 +858,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
 </div>
 
 <dialog id="wsDialog" class="ws-dialog" aria-labelledby="wsDialogTitle"></dialog>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -861,6 +868,11 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const trim=(s,n)=>{s=String(s??'');return s.length>n?s.slice(0,n)+'…':s;};
 const debounce=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};};
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1700);}
+// In-app confirm: same look as the rest of the journal, focus-trapped by <dialog>, resolves true/false.
+function tdConfirm(message,{confirmLabel='Confirm',danger=false}={}){return new Promise(resolve=>{const tr=s=>window.TDLocale?.translate?window.TDLocale.translate(s):s;let d=$('#tdConfirm');if(!d){d=document.createElement('dialog');d.id='tdConfirm';d.className='td-confirm';d.setAttribute('aria-labelledby','tdConfirmMsg');d.innerHTML='<p id="tdConfirmMsg"></p><div class="td-confirm-actions"><button type="button" class="btn ghost" data-answer="no"></button><button type="button" class="btn" data-answer="yes"></button></div>';document.body.append(d);}
+  const opener=document.activeElement;$('#tdConfirmMsg').textContent=tr(message);const no=d.querySelector('[data-answer="no"]'),yes=d.querySelector('[data-answer="yes"]');no.textContent=tr('Cancel');yes.textContent=tr(confirmLabel);yes.classList.toggle('danger',danger);
+  const done=answer=>{d.onclose=null;if(d.open)d.close();opener?.focus?.();resolve(answer);};no.onclick=()=>done(false);yes.onclick=()=>done(true);d.onclose=()=>done(false);d.oncancel=event=>{event.preventDefault();done(false);};d.showModal();(danger?no:yes).focus();});}
+window.tdConfirm=tdConfirm;
 
 let selectedDate=null, allTrades=[], dayData=null, view='journal', openTradeId='new';
 const TODAY=()=>new Date().toLocaleDateString('en-CA');  // YYYY-MM-DD in local time
@@ -903,12 +915,14 @@ let theme=localStorage.getItem('tj_theme')||'light';
 applyTheme(theme);
 
 // ---------- views ----------
-$$('.navitem[data-view]').forEach(n=>n.onclick=event=>{event.preventDefault();setView(n.dataset.view);});
+$$('.navitem[data-view]').forEach(n=>n.onclick=event=>{event.preventDefault();setView(n.dataset.view);focusPaneHeading(n.dataset.view);});
+// After a nav jump, move focus to the new page's heading so screen readers announce it.
+function focusPaneHeading(v){requestAnimationFrame(()=>{const h=document.querySelector('#pane-'+v+' h1, #pane-'+v+' h2');if(!h)return;if(!h.hasAttribute('tabindex'))h.setAttribute('tabindex','-1');h.focus({preventScroll:true});});}
 $('#sidebarMembership').onclick=event=>{event.preventDefault();setView('billing');};
 function setView(v){
   view=v;
   if(['month','settings','edge','performance','news','focus','feedback','billing'].includes(v))history.replaceState(null,'',location.pathname+location.search+(v==='month'?'':'#'+v));
-  $$('.navitem').forEach(n=>n.classList.toggle('on',n.dataset.view===v));
+  $$('.navitem').forEach(n=>{const on=n.dataset.view===v;n.classList.toggle('on',on);if(on)n.setAttribute('aria-current','page');else n.removeAttribute('aria-current');});
   $$('.pane').forEach(p=>p.classList.remove('on'));
   $('#pane-'+v).classList.add('on');
   $('#middle').classList.toggle('hidden', v!=='journal');
@@ -972,14 +986,16 @@ $('#loginForm').addEventListener('submit',async e=>{
     else{const d=await r.json().catch(()=>({}));$('#loginErr').textContent=d.error||'Login failed';}
   }catch{$('#loginErr').textContent='Could not reach the server.';}
 });
-async function doLogout(){if(!confirm('Log out? Unsaved drafts on this device will be removed.'))return;try{const response=await fetch('/api/logout',{method:'POST'});if(!response.ok)throw Error('Could not log out. Please try again.');window.TradeDeskDrafts?.clearAll();booted=false;routineState=null;routineDraft=null;settingsDraft=null;allTrades=[];dayData=null;$('#routinePanel').hidden=true;showLogin();location.reload();}catch(error){toast(error.message||'Could not log out. Please try again.');}}
+async function doLogout(confirmed=false){if(!confirmed&&!await tdConfirm('Log out? Unsaved drafts on this device will be removed.',{confirmLabel:'Log out'}))return;try{const response=await fetch('/api/logout',{method:'POST'});if(!response.ok)throw Error('Could not log out. Please try again.');window.TradeDeskDrafts?.clearAll();booted=false;routineState=null;routineDraft=null;settingsDraft=null;allTrades=[];dayData=null;$('#routinePanel').hidden=true;showLogin();location.reload();}catch(error){toast(error.message||'Could not log out. Please try again.');}}
 function closeAccountMenu(){$('#avatarMenu').classList.remove('show');$('#tbAvatar').setAttribute('aria-expanded','false');}
 document.addEventListener('focusin',event=>{if(!event.target.closest('.tb-acct'))closeAccountMenu();});
 $('#tbAvatar').onclick=e=>{e.stopPropagation();const open=$('#avatarMenu').classList.toggle('show');$('#tbAvatar').setAttribute('aria-expanded',String(open));if(open)$('#menuSettings').focus();};
-$('#avatarMenu').addEventListener('keydown',e=>{const items=[$('#menuSettings'),$('#menuLogout')];if(e.key==='Escape'){closeAccountMenu();$('#tbAvatar').setAttribute('aria-expanded','false');$('#tbAvatar').focus();}if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();items[(items.indexOf(document.activeElement)+(e.key==='ArrowDown'?1:-1)+items.length)%items.length].focus();}});
+$('#avatarMenu').addEventListener('keydown',e=>{const items=[$('#menuSettings'),$('#menuBilling'),$('#menuFeedback'),$('#menuLogout')];if(e.key==='Escape'){closeAccountMenu();$('#tbAvatar').setAttribute('aria-expanded','false');$('#tbAvatar').focus();}if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();items[(items.indexOf(document.activeElement)+(e.key==='ArrowDown'?1:-1)+items.length)%items.length].focus();}});
 document.addEventListener('click',e=>{if(!e.target.closest('.tb-acct'))closeAccountMenu();});
 $('#menuSettings').onclick=()=>{closeAccountMenu();openSettings();};
-$('#menuLogout').onclick=()=>{closeAccountMenu();if(confirm('Log out of TradeDesk?'))doLogout();};
+$('#menuBilling').onclick=()=>{closeAccountMenu();setView('billing');};
+$('#menuFeedback').onclick=()=>{closeAccountMenu();setView('feedback');};
+$('#menuLogout').onclick=async()=>{closeAccountMenu();if(await tdConfirm('Log out of TradeDesk?',{confirmLabel:'Log out'}))doLogout(true);};
 
 // ---------- settings ----------
 let settingsTab='account';
@@ -1010,7 +1026,7 @@ function renderSetChecklist(){
   el.querySelectorAll('input,textarea,select').forEach(input=>input.oninput=markSettingsDirty);
   $('#setPlanEdit').onchange=()=>{readSettingsEditor();settingsEditType=$('#setPlanEdit').value;el.innerHTML='';renderSetChecklist();markSettingsDirty();};
   $('#savePlanDefaults').onclick=savePlanDefaults;
-  $('#reloadPlanDefaults').onclick=async()=>{if(!confirm('Discard unsaved edits and reload saved defaults?'))return;if(await loadPlanSettings()){settingsDraft=null;el.innerHTML='';renderSetChecklist();}};
+  $('#reloadPlanDefaults').onclick=async()=>{if(!await tdConfirm('Discard unsaved edits and reload saved defaults?',{confirmLabel:'Discard',danger:true}))return;if(await loadPlanSettings()){settingsDraft=null;el.innerHTML='';renderSetChecklist();}};
   $('#backToTrade').onclick=()=>setView('journal');
   el.querySelectorAll('[data-reference]').forEach(input=>input.onchange=()=>uploadSettingReference(input));
   renderSettingReferences();updateSettingsBusy();
@@ -1221,7 +1237,12 @@ function chkBadge(json,planJson){let a=[],plan={};try{a=json?JSON.parse(json):[]
 
 
 // ---------- all trades table ----------
-async function loadAll(){const response=await fetch('/api/trades');const rows=await response.json().catch(()=>null);if(!response.ok||!Array.isArray(rows))throw Error(rows?.error||'Could not load your journal. Please try again.');allTrades=rows;window.tradesLoaded=true;window.TDLocale?.protect(allTrades);window.tdRenderUsage?.();renderTags();return rows;}
+async function loadAll(){const response=await fetch('/api/trades');const rows=await response.json().catch(()=>null);if(!response.ok||!Array.isArray(rows))throw Error(rows?.error||'Could not load your journal. Please try again.');allTrades=rows;window.tradesLoaded=true;tradesChanged();return rows;}
+// Single-trade writes patch the cached list instead of re-downloading the whole history.
+function tradesChanged(){allTrades.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||b.id-a.id);window.TDLocale?.protect(allTrades);window.tdRenderUsage?.();renderTags();}
+function upsertTrade(row){if(!row||!Number.isInteger(row.id))return;const i=allTrades.findIndex(t=>t.id===row.id);if(i<0)allTrades.unshift(row);else allTrades[i]=row;tradesChanged();}
+function dropTrade(id){allTrades=allTrades.filter(t=>t.id!==id);tradesChanged();}
+async function refreshTrade(id){const response=await fetch('/api/trades/'+id);if(response.status===404){dropTrade(Number(id));return null;}const row=await response.json().catch(()=>null);if(!response.ok||!row)throw Error(row?.error||'Could not load this trade. Please try again.');upsertTrade(row);return row;}
 let searchTerm='';
 function renderAllTable(){
   const list=searchTerm?allTrades.filter(t=>[t.symbol,t.setup,t.notes,t.logic,t.tags,t.direction,t.outcome].some(v=>String(v||'').toLowerCase().includes(searchTerm))):allTrades;
@@ -1423,11 +1444,11 @@ async function pullDelta(){
   const btns=[$('#pullBtn')];btns.forEach(b=>{if(b){b.disabled=true;}});
   try{
     const r=await(await fetch('/api/delta/today')).json();
-    if(r.error==='no-credentials'){alert('No Delta API keys. Add your read-only keys in Settings → Integrations.');return;}
-    if(r.error){alert('Delta: '+r.error);return;}
+    if(r.error==='no-credentials'){toast('No Delta API keys. Add your read-only keys in Settings → Integrations.');return;}
+    if(r.error){toast('Delta: '+r.error);return;}
     if(!r.trades||!r.trades.length){toast('No Delta trades for today');return;}
     importQueue=r.trades;importIdx=0;loadImport();
-  }catch(e){alert('Could not reach Delta: '+e);}
+  }catch(e){toast('Could not reach Delta: '+e);}
   finally{btns.forEach(b=>{if(b)b.disabled=false;});}
 }
 $('#pullBtn').onclick=pullDelta;        // in-form: step through one-by-one
@@ -1484,7 +1505,7 @@ function renderRoutineEditor(){const el=$('#routineEditor');if($('#routineEnable
   el.querySelectorAll('input').forEach(input=>input.oninput=routineChanged);
   $('#routineAdd').onclick=()=>{readRoutineEditor();if(routineDraft.steps.length>=6)return;routineDraft.steps.push({id:crypto.randomUUID(),title:'New routine step',icon:'target',action:'none'});renderRoutineSteps();routineChanged();};
   $('#routineResetDefaults').onclick=()=>{if(!confirm('Replace this draft with the three default steps?'))return;routineDraft.steps=[{id:'news',title:'Review news on the economic calendar',action:'none',icon:'calendar'},{id:'plan',title:'Review your trade plan',action:'preferences',icon:'target'},{id:'meditate',title:'Meditate (15 mins)',action:'none',icon:'calm'}];renderRoutineSteps();routineChanged();};
-  $('#routineCancel').onclick=async()=>{if(!confirm('Discard unsaved routine changes?'))return;if(await loadRoutine()){routineDraft=null;el.innerHTML='';renderRoutineEditor();}};
+  $('#routineCancel').onclick=async()=>{if(!await tdConfirm('Discard unsaved routine changes?',{confirmLabel:'Discard',danger:true}))return;if(await loadRoutine()){routineDraft=null;el.innerHTML='';renderRoutineEditor();}};
   $('#routineSave').onclick=saveRoutine;
   $('#routinePreview').onclick=()=>{routineForced=true;renderRoutinePanel();};
 }

@@ -50,7 +50,7 @@
       ]
     },
     {
-      "source": "/(language|onboarding|feedback-page|trade-drafts|broker-import|workspace|calendar|trade|playbook|profile|meditation).js",
+      "source": "/(language|onboarding|feedback-page|trade-drafts|broker-import|workspace|calendar|trade|playbook|profile|meditation|news).js",
       "headers": [
         {
           "key": "Cache-Control",

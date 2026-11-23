@@ -5,6 +5,9 @@
   --grn:#16a34a; --red:#e0414a; --amb:#d97706;
   --missing-bg:#fdfaf2; --missing-line:#f0e3c6; --missing-txt:#c08a1c;
   --page:#f3f1fc;
+  /* Text-size accents darkened slightly from #6c5ce7/#747184 to reach WCAG AA on --page. */
+  --link:#6252e0; --lang-label:#6a6779; --lang-line:#e1dff0;
+  color-scheme:light;
 }
 [data-theme="dark"]{
   --bg:#0b0e14; --sidebar:#0e131c; --panel:#131822; --panel2:#1a2130; --line:#232c3d;
@@ -13,6 +16,21 @@
   --grn:#22c55e; --red:#ef4444; --amb:#f59e0b;
   --missing-bg:#1d1a10; --missing-line:#3d3415; --missing-txt:#e0b53e;
   --page:#05080c;
+  --link:#8b7cf6; --lang-label:#9aa3b2; --lang-line:#2e3749;
+  color-scheme:dark;
+}
+/* Follow the system setting until the visitor picks a theme (td_theme). */
+@media (prefers-color-scheme: dark){
+:root:not([data-theme="light"]){
+  --bg:#0b0e14; --sidebar:#0e131c; --panel:#131822; --panel2:#1a2130; --line:#232c3d;
+  --txt:#e6edf6; --mut:#8c97a8; --dim:#5d6678;
+  --accent:#8b7cf6; --accent-weak:#211f37;
+  --grn:#22c55e; --red:#ef4444; --amb:#f59e0b;
+  --missing-bg:#1d1a10; --missing-line:#3d3415; --missing-txt:#e0b53e;
+  --page:#05080c;
+  --link:#8b7cf6; --lang-label:#9aa3b2; --lang-line:#2e3749;
+  color-scheme:dark;
+}
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body,#root{height:100%}
@@ -433,7 +451,12 @@ tbody tr:hover td{background:var(--panel2)}
 .pub-legal{max-width:720px !important;padding-bottom:56px !important;line-height:1.65;font-size:15px}
 .pub-legal h1{font-size:30px;letter-spacing:-.6px;margin:28px 0 16px}
 .pub-legal h3{margin:26px 0 6px;font-size:16px}
-.pub-legal a{color:var(--accent)}
+.pub-legal a{color:var(--link,var(--accent))}
+.pub-legal ul{padding-inline-start:20px;margin:6px 0}
+.pub-table{overflow-x:auto;margin:10px 0}
+.pub-legal table{min-width:480px;font-size:14px;border-collapse:collapse}
+.pub-legal th,.pub-legal td{text-align:start;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+.pub-legal th{color:var(--mut);font-weight:600;font-size:13px}
 .pub-foot{max-width:1040px;margin:0 auto;padding:22px 20px 32px;border-top:1px solid var(--line);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;color:var(--mut);font-size:13px}
 .pub-foot nav{display:flex;gap:16px}
 .pub-foot a{color:var(--mut);text-decoration:none}
@@ -640,7 +663,7 @@ table.grp .num{text-align:right;font-variant-numeric:tabular-nums}
 
 /* Language preference is independent of plan currency and display theme. */
 .language-control{display:inline-flex;align-items:center;gap:8px;color:inherit;font-size:11px}
-.language-control>span{color:#747184}.language-control select{background:transparent;border:1px solid #e1dff0;border-radius:24px;padding:7px 10px;color:inherit;font:inherit;max-width:165px;min-height:34px}
+.language-control>span{color:var(--lang-label,#6a6779)}.language-control select{background:transparent;border:1px solid var(--lang-line,#e1dff0);border-radius:24px;padding:7px 10px;color:inherit;font:inherit;max-width:165px;min-height:34px}
 .billing-topbar .language-control{margin-inline-start:auto;margin-inline-end:24px}
 [dir="rtl"] .language-control,[dir="rtl"] .pc-feats li,[dir="rtl"] .tf-field{text-align:start}
 [dir="rtl"] input[type="email"],[dir="rtl"] input[type="password"],[dir="rtl"] input[type="number"],[dir="rtl"] .pc-price{direction:ltr;unicode-bidi:isolate}

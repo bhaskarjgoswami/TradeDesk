@@ -7,8 +7,11 @@ import { confirmationRedirect, initialAuthReturn } from "../lib/authReturn";
 //   - adds sign-up and password reset to the existing login card, and the TradeDesk brand
 import { supabase } from "../lib/supabase";
 import { config } from "../lib/config";
+import { installErrorReporter } from "../lib/errorReporter";
 import { api } from "../lib/api";
 import { SUPPORT_EMAIL, SUPPORT_URL, SUPPORT_LABEL } from "../lib/brand";
+// The journal at /app reports uncaught browser errors the same way the landing does.
+if (import.meta.env.PROD) installErrorReporter(config.apiUrl);
 
 const API = config.apiUrl + "/j";
 let mode = new URLSearchParams(location.search).has("signup") ? "signup" : "login";

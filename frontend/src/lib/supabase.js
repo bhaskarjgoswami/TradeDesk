@@ -2,6 +2,7 @@ import "./authReturn";
 import { createClient } from "@supabase/supabase-js";
 
 import { config } from "./config";
+import { registerClient } from "./supabaseLoader";
 
 export const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey, {
   auth: {
@@ -10,3 +11,4 @@ export const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey,
     detectSessionInUrl: true,
   },
 });
+registerClient(supabase);

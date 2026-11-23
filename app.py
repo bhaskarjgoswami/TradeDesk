@@ -1116,6 +1116,12 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json(list_trades(params))
             return
 
+        if re.fullmatch(r"/api/trades/\d+", path):
+            with db() as conn:
+                row = conn.execute("SELECT * FROM trades WHERE id=?", (int(path.rsplit("/", 1)[1]),)).fetchone()
+            self._send_json(dict(row) if row else {"error": "not found"}, 200 if row else 404)
+            return
+
         if path == "/api/stats":
             self._send_json(stats())
             return

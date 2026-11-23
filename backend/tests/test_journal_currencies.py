@@ -63,3 +63,10 @@ def test_net_outcome_agrees_with_stats_and_filters_for_existing_trades(journal):
     assert core.stats()['losses']==1
     assert len(core.list_trades({'outcome':['Loss']}))==1
     assert core.list_trades({'outcome':['Win']})==[]
+
+
+def test_get_trade_returns_one_saved_row_or_none(journal):
+    saved=core.create_trade(dict(date='2026-11-06',symbol='QQQ',direction='Short',pnl=-3,fee=1))
+    assert core.get_trade(saved['id'])['symbol']=='QQQ'
+    core.delete_trade(saved['id'])
+    assert core.get_trade(saved['id']) is None

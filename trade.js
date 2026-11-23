@@ -119,9 +119,8 @@ async function tfSave(){if(TF.busy||TF.uploads)return;const form=$('#tfForm'),st
   finally{TF.busy=false;if($('#tfSave'))$('#tfSave').disabled=false;}
   window.TradeDeskDrafts?.clear(draftKey);TF.draftStorageKey=saved.id;TF.trade=saved;TF.clientId=null;TF.pendingBody=null;TF.dirty=changedSinceAttempt;
   // The write is complete. A failed refresh must never turn this into a new POST.
-  const index=allTrades.findIndex(trade=>trade.id===saved.id);if(index<0)allTrades.unshift(saved);else allTrades[index]=saved;
-  if(changedSinceAttempt){tfPersistDraft();status.textContent='Previous save confirmed. Your newer changes are still here; save again to apply them.';$('#tfSave').textContent='Save Changes';return;}
-  try{await loadAll();}catch{toast('Trade saved. Could not refresh the journal; try again shortly.');status.textContent='Trade saved. Could not refresh the journal; try again shortly.';$('#tfSave').textContent='Save Changes';return;}
+  upsertTrade(saved);
+  if(changedSinceAttempt){tfPersistDraft();status.textContent='Previous save confirmed. Your newer changes are still here; save again to apply them.';$('#tfSave').textContent='Save changes';return;}
   toast(t.id?'Trade updated':'Trade saved ✓');if(TF.queue.length){tfNextImport();return;}if(t.id&&TF.back==='tradeview'){openTradeDetail(saved.id);return;}calShowDay(body.date);
 }
 // Delta: pull today's fills, then journal them one at a time on this page.
@@ -131,8 +130,8 @@ async function tfPull(){const button=$('#tfPull');button.disabled=true;try{const
   catch(error){toast('Could not reach Delta');}finally{if(button.isConnected)button.disabled=false;}}
 function tfNextImport(){TF.queueIdx++;const c=TF.queue[TF.queueIdx];if(!c){TF.queue=[];toast('All Delta trades reviewed ✓');const date=TF.date;loadAll().then(()=>calShowDay(date));return;}
   const back=TF.back;openTradePage(null,c.date,null,{...c,contract_value:c.contract_value||c.cv||null}).then(()=>{TF.back=back;});}
-async function tfDelete(){if(!TF.trade||!confirm('Delete this trade permanently?'))return;try{const response=await fetch('/api/trades/'+TF.trade.id,{method:'DELETE'});if(!response.ok)throw Error('Could not delete this trade. Please try again.');TF.dirty=false;window.TradeDeskDrafts?.clear(TF.draftStorageKey||TF.trade.id);allTrades=allTrades.filter(t=>t.id!==TF.trade.id);toast('Trade deleted');const date=TF.trade.date;try{await loadAll();}catch{toast('Trade deleted. Refresh the journal when your connection returns.');}calShowDay(date);}catch(error){toast(error.message);}}
-async function tfLeave(){if(TF.dirty&&!confirm('Discard this unsaved draft?'))return;window.TradeDeskDrafts?.clear(TF.draftStorageKey||TF.trade?.id||'new');TF.dirty=false;if(TF.trade&&TF.back==='tradeview'){openTradeDetail(TF.trade.id);return;}if(TF.back==='month'||TF.back==='journal'||!TF.back||TF.back==='trade'){calShowDay(TF.date);return;}setView(TF.back);}
+async function tfDelete(){if(!TF.trade||!await tdConfirm('Delete this trade permanently?',{confirmLabel:'Delete',danger:true}))return;try{const response=await fetch('/api/trades/'+TF.trade.id,{method:'DELETE'});if(!response.ok)throw Error('Could not delete this trade. Please try again.');TF.dirty=false;window.TradeDeskDrafts?.clear(TF.draftStorageKey||TF.trade.id);dropTrade(TF.trade.id);toast('Trade deleted');calShowDay(TF.trade.date);}catch(error){toast(error.message);}}
+async function tfLeave(){if(TF.dirty&&!await tdConfirm('Discard this unsaved draft?',{confirmLabel:'Discard',danger:true}))return;window.TradeDeskDrafts?.clear(TF.draftStorageKey||TF.trade?.id||'new');TF.dirty=false;if(TF.trade&&TF.back==='tradeview'){openTradeDetail(TF.trade.id);return;}if(TF.back==='month'||TF.back==='journal'||!TF.back||TF.back==='trade'){calShowDay(TF.date);return;}setView(TF.back);}
 
 
 // ---------- trade details (read-only facts + editable reflection) ----------
@@ -174,7 +173,7 @@ function renderTradeDetail(){const t=allTrades.find(x=>x.id===TD.id);if(!t){calS
   form.onsubmit=async event=>{event.preventDefault();const button=$('#tdSave');button.disabled=true;$('#tdStatus').textContent='Saving…';
     const review={...r,version:1,followedPlan:form.followed.checked,emotionIn:form.emotionIn.value,emotionOut:form.emotionOut.value,management:form.management.value.trim(),mistakes:form.mistakes.value.trim(),reviewed:true,reviewedAt:r.reviewedAt||new Date().toISOString()};
     const strategyId=form.strategy.value?Number(form.strategy.value):null,body={...t,review:JSON.stringify(review),notes:form.notes.value.trim(),strategy_id:strategyId};
-    try{const response=await fetch('/api/trades/'+t.id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!response.ok)throw Error();TD.dirty=false;await loadAll();toast('Reflection saved');renderTradeDetail();}
+    try{const response=await fetch('/api/trades/'+t.id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const row=await response.json().catch(()=>null);if(!response.ok)throw Error();TD.dirty=false;upsertTrade(row);toast('Reflection saved');renderTradeDetail();}
     catch{$('#tdStatus').textContent='Could not save. Your edits are still here.';button.disabled=false;}};
   $('#tdBack').onclick=()=>{if(TD.dirty&&!confirm('Discard unsaved reflection changes?'))return;TD.dirty=false;calShowDay(t.date);};
   $('#tdEdit').onclick=()=>{if(TD.dirty&&!confirm('Discard unsaved reflection changes?'))return;TD.dirty=false;openTradePage(t);};
@@ -196,5 +195,5 @@ Object.assign(wsActions,{'new-trade':()=>openTradePage(null,wsLocalDate()),'cal-
  'edit-trade':button=>{if(WS.dialogDirty&&!confirm('Discard the unsaved review and open trade details?'))return;wsCloseDialog(true);editTrade(Number(button.dataset.id));}});
 
 function tfPersistDraft(){const form=$('#tfForm');if(!form)return !TF.dirty;const fields=Object.fromEntries(new FormData(form));fields.followed=form.elements.followed.checked;return window.TradeDeskDrafts?.save(TF.draftStorageKey||TF.trade?.id||'new',{fields,timezone:TF.timezone,trade:TF.trade,seed:TF.draft,charts:TF.charts,clientId:TF.clientId,pendingBody:TF.pendingBody,reviewedAt:TF.reviewedAt,auto:{autoPnl:TF.autoPnl,autoRisk:TF.autoRisk,autoR:TF.autoR}})===true;}
-async function tfReloadSaved(){if(!TF.trade){toast('Check your journal for the completed save before starting another trade.');return;}if(!confirm('Discard this draft and load the latest saved trade?'))return;try{await loadAll();const latest=allTrades.find(t=>t.id===TF.trade.id);if(!latest){toast('This trade is no longer in your journal.');return;}window.TradeDeskDrafts?.clear(TF.draftStorageKey||TF.trade.id);TF.dirty=false;openTradePage(latest);}catch(error){toast(error.message||'Could not load the saved trade. Your draft is kept.');}}
+async function tfReloadSaved(){if(!TF.trade){toast('Check your journal for the completed save before starting another trade.');return;}if(!await tdConfirm('Discard this draft and load the latest saved trade?',{confirmLabel:'Discard',danger:true}))return;try{const latest=await refreshTrade(TF.trade.id);if(!latest){toast('This trade is no longer in your journal.');return;}window.TradeDeskDrafts?.clear(TF.draftStorageKey||TF.trade.id);TF.dirty=false;openTradePage(latest);}catch(error){toast(error.message||'Could not load the saved trade. Your draft is kept.');}}
 window.addEventListener('beforeunload',event=>{if(view==='trade'&&(TF.busy||TF.uploads||(TF.dirty&&!tfPersistDraft()))){event.preventDefault();event.returnValue='';}});

@@ -550,6 +550,12 @@ def update_trade(trade_id, data):
     return workspace.update_trade_record(db,FIELDS,trade_id,clean,expected)
 
 
+def get_trade(trade_id):
+    with db() as conn:
+        row = conn.execute("SELECT * FROM trades WHERE id=?", (trade_id,)).fetchone()
+        return dict(row) if row else None
+
+
 def delete_trade(trade_id):
     with db() as conn:
         conn.execute("DELETE FROM trades WHERE id=?", (trade_id,))

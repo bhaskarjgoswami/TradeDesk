@@ -161,6 +161,13 @@ def post_trade(request: Request, user=Depends(get_current_user)):
             return err(str(e), 400)
 
 
+@router.get("/api/trades/{trade_id}")
+def get_one_trade(trade_id: int, user=Depends(get_current_user)):
+    with scoped(user):
+        row = core.get_trade(trade_id)
+        return ok(row) if row else err("not found", 404)
+
+
 @router.put("/api/trades/{trade_id}")
 def put_trade(trade_id: int, request: Request, user=Depends(get_current_user)):
     data = body(request)

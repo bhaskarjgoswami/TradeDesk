@@ -819,3 +819,19 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 #wsPrefsForm .ws-form-status{display:block;margin-top:8px;min-height:16px}
 .cal-first{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px 24px;margin-bottom:18px;border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}.cal-first h2{font-size:17px;font-weight:600}.cal-first p{color:var(--mut);font-size:13px;line-height:1.6;margin-top:6px;max-width:58ch}.cal-first-actions{display:flex;flex-wrap:wrap;gap:8px}.cal-first-actions .btn{min-height:40px}
 .expiry-notice{padding:9px 24px;font-size:12px;line-height:1.5;color:var(--txt);background:var(--accent-weak);border-bottom:1px solid var(--line)}.expiry-notice a{color:var(--accent);font-weight:600}
+/* In-app confirm dialog */
+.td-confirm{border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--txt);padding:20px;max-width:min(420px,calc(100vw - 32px));box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.td-confirm::backdrop{background:rgba(10,12,16,.45)}
+.td-confirm p{margin:0 0 18px;font-size:14px;line-height:1.5}
+.td-confirm-actions{display:flex;justify-content:flex-end;gap:8px}
+.td-confirm .btn.danger{background:var(--red,#d92d20);color:#fff}
+
+/* Calendar on phones: ring for today, compact P&L, no trade-count line */
+.cal-val-short{display:none}
+@media(max-width:700px){
+.cal-today{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 4px;border-radius:999px;background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.cal-today-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.cal-day .cal-count,.cal-day .cal-val{display:none}
+.cal-day .cal-val-short{display:block;position:absolute;left:4px;right:4px;bottom:5px;font-size:11px;line-height:1.1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.cal-day.today{box-shadow:none}
+}

@@ -20,6 +20,13 @@ def scrub_event(event,hint):
             frames.append(clean)
         values.append(dict(type=error.get('type','Error'),value='Error details omitted for privacy',stacktrace=dict(frames=frames)))
     if values:safe['exception']=dict(values=values)
+    # Browser reports were already truncated and scrubbed by app.client_errors.
+    tags=event.get('tags') or {}
+    if isinstance(tags,dict) and tags.get('kind')=='client_error':
+        safe['tags']={key:str(value)[:200] for key,value in tags.items() if key in ('kind','client_source','client_page')}
+        if isinstance(event.get('message'),str):safe['message']=event['message'][:600]
+        context=(event.get('contexts') or {}).get('client_error')
+        if isinstance(context,dict):safe['contexts']={'client_error':context}
     return safe
 
 

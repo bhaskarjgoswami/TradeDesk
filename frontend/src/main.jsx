@@ -5,6 +5,10 @@ import { AuthProvider } from "./lib/AuthContext";
 import { FeedbackProvider } from "./lib/feedback";
 import App from "./App";
 import "./styles.css";
+import { config } from "./lib/config";
+import { installErrorReporter } from "./lib/errorReporter";
+
+if (import.meta.env.PROD) installErrorReporter(config.apiUrl);
 
 // restore theme
 const saved = localStorage.getItem("td_theme");

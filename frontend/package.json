@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm test && vite build",
+    "build": "npm test && vite build && node scripts/minify-journal.mjs",
     "preview": "vite preview",
     "test": "node --test src/lib/*.test.js",
     "sync:journal": "node scripts/sync-journal-ui.mjs",

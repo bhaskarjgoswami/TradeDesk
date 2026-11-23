@@ -189,7 +189,7 @@ function pbBindEditor(root){const on=(sel,fn)=>root.querySelectorAll(sel).forEac
 async function pbDuplicate(item,button){button.disabled=true;
   try{const created=await wsApi('items','POST',{kind:'strategy',title:item.title+' (copy)',body:{...clonePlan(item.body),primary:false,active:true},clientId:crypto.randomUUID()});await wsReload('strategy');PB.sel=created.id;PB.draft=null;renderPlaybook();toast('Plan duplicated');}
   catch(error){toast(error.message);button.disabled=false;}}
-async function pbDelete(item,button){if(!confirm(`Delete "${item.title}"? Trades logged with it keep their saved copy of the plan.`))return;button.disabled=true;
+async function pbDelete(item,button){if(!await tdConfirm(`Delete "${item.title}"? Trades logged with it keep their saved copy of the plan.`,{confirmLabel:'Delete',danger:true}))return;button.disabled=true;
   try{await wsApi('items/'+item.id,'DELETE',{revision:item.revision});await wsReload('strategy');PB.sel=null;PB.draft=null;renderPlaybook();toast('Plan deleted');}
   catch(error){toast(error.message);button.disabled=false;}}
 function pbCloseMenus(){$$('#ws-strategies .pb-menu').forEach(m=>{if(m.id==='pbNewMenu')m.hidden=true;else m.remove();});$('#pbNew')?.setAttribute('aria-expanded','false');}

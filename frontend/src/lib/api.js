@@ -1,9 +1,10 @@
-import { supabase } from "./supabase";
+import { loadSupabase } from "./supabaseLoader";
 import { config } from "./config";
 
 const BASE = config.apiUrl;
 
 async function authHeader() {
+  const supabase = await loadSupabase();
   const { data } = await supabase.auth.getSession();
   const token = data?.session?.access_token;
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -28,7 +29,7 @@ async function request(method, path, body) {
   if (res.status === 401) {
     const error = await res.clone().json().catch(() => ({}));
     if (error.detail?.code !== "razorpay_auth_failed") {
-      await supabase.auth.signOut().catch(() => {});
+      await loadSupabase().then((supabase) => supabase.auth.signOut()).catch(() => {});
       throw Object.assign(new Error("Your session expired. Please sign in again."), { status: 401 });
     }
   }
