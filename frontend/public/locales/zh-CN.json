@@ -1484,5 +1484,8 @@
   "Payments for Pro": "Pro 付款",
   "Error monitoring, when enabled (no journal data, tokens or email addresses)": "错误监控（启用时，不含日志数据、令牌或邮箱地址）",
   "[Company name]": "[公司名称]",
-  "[Registered address]": "[注册地址]"
+  "[Registered address]": "[注册地址]",
+  "Times in": "时间采用",
+  "change": "更改",
+  "Leave times blank if unknown.": "如不确定时间，可留空。"
 }

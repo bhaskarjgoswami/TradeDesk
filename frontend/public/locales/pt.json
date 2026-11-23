@@ -1484,5 +1484,8 @@
   "Payments for Pro": "Pagamentos do Pro",
   "Error monitoring, when enabled (no journal data, tokens or email addresses)": "Monitoramento de erros, quando ativado (sem dados do diário, tokens ou endereços de e-mail)",
   "[Company name]": "[Nome da empresa]",
-  "[Registered address]": "[Endereço registrado]"
+  "[Registered address]": "[Endereço registrado]",
+  "Times in": "Horários em",
+  "change": "alterar",
+  "Leave times blank if unknown.": "Deixe os horários em branco se não souber."
 }

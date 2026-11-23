@@ -1484,5 +1484,8 @@
   "Payments for Pro": "مدفوعات Pro",
   "Error monitoring, when enabled (no journal data, tokens or email addresses)": "مراقبة الأخطاء، عند تفعيلها (دون بيانات دفتر التداول أو الرموز أو عناوين البريد الإلكتروني)",
   "[Company name]": "[اسم الشركة]",
-  "[Registered address]": "[العنوان المسجل]"
+  "[Registered address]": "[العنوان المسجل]",
+  "Times in": "الأوقات بتوقيت",
+  "change": "تغيير",
+  "Leave times blank if unknown.": "اترك الأوقات فارغة إذا لم تكن تعرفها."
 }

@@ -568,7 +568,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
           <a class="forgot" href="#" onclick="return false">Forgot password?</a>
         </div>
         <div class="login-err" id="loginErr" role="status" aria-live="polite"></div>
-        <button class="login-btn" type="submit">Sign In <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <button class="login-btn" type="submit">Sign in <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       </form>
       <div class="td-mode" id="authModePrompt">New to TradeDesk? <a href="https://trade-desk-dl66.vercel.app/app?signup=1" data-m="signup">Sign up</a></div>
       <div class="login-foot">Need help? Contact <a href="/contact">Contact support</a></div>
@@ -642,7 +642,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
   <!-- MIDDLE : DAY LIST -->
   <section class="middle" id="middle">
     <div class="midhead"><h2 id="midTitle">Days Logged (0)</h2></div>
-    <button class="logday" id="logDayBtn">+ Log Day</button>
+    <button class="logday" id="logDayBtn">+ Log day</button>
     <div class="daycards" id="dayCards"></div>
   </section>
 
@@ -1121,7 +1121,7 @@ async function loadDays(selectFirst){
       <div class="dc-date">${fmtDate(d.date)}</div>
       <div class="dc-pnl ${cls}">Net P&L ${pnl>0?'+':''}${money(pnl)} · ${d.total_trades} trade${d.total_trades===1?'':'s'}</div>
     </div>`;
-  }).join('')||`<div class="emptyday" style="padding:0 2px">No days yet. Hit <b>+ Log Day</b>.</div>`;
+  }).join('')||`<div class="emptyday" style="padding:0 2px">No days yet. Hit <b>+ Log day</b>.</div>`;
   if(selectFirst&&days.length&&!selectedDate)selectDay(days[0].date);
 }
 function fmtDate(d){
@@ -1164,10 +1164,10 @@ function renderRail(){
     </div>
     <div class="rail-group">
       <div class="rail-row"><span class="k">Volume</span><span class="v">${fmt(s.volume,0)}</span></div>
-      <div class="rail-row"><span class="k">Profit Factor</span><span class="v">${pf}</span></div>
+      <div class="rail-row"><span class="k">Profit factor</span><span class="v">${pf}</span></div>
     </div>
     <div class="rail-group">
-      <div class="rail-row"><span class="k">Total Trades</span><span class="v">${s.total_trades}</span></div>
+      <div class="rail-row"><span class="k">Total trades</span><span class="v">${s.total_trades}</span></div>
       <div class="rail-row"><span class="k">Winners</span><span class="v pos">${s.winners}</span></div>
       <div class="rail-row"><span class="k">Losers</span><span class="v neg">${s.losers}</span></div>
       <div class="rail-row"><span class="k">Winrate</span><span class="v">${s.winrate}%</span></div>
@@ -1572,7 +1572,7 @@ function routineActivePlan(){const items=(typeof WS!=='undefined'&&WS.items.stra
   const lines=v=>String(v||'').split('\n').map(x=>x.trim()).filter(Boolean);
   return{name:plan?plan.title:(b.name||'Default checklist'),type:b.description&&plan&&b.description!==plan.title?b.description:'',charting:b.charting||[],criteria:b.criteria||[],exit:lines(b.exitRules),management:b.management||[],notes:b.notes||[],images:[...(b.setupImages||[]),...(b.entryImages||[])],setupImages:b.setupImages||[],entryImages:b.entryImages||[]};}
 // Accordion sections of the plan. Checkable ones carry a key prefix (c/e/x/m) stored with the routine.
-const ROUTINE_PLAN_SECTIONS=[['charting','c','Charting Process','<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'],['criteria','e','Entry Criteria','<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'],['exit','x','Exit Criteria','<rect x="4" y="4" width="16" height="16" rx="2"/><path d="m8 12 3 3 5-6"/>'],['management','m','Trade Management','<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>'],['notes',null,'Trading Notes','<path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/>']];
+const ROUTINE_PLAN_SECTIONS=[['charting','c','Charting process','<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'],['criteria','e','Entry criteria','<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'],['exit','x','Exit criteria','<rect x="4" y="4" width="16" height="16" rx="2"/><path d="m8 12 3 3 5-6"/>'],['management','m','Trade management','<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>'],['notes',null,'Trading notes','<path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/>']];
 function routinePlanKeys(step){const p=routineActivePlan();return ROUTINE_PLAN_SECTIONS.filter(x=>x[1]).flatMap(([key,pre])=>p[key].map((_,i)=>step.id+'::'+pre+i));}
 // Every plan section starts open; sections the trader collapses stay collapsed until the routine resets.
 let routineClosedSecs=new Set();

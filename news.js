@@ -6,7 +6,7 @@
 const NEWS={cat:'breaking',impact:'medium',items:null,failed:[],events:null,error:'',calError:'',loading:false,fetchedAt:0,tick:null};
 // Headline topics: [key, label, description]. Keys match FEEDS in news.py and NEWS_REGIONS in workspace.py.
 const NEWS_TOPICS=[
-  ['stocks','Stock Markets','Share market and index news for the country in your Account.'],
+  ['stocks','Stock markets','Share market and index news for the country in your Account.'],
   ['forex','Currencies','Currency pairs and the US dollar.'],
   ['commodities','Commodities','Gold, silver, crude oil and metals.'],
   ['crypto','Crypto','Bitcoin, Ethereum and the wider crypto market.'],
@@ -142,7 +142,7 @@ function newsHeadlines(){
   const seen=new Set(),pool=[...NEWS.items.filter(i=>regions.includes(i.cat)),...indexItems].filter(i=>{const k=i.title.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().slice(0,70);if(seen.has(k))return false;seen.add(k);return true;}).sort((a,b)=>(b.published_at||'').localeCompare(a.published_at||''));
   const items=NEWS.cat==='breaking'?pool.filter(newsIsHigh):pool.filter(i=>i.cat===NEWS.cat);
   const choose=`<button type="button" class="news-choose" data-news-action="regions" title="Choose news topics in Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Choose topics</button>`;
-  const tabs=`<div class="news-tabs news-topic-tabs" role="group" aria-label="News category">${[['breaking','Breaking News'],...NEWS_TOPICS.filter(([key])=>regions.includes(key))].map(([key,label])=>`<button type="button" class="news-tab${NEWS.cat===key?' on':''}" aria-pressed="${NEWS.cat===key}" data-news-cat="${key}">${label}</button>`).join('')}</div>`;
+  const tabs=`<div class="news-tabs news-topic-tabs" role="group" aria-label="News category">${[['breaking','Breaking news'],...NEWS_TOPICS.filter(([key])=>regions.includes(key))].map(([key,label])=>`<button type="button" class="news-tab${NEWS.cat===key?' on':''}" aria-pressed="${NEWS.cat===key}" data-news-cat="${key}">${label}</button>`).join('')}</div>`;
   const failed=NEWS.failed.length?`<p class="news-muted">Some sources did not respond: <span data-user-content>${esc(NEWS.failed.join(', '))}</span></p>`:'';
   const list=items.length?`<ul class="news-list">${items.map(newsItemRow).join('')}</ul>`:NEWS.cat==='breaking'?wsEmpty('No breaking news right now','Nothing market-moving in your topics yet. Check the other tabs or refresh in a few minutes.'):wsEmpty('No headlines here yet','Try another category or refresh in a few minutes.');
   return `<section class="ws-card news-feed" aria-label="Headlines"><div class="ws-card-head"><h2>Headlines</h2>${choose}</div>${tabs}${failed}${list}</section>`;

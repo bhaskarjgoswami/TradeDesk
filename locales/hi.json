@@ -1484,5 +1484,8 @@
   "Payments for Pro": "Pro के लिए भुगतान",
   "Error monitoring, when enabled (no journal data, tokens or email addresses)": "त्रुटि निगरानी, चालू होने पर (कोई जर्नल डेटा, टोकन या ईमेल पता नहीं)",
   "[Company name]": "[कंपनी का नाम]",
-  "[Registered address]": "[पंजीकृत पता]"
+  "[Registered address]": "[पंजीकृत पता]",
+  "Times in": "समय क्षेत्र",
+  "change": "बदलें",
+  "Leave times blank if unknown.": "अगर समय पता न हो तो खाली छोड़ दें।"
 }

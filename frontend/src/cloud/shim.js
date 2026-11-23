@@ -8,6 +8,8 @@ import { confirmationRedirect, initialAuthReturn } from "../lib/authReturn";
 import { supabase } from "../lib/supabase";
 import { config } from "../lib/config";
 import { installErrorReporter } from "../lib/errorReporter";
+import { registerServiceWorker } from "../lib/registerServiceWorker";
+import { fetchAllTrades } from "../lib/tradePages";
 import { api } from "../lib/api";
 import { SUPPORT_EMAIL, SUPPORT_URL, SUPPORT_LABEL } from "../lib/brand";
 // The journal at /app reports uncaught browser errors the same way the landing does.
@@ -102,8 +104,8 @@ async function token() {
 function showDeletionRecovery(){
   if(document.getElementById('tdDeletionRecovery'))return;
   const overlay=document.createElement('dialog');overlay.id='tdDeletionRecovery';overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','tdDeletionTitle');
-  overlay.style.cssText='position:fixed;inset:0;margin:auto;border:0;border-radius:24px;padding:0;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);background:white';
-  overlay.innerHTML='<div style="max-width:480px;background:white;padding:32px;border-radius:24px;color:#29283f"><h1 id="tdDeletionTitle">Complete your deletion request</h1><p>Retry to finish removing your account. If deletion has started, your journal remains locked until cleanup finishes.</p><p id="tdDeletionStatus" role="status"></p><button id="tdDeletionRetry" class="ws-btn primary">Retry deletion</button> <button id="tdDeletionLogout" class="ws-btn">Sign out</button></div>';
+  overlay.style.cssText='position:fixed;inset:0;margin:auto;border:0;border-radius:24px;padding:0;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);background:var(--panel,white)';
+  overlay.innerHTML='<div style="max-width:480px;background:var(--panel,white);padding:32px;border-radius:24px;color:var(--txt,#29283f)"><h1 id="tdDeletionTitle">Complete your deletion request</h1><p>Retry to finish removing your account. If deletion has started, your journal remains locked until cleanup finishes.</p><p id="tdDeletionStatus" role="status"></p><button id="tdDeletionRetry" class="ws-btn primary">Retry deletion</button> <button id="tdDeletionLogout" class="ws-btn">Sign out</button></div>';
   document.body.append(overlay);
   // A modal dialog stays above the existing deletion confirmation and keeps
   // keyboard focus on recovery while the account is locked.
@@ -159,19 +161,9 @@ async function handle(url, init, nativeFetch) {
   let res;
   try {
     if (path === "/api/trades" && method === "GET") {
-      const search = new URLSearchParams(url.split("?")[1] || "");
-      search.set("limit","500");
-      const rows=[];
-      while (true) {
-        const page = await nativeFetch(API + "/api/trades/page?" + search, readInit({...init,headers}));
-        if (!page.ok) { if(page.status===423)showDeletionRecovery(); if(page.status===401)window.sessionExpired?.(); return page; }
-        const data=await page.json();
-        rows.push(...data.rows);
-        if (!data.next_cursor) break;
-        search.set("before_id",data.next_cursor);
-      }
-      rows.sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")) || b.id-a.id);
-      return json(rows);
+      const result = await fetchAllTrades(url, search => nativeFetch(API + "/api/trades/page?" + search, readInit({...init,headers})));
+      if (result.failed) { const page=result.failed; if(page.status===423)showDeletionRecovery(); if(page.status===401)window.sessionExpired?.(); return page; }
+      return json(result.rows);
     }
     res = await nativeFetch(API + url, method === "GET" ? readInit({ ...init, headers }) : { ...init, headers });
   } catch (e) {
@@ -320,8 +312,8 @@ function showPasswordRecovery() {
   const dialog=document.createElement("dialog");
   dialog.id="passwordRecovery";
   dialog.setAttribute("aria-labelledby","recoveryTitle");
-  dialog.style.cssText="border:1px solid #e3e1f1;border-radius:24px;padding:32px;width:min(420px,calc(100vw - 32px));color:#29283e;background:white;font-family:var(--font-ui,Inter,sans-serif)";
-  dialog.innerHTML=`<form><h2 id="recoveryTitle" style="margin:0 0 12px">Set a new password</h2><p>Choose at least 8 characters for your TradeDesk account.</p><label for="recoveryPassword">New password</label><input id="recoveryPassword" type="password" autocomplete="new-password" required minlength="8" style="box-sizing:border-box;width:100%;height:42px;border-radius:32px;border:1px solid #e3e1f1;padding:0 16px;margin:8px 0 16px;font:inherit"><label for="recoveryConfirm">Confirm password</label><input id="recoveryConfirm" type="password" autocomplete="new-password" required minlength="8" style="box-sizing:border-box;width:100%;height:42px;border-radius:32px;border:1px solid #e3e1f1;padding:0 16px;margin:8px 0 16px;font:inherit"><p role="status" aria-live="polite" id="recoveryStatus"></p><button type="submit" style="height:42px;width:100%;border-radius:40px;background:#605cf3;color:white;border:0;font:inherit">Update password</button></form>`;
+  dialog.style.cssText="border:1px solid var(--line,#e3e1f1);border-radius:24px;padding:32px;width:min(420px,calc(100vw - 32px));color:var(--txt,#29283e);background:var(--panel,white);font-family:var(--font-ui,Inter,sans-serif)";
+  dialog.innerHTML=`<form><h2 id="recoveryTitle" style="margin:0 0 12px">Set a new password</h2><p>Choose at least 8 characters for your TradeDesk account.</p><label for="recoveryPassword">New password</label><input id="recoveryPassword" type="password" autocomplete="new-password" required minlength="8" style="box-sizing:border-box;width:100%;height:42px;border-radius:32px;border:1px solid var(--line,#e3e1f1);padding:0 16px;margin:8px 0 16px;font:inherit;background:var(--panel2,white);color:inherit"><label for="recoveryConfirm">Confirm password</label><input id="recoveryConfirm" type="password" autocomplete="new-password" required minlength="8" style="box-sizing:border-box;width:100%;height:42px;border-radius:32px;border:1px solid var(--line,#e3e1f1);padding:0 16px;margin:8px 0 16px;font:inherit;background:var(--panel2,white);color:inherit"><p role="status" aria-live="polite" id="recoveryStatus"></p><button type="submit" style="height:42px;width:100%;border-radius:40px;background:var(--accent,#605cf3);color:white;border:0;font:inherit">Update password</button></form>`;
   document.body.append(dialog);dialog.showModal();
   dialog.querySelector("form").onsubmit=async event=>{
     event.preventDefault();
@@ -361,7 +353,4 @@ window.renderBilling=async()=>{
   }finally{delete host.dataset.loading;}
 };
 
-if(import.meta.env.PROD&&'serviceWorker' in navigator){
-  const register=()=>navigator.serviceWorker.register('/sw.js').catch(()=>{});
-  if(document.readyState==='complete')register();else window.addEventListener('load',register,{once:true});
-}
+if(import.meta.env.PROD)registerServiceWorker();

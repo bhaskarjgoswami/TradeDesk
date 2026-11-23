@@ -3,7 +3,7 @@
 //  - page loads: network first, cached shell only when offline
 //  - /assets/* (content-hashed): cache first
 //  - everything else (API, Supabase, other origins): not intercepted
-const CACHE = "tradedesk-v5";
+const CACHE = "tradedesk-v6";
 const SHELL = "/index.html";
 
 const JOURNAL_ASSETS=['/cloud-boot.js','/language.js','/onboarding.js','/feedback-page.js','/trade-drafts.js','/broker-import.js','/workspace.js','/calendar.js','/trade.js','/playbook.js','/profile.js','/meditation.js','/news.js','/workspace.css','/theme.css','/theme-mercury.css'];
@@ -17,10 +17,19 @@ self.addEventListener("install",(event)=>{
   })());
 });
 
+// Hashed /assets files pile up across deploys; keep only those the cached shells still reference.
+async function pruneAssets(){
+  const cache=await caches.open(CACHE),keep=new Set();
+  for(const shell of [SHELL,'/app/index.html']){const res=await cache.match(shell);if(!res)continue;const html=await res.text();for(const m of html.matchAll(/(?:src|href)=["'](\/assets\/[^"']+)["']/g))keep.add(m[1]);}
+  if(!keep.size)return;
+  for(const req of await cache.keys()){const path=new URL(req.url).pathname;if(path.startsWith('/assets/')&&!keep.has(path))await cache.delete(req);}
+}
+
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(pruneAssets)
       .then(() => self.clients.claim())
   );
 });
@@ -36,7 +45,7 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(
       fetch(req)
         .then((res) => {
-          if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(shell, copy)); }
+          if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(shell, copy)).then(pruneAssets).catch(() => {}); }
           return res;
         })
         .catch(() => caches.match(shell))
