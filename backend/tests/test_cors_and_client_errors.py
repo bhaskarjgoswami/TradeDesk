@@ -139,3 +139,22 @@ def test_sentry_scrubber_keeps_client_error_tags_but_not_server_messages():
     assert client["contexts"] == dict(client_error=dict(line=1))
     server = scrub_event(dict(message="SELECT secret", tags=dict(kind="other")), {})
     assert "message" not in server and "tags" not in server
+
+
+def test_unset_frontend_url_does_not_open_localhost_in_production(monkeypatch):
+    # Production on Render runs without FRONTEND_URL, so config falls back to the Vite dev URL.
+    monkeypatch.setenv("RENDER", "true")
+    monkeypatch.delenv("FRONTEND_URL", raising=False)
+    try:
+        from app import config
+        importlib.reload(config)
+        prod = importlib.reload(main)
+        client = TestClient(prod.app)
+        assert "access-control-allow-origin" not in preflight(client, "http://localhost:5173").headers
+        allowed = preflight(client, "https://trade-desk-dl66.vercel.app")
+        assert allowed.headers.get("access-control-allow-origin") == "https://trade-desk-dl66.vercel.app"
+    finally:
+        monkeypatch.delenv("RENDER")
+        from app import config
+        importlib.reload(config)
+        importlib.reload(main)

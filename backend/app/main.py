@@ -151,7 +151,8 @@ VERCEL_ORIGIN_REGEX = (
     r"https://trade-desk-dl66(?:\.vercel\.app"
     r"|-(?:[a-z0-9]{9}|git-[a-z0-9-]{1,63})-bhaskarjgoswami-5079s-projects\.vercel\.app)"
 )
-CORS_ORIGINS = [FRONTEND_URL] + ([] if PRODUCTION else DEV_ORIGINS)
+# FRONTEND_URL falls back to the Vite dev URL when unset; never let that open CORS in production.
+CORS_ORIGINS = ([] if PRODUCTION and "localhost" in FRONTEND_URL else [FRONTEND_URL]) + ([] if PRODUCTION else DEV_ORIGINS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
