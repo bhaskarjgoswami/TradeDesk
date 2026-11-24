@@ -9,7 +9,7 @@ function setup(cached=true){
   let resolve,requests=0,syncs=0;
   w.$=selector=>w.document.querySelector(selector);
   w.routineState=cached?{period:'today'}:null;w.routineForced=false;w.routineHiddenPeriod=null;
-  w.renderRoutinePanel=()=>{w.$('#routinePanel').hidden=!w.routineForced;};
+  w.renderRoutinePanel=()=>{const el=w.$('#routinePanel');el.hidden=!w.routineForced;el.classList.toggle('popup',!!w.routineForced);};  // a button-opened routine is always the two-column popup
   w.loadRoutine=()=>{requests++;return new Promise(done=>{resolve=ok=>{if(ok)w.routineState={period:'today'};w.renderRoutinePanel();done(ok);};});};
   w.routineQuietSync=()=>{syncs++;};w.toast=()=>{};
   w.eval(html.slice(html.indexOf('let routineOpening=false;'),html.indexOf('// ---------- boot ----------')));
