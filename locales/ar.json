@@ -1487,5 +1487,13 @@
   "[Registered address]": "[العنوان المسجل]",
   "Times in": "الأوقات بتوقيت",
   "change": "تغيير",
-  "Leave times blank if unknown.": "اترك الأوقات فارغة إذا لم تكن تعرفها."
+  "Leave times blank if unknown.": "اترك الأوقات فارغة إذا لم تكن تعرفها.",
+  "Review your journal": "راجع يومياتك",
+  "Review your performance": "راجع أداءك",
+  "Meditate": "تأمّل",
+  "Check market news": "تابع أخبار السوق",
+  "Your trade plans, your daily pre-market routine and the A+ checklist that defines a valid entry.": "خطط التداول الخاصة بك وروتينك اليومي قبل الافتتاح وقائمة A+ التي تحدد الدخول الصحيح.",
+  "Trade plan sections": "أقسام خطة التداول",
+  "Active plan": "الخطة النشطة",
+  "Trade plan checklist": "قائمة خطة التداول"
 }

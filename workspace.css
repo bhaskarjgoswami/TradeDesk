@@ -835,3 +835,9 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 .cal-day .cal-val-short{display:block;position:absolute;left:4px;right:4px;bottom:5px;font-size:11px;line-height:1.1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .cal-day.today{box-shadow:none}
 }
+
+/* Docked routine panel is narrow: flatter checklist (no indented rail), a little wider on desktop */
+.routine-panel:not(.popup) .rp-plan{padding:2px 12px}
+.routine-panel:not(.popup) .rp-acc summary{padding:10px 0;font-size:13px}
+.routine-panel:not(.popup) .rp-acc-inner{padding:0 0 8px;border-left:0;margin:0}
+@media(min-width:601px){.routine-panel:not(.popup){width:320px}}

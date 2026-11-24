@@ -1487,5 +1487,13 @@
   "[Registered address]": "[注册地址]",
   "Times in": "时间采用",
   "change": "更改",
-  "Leave times blank if unknown.": "如不确定时间，可留空。"
+  "Leave times blank if unknown.": "如不确定时间，可留空。",
+  "Review your journal": "回顾交易日志",
+  "Review your performance": "回顾交易表现",
+  "Meditate": "冥想",
+  "Check market news": "查看市场新闻",
+  "Your trade plans, your daily pre-market routine and the A+ checklist that defines a valid entry.": "你的交易计划、每日盘前流程，以及定义有效入场的 A+ 清单。",
+  "Trade plan sections": "交易计划栏目",
+  "Active plan": "当前计划",
+  "Trade plan checklist": "交易计划清单"
 }

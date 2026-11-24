@@ -275,7 +275,7 @@ def routine_state():
         settings=validate_routine(json.loads(row['value'])) if row else json.loads(json.dumps(DEFAULT_ROUTINE))
         if not row and conn.execute('SELECT COUNT(*) AS n FROM trades').fetchone()['n'] < FIRST_RUN_TRADES:
             # A brand-new journal opens on its first trade, not on a checklist the user never set up.
-            settings.update(enabled=False,popup=False)
+            settings.update(enabled=False)  # keep popup on so enabling it later opens the two-column view
         hours,minutes=map(int,settings['resetTime'].split(':'))
         profile=json.loads(rows['workspace_profile']['value']) if 'workspace_profile' in rows else {}
         now=datetime.now(journal_zone(profile.get('timezone') or 'UTC'))

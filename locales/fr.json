@@ -1487,5 +1487,13 @@
   "[Registered address]": "[Adresse du siège]",
   "Times in": "Heures en",
   "change": "modifier",
-  "Leave times blank if unknown.": "Laissez les heures vides si vous ne les connaissez pas."
+  "Leave times blank if unknown.": "Laissez les heures vides si vous ne les connaissez pas.",
+  "Review your journal": "Relisez votre journal",
+  "Review your performance": "Examinez vos performances",
+  "Meditate": "Méditez",
+  "Check market news": "Consultez les actualités du marché",
+  "Your trade plans, your daily pre-market routine and the A+ checklist that defines a valid entry.": "Vos plans de trading, votre routine quotidienne avant l’ouverture et la checklist A+ qui définit une entrée valide.",
+  "Trade plan sections": "Sections du plan de trading",
+  "Active plan": "Plan actif",
+  "Trade plan checklist": "Checklist du plan de trading"
 }

@@ -35,7 +35,7 @@ def _add_trades(journal, n):
 
 def test_brand_new_journal_starts_without_the_routine(journal):
     settings = journal.routine_state()["settings"]
-    assert settings["enabled"] is False and settings["popup"] is False
+    assert settings["enabled"] is False and settings["popup"] is True
 
 
 def test_new_cloud_journal_opens_desktop_popup(journal):
