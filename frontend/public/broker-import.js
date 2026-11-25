@@ -3,7 +3,7 @@
   'use strict';
   const fields=['date','symbol','direction','setup','entry','stop','exit','qty','pnl','fee','risk','r_multiple','notes','tags','contract_value','broker','currency','execution_id'];
   const numeric=new Set(['entry','stop','exit','qty','pnl','fee','risk','r_multiple','contract_value']);
-  const aliases={execution_id:['tradeid','positionid','brokertradeid','closedtradeid'],date:['date','tradedate','opendate','entrydate','entrytime','datetime','time'],symbol:['symbol','tradingsymbol','ticker','instrument','contract','product'],direction:['direction','side','position','positionside','buysell'],entry:['entry','entryprice','openprice','averageentryprice','buyprice'],exit:['exit','exitprice','closeprice','averageexitprice','sellprice'],stop:['stop','stoploss','sl'],qty:['qty','quantity','size','volume','lots'],pnl:['pnl','grosspnl','grossprofit','profitloss','realizedpnl','realisedpnl'],fee:['fee','fees','commission','commissions','brokerage'],contract_value:['contractvalue','contractmultiplier','multiplier'],broker:['broker','brokername','exchange'],currency:['currency','accountcurrency','pnlcurrency','profitcurrency'],r_multiple:['rmultiple','r'],setup:['setup','strategy'],risk:['risk'],notes:['notes','comment','comments','description'],tags:['tags']};
+  const aliases={execution_id:['tradeid','positionid','brokertradeid','closedtradeid'],date:['date','tradedate','opendate','entrydate','entrytime','datetime','time'],symbol:['symbol','tradingsymbol','ticker','instrument','contract','product'],direction:['direction','side','position','positionside','buysell'],entry:['entry','entryprice','openprice','averageentryprice','buyprice'],exit:['exit','exitprice','closeprice','averageexitprice','sellprice'],stop:['stop','stoploss','sl'],qty:['qty','quantity','size','volume','lots'],pnl:['pnl','pl','grosspnl','grosspl','grossprofit','profitloss','realizedpnl','realisedpnl','realizedpl','realisedpl'],fee:['fee','fees','commission','commissions','brokerage'],contract_value:['contractvalue','contractmultiplier','multiplier'],broker:['broker','brokername','exchange'],currency:['currency','accountcurrency','pnlcurrency','profitcurrency'],r_multiple:['rmultiple','r'],setup:['setup','strategy'],risk:['risk'],notes:['notes','comment','comments','description'],tags:['tags']};
   const normalize=value=>String(value).trim().toLowerCase().replace(/[^a-z0-9]/g,'');
   function parse(text){
     const source=String(text).replace(/^\uFEFF/,'');
@@ -22,12 +22,167 @@
     }
     if(inQuote)throw Error('CSV has an unclosed quote.');
     record.push(value);if(record.some(v=>v.trim()))records.push(record);
+    return finish(records);
+  }
+  // Shared checks for CSV and XML tables. Short rows are padded and empty
+  // trailing cells dropped, since many broker exports end rows early.
+  function finish(records){
     if(records.length<2)throw Error('Add a header row and at least one trade.');
-    const headers=records.shift().map(v=>v.trim());
-    if(headers.some(v=>!v)||new Set(headers.map(v=>v.toLowerCase())).size!==headers.length)throw Error('Use unique, non-empty CSV column headers.');
+    const headers=records.shift().map(v=>String(v).trim());
+    while(headers.length&&!headers[headers.length-1])headers.pop();
+    if(headers.some(v=>!v)||new Set(headers.map(v=>v.toLowerCase())).size!==headers.length)throw Error('Use unique, non-empty column headers.');
     if(records.length>1000)throw Error('Import up to 1,000 trades at a time.');
-    records.forEach((row,i)=>{if(row.length!==headers.length)throw Error('Column count differs on data row '+(i+1));});
-    return{headers,records};
+    return{headers,records:records.map((row,i)=>{
+      if(row.slice(headers.length).some(v=>String(v).trim()))throw Error('Data row '+(i+1)+' has more values than there are column headers.');
+      row=row.slice(0,headers.length);while(row.length<headers.length)row.push('');return row;
+    })};
+  }
+  const entities={amp:'&',lt:'<',gt:'>',quot:'"',apos:"'"};
+  const decode=s=>s.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi,(m,e)=>{if(e[0]!=='#')return e in entities?entities[e]:m;const n=e[1].toLowerCase()==='x'?parseInt(e.slice(2),16):parseInt(e.slice(1),10);return n>0&&n<=0x10ffff?String.fromCodePoint(n):m;});
+  const local=name=>name.slice(name.indexOf(':')+1);
+  // Small XML reader: elements, attributes, text and CDATA. Entities declared in
+  // a DTD are never expanded.
+  function xmlTree(text){
+    const src=String(text).replace(/^\uFEFF/,'');
+    const root={name:'#root',attrs:{},children:[],text:''},stack=[root];
+    const token=/<!\[CDATA\[([\s\S]*?)\]\]>|<!--[\s\S]*?-->|<\?[\s\S]*?\?>|<!DOCTYPE(?:[^>\[]|\[[\s\S]*?\])*>|<\/([^\s>]+)\s*>|<([^\s\/>!?]+)((?:\s+[^\s=\/>]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>|([^<]+)/y;
+    const attr=/([^\s=\/>]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
+    while(token.lastIndex<src.length){
+      const at=token.lastIndex,m=token.exec(src);
+      if(!m)throw Error('This XML file is not valid near character '+(at+1)+'.');
+      const top=stack[stack.length-1];
+      if(m[1]!==undefined)top.text+=m[1];
+      else if(m[6]!==undefined)top.text+=decode(m[6]);
+      else if(m[2]!==undefined){if(stack.length<2||top.raw!==m[2])throw Error('This XML file has a closing tag that does not match its opening tag.');stack.pop();}
+      else if(m[3]!==undefined){
+        const node={name:local(m[3]),raw:m[3],attrs:{},children:[],text:''};
+        for(const a of m[4].matchAll(attr))if(!/^xmlns(:|$)/.test(a[1]))node.attrs[local(a[1])]=decode(a[2]??a[3]);
+        top.children.push(node);if(!m[5])stack.push(node);
+      }
+    }
+    if(stack.length>1)throw Error('This XML file ends before all of its tags are closed.');
+    if(root.children.length!==1)throw Error('This XML file needs one root element.');
+    return root.children[0];
+  }
+  const textOf=node=>node.text+node.children.map(textOf).join('');
+  const walk=(node,fn)=>{fn(node);node.children.forEach(child=>walk(child,fn));};
+  // Excel "XML Spreadsheet 2003": Workbook > Worksheet > Table > Row > Cell > Data.
+  function spreadsheetRows(book){
+    let table=null;walk(book,node=>{if(!table&&node.name==='Table')table=node;});
+    if(!table)throw Error('This spreadsheet XML has no table.');
+    return table.children.filter(row=>row.name==='Row').map(row=>{
+      const out=[];
+      row.children.filter(cell=>cell.name==='Cell').forEach(cell=>{
+        const index=parseInt(cell.attrs.Index,10);if(index>0)while(out.length<index-1)out.push('');
+        const data=cell.children.find(child=>child.name==='Data');out.push(data?textOf(data).trim():'');
+        for(let i=parseInt(cell.attrs.MergeAcross,10)||0;i>0;i--)out.push('');
+      });
+      return out;
+    }).filter(row=>row.some(v=>v));
+  }
+  // Any other XML: the most repeated element with fields becomes one trade, and
+  // its attributes and simple child elements become the columns.
+  function fieldsOf(node){
+    const out=new Map(Object.entries(node.attrs));
+    node.children.forEach(child=>{
+      if(!child.children.length)out.set(child.name,child.text.trim());
+      else child.children.filter(leaf=>!leaf.children.length).forEach(leaf=>out.set(child.name+' '+leaf.name,leaf.text.trim()));
+      Object.entries(child.attrs).forEach(([k,v])=>{if(!out.has(child.name+' '+k))out.set(child.name+' '+k,v);});
+    });
+    return out;
+  }
+  function recordRows(rootNode){
+    let best=null;
+    walk(rootNode,parent=>{
+      const groups={};parent.children.forEach(child=>{(groups[child.name]=groups[child.name]||[]).push(child);});
+      Object.values(groups).forEach(nodes=>{
+        const withFields=nodes.filter(n=>fieldsOf(n).size);
+        if(withFields.length&&(!best||withFields.length>best.length))best=withFields;
+      });
+    });
+    if(!best)throw Error('No trade records were found in this XML file.');
+    const rows=best.map(fieldsOf),headers=[];
+    rows.forEach(row=>row.forEach((v,k)=>{if(!headers.includes(k))headers.push(k);}));
+    return[headers,...rows.map(row=>headers.map(h=>row.get(h)??''))];
+  }
+  function parseXml(text){
+    const rootNode=xmlTree(text);
+    return finish(rootNode.name==='Workbook'?spreadsheetRows(rootNode):recordRows(rootNode));
+  }
+  // Picks the reader from the file contents, so a misnamed file still works.
+  function parseFile(text){
+    const source=String(text).replace(/^\uFEFF/,'');
+    return /^\s*</.test(source)?parseXml(source):parse(source);
+  }
+  // .xlsx is a zip of XML parts. Unzipped with the browser's built-in
+  // DecompressionStream, so no library is needed.
+  async function unzip(bytes){
+    const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength),files={};
+    let end=-1;for(let i=bytes.length-22;i>=Math.max(0,bytes.length-65557);i--)if(view.getUint32(i,true)===0x06054b50){end=i;break;}
+    if(end<0)throw Error('This Excel file is damaged or incomplete.');
+    let at=view.getUint32(end+16,true);const count=view.getUint16(end+10,true);
+    for(let n=0;n<count;n++){
+      if(view.getUint32(at,true)!==0x02014b50)throw Error('This Excel file is damaged or incomplete.');
+      const method=view.getUint16(at+10,true),size=view.getUint32(at+20,true),nameLen=view.getUint16(at+28,true),extraLen=view.getUint16(at+30,true),noteLen=view.getUint16(at+32,true),offset=view.getUint32(at+42,true);
+      const name=new TextDecoder().decode(bytes.subarray(at+46,at+46+nameLen));
+      files[name]={method,size,offset};at+=46+nameLen+extraLen+noteLen;
+    }
+    return async name=>{
+      const f=files[name];if(!f)return null;
+      const start=f.offset+30+view.getUint16(f.offset+26,true)+view.getUint16(f.offset+28,true),data=bytes.subarray(start,start+f.size);
+      if(f.method===0)return new TextDecoder().decode(data);
+      if(f.method!==8||typeof DecompressionStream!=='function')throw Error('This browser cannot open Excel files. Save the file as CSV and try again.');
+      return new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+    };
+  }
+  const builtinDates=new Set([14,15,16,17,18,19,20,21,22,45,46,47]);
+  const isDateFormat=code=>/[dmyhs]/i.test(String(code).replace(/\[[^\]]*\]|"[^"]*"|\\./g,''));
+  function serialDate(serial){
+    const ms=Math.round((serial-25569)*86400000),d=new Date(ms),pad=v=>String(v).padStart(2,'0');
+    const date=`${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`;
+    return serial%1?`${date} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`:date;
+  }
+  const columnIndex=ref=>{let n=0;for(const c of String(ref).replace(/[0-9]/g,''))n=n*26+c.toUpperCase().charCodeAt(0)-64;return n-1;};
+  async function parseXlsx(buffer){
+    const read=await unzip(new Uint8Array(buffer));
+    const book=await read('xl/workbook.xml');if(!book)throw Error('This Excel file has no worksheets.');
+    const sheetTag=[];walk(xmlTree(book),n=>{if(n.name==='sheet')sheetTag.push(n);});
+    let path='xl/worksheets/sheet1.xml';
+    const rels=await read('xl/_rels/workbook.xml.rels');
+    if(rels&&sheetTag[0]){walk(xmlTree(rels),n=>{if(n.name==='Relationship'&&n.attrs.Id===sheetTag[0].attrs.id){const t=n.attrs.Target;path=t.startsWith('/')?t.slice(1):'xl/'+t.replace(/^\.\//,'');}});}
+    const sheet=await read(path);if(!sheet)throw Error('This Excel file has no worksheets.');
+    const shared=[],sharedXml=await read('xl/sharedStrings.xml');
+    if(sharedXml)xmlTree(sharedXml).children.filter(n=>n.name==='si').forEach(si=>{let t='';walk(si,n=>{if(n.name==='t')t+=n.text;});shared.push(t);});
+    const dateStyles=new Set(),stylesXml=await read('xl/styles.xml');
+    if(stylesXml){
+      const styles=xmlTree(stylesXml),custom={};
+      walk(styles,n=>{if(n.name==='numFmt')custom[n.attrs.numFmtId]=n.attrs.formatCode;});
+      const xfs=styles.children.find(n=>n.name==='cellXfs');
+      (xfs?xfs.children:[]).forEach((xf,i)=>{const id=Number(xf.attrs.numFmtId);if(builtinDates.has(id)||(custom[id]&&isDateFormat(custom[id])))dateStyles.add(i);});
+    }
+    const rows=[];
+    walk(xmlTree(sheet),row=>{
+      if(row.name!=='row')return;
+      const out=[];
+      row.children.filter(c=>c.name==='c').forEach(c=>{
+        const i=c.attrs.r?columnIndex(c.attrs.r):out.length;while(out.length<i)out.push('');
+        const v=c.children.find(n=>n.name==='v'),raw=v?v.text:'';let value=raw;
+        if(c.attrs.t==='s')value=shared[Number(raw)]??'';
+        else if(c.attrs.t==='inlineStr'){value='';walk(c,n=>{if(n.name==='t')value+=n.text;});}
+        else if(c.attrs.t==='b')value=raw==='1'?'TRUE':'FALSE';
+        else if(c.attrs.t!=='str'&&c.attrs.t!=='e'&&raw!==''&&dateStyles.has(Number(c.attrs.s||0))&&isFinite(raw))value=serialDate(Number(raw));
+        out[i]=String(value).trim();
+      });
+      if(out.some(v=>v))rows.push(out);
+    });
+    return finish(rows);
+  }
+  // Reads a File/Blob: .xlsx by its zip signature, otherwise CSV or XML text.
+  async function parseUpload(file){
+    const buffer=await file.arrayBuffer(),head=new Uint8Array(buffer.slice(0,4));
+    if(head[0]===0x50&&head[1]===0x4b)return parseXlsx(buffer);
+    if(head[0]===0xd0&&head[1]===0xcf&&head[2]===0x11&&head[3]===0xe0)throw Error('Old .xls files are not supported. In Excel, save it as .xlsx or CSV, then choose that file.');
+    return parseFile(new TextDecoder().decode(buffer));
   }
   function suggest(headers){
     const normalized=headers.map(normalize);
@@ -61,7 +216,7 @@
   }
   function convert(table,mapping,options={}){
     const used=fields.filter(field=>Number(mapping[field])>=0).map(field=>Number(mapping[field]));
-    if(new Set(used).size!==used.length)throw Error('Map each CSV column to only one journal field.');
+    if(new Set(used).size!==used.length)throw Error('Map each column to only one journal field.');
     for(const key of ['date','symbol','direction'])if(!Number.isInteger(Number(mapping[key]))||Number(mapping[key])<0||Number(mapping[key])>=table.headers.length)throw Error('Map the '+key+' column first.');
     return table.records.map((record,index)=>{
       try{
@@ -90,5 +245,5 @@
       }catch(error){throw Error('Row '+(index+1)+': '+error.message);}
     });
   }
-  return{fields,parse,suggest,convert};
+  return{fields,parse,parseXml,parseFile,parseXlsx,parseUpload,suggest,convert};
 });

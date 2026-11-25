@@ -27,7 +27,7 @@ window.tradesToReviewCount=()=>(typeof allTrades==='undefined'?0:allTrades.filte
 
 window.renderTradesList=function(){const root=$('#ws-trades');if(!root)return;
   const queue=allTrades.filter(tlNeedsReview).length;
-  root.innerHTML=`<header class="ws-header"><div><span class="ws-eyebrow">Your trades</span><h1>Trades</h1><p class="ws-subtitle">Find any trade, and review the ones you haven't looked at yet.</p></div><div class="tl-head-actions">${wsBtn('Import CSV','import',true)}${wsBtn('Export CSV','export',true)}<button type="button" class="btn" id="tlAdd">+ Add trade</button></div></header>
+  root.innerHTML=`<header class="ws-header"><div><span class="ws-eyebrow">Your trades</span><h1>Trades</h1><p class="ws-subtitle">Find any trade, and review the ones you haven't looked at yet.</p></div><div class="tl-head-actions">${wsBtn('Import trades','import',true)}${wsBtn('Export CSV','export',true)}<button type="button" class="btn" id="tlAdd">+ Add trade</button></div></header>
   <div class="tl-tabs" role="tablist" aria-label="Trades views"><button type="button" role="tab" id="tlTabAll" aria-selected="${TL.tab==='all'}" aria-controls="tlPanel" data-tl-tab="all">All trades <span class="tl-n">${allTrades.length}</span></button><button type="button" role="tab" id="tlTabReview" aria-selected="${TL.tab==='review'}" aria-controls="tlPanel" data-tl-tab="review">To review <span class="tl-n ${queue?'on':''}">${queue}</span></button><button type="button" role="tab" id="tlTabWeek" aria-selected="${TL.tab==='week'}" aria-controls="tlPanel" data-tl-tab="week">Weekly review</button></div>
   <div id="tlPanel" role="tabpanel" aria-labelledby="${TL_TAB_IDS[TL.tab]}"></div>`;
   $('#tlAdd').onclick=()=>openTradePage(null,wsLocalDate());
