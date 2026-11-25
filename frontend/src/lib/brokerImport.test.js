@@ -59,7 +59,7 @@ import {deflateRawSync} from 'node:zlib';
 function zip(files){
   const locals=[],central=[];let offset=0;
   for(const [name,text] of Object.entries(files)){
-    const n=Buffer.from(name),data=deflateRawSync(Buffer.from(text));
+    const n=Buffer.from(name),data=deflateRawSync(Buffer.isBuffer(text)?text:Buffer.from(text));
     const local=Buffer.alloc(30);local.writeUInt32LE(0x04034b50,0);local.writeUInt16LE(8,8);local.writeUInt32LE(data.length,18);local.writeUInt16LE(n.length,26);
     const dir=Buffer.alloc(46);dir.writeUInt32LE(0x02014b50,0);dir.writeUInt16LE(8,10);dir.writeUInt32LE(data.length,20);dir.writeUInt16LE(n.length,28);dir.writeUInt32LE(offset,42);
     locals.push(local,n,data);central.push(dir,n);offset+=30+n.length+data.length;
@@ -102,4 +102,25 @@ test('reads .xlsx workbooks with shared strings and date cells',async()=>{
 });
 test('explains that old .xls files must be saved as .xlsx or CSV',async()=>{
   await assert.rejects(broker.parseUpload(blob(new Uint8Array([0xd0,0xcf,0x11,0xe0,0,0]).buffer)),/Old \.xls/);
+});
+test('reads MetaTrader style .xlsx: UTF-16 parts, title rows and several tables',async()=>{
+  const u16=s=>Buffer.concat([Buffer.from([0xff,0xfe]),Buffer.from(s,'utf16le')]).toString('latin1');
+  const cell=(r,c,v)=>`<c r="${'ABCDEFGHIJKLM'[c]}${r}" t="inlineStr"><is><t>${v}</t></is></c>`;
+  const row=(r,vals)=>`<row r="${r}">${vals.map((v,c)=>v===''?'':cell(r,c,v)).join('')}</row>`;
+  const sheet='<?xml version="1.0" encoding="UTF-16"?><worksheet><sheetData>'+[
+    ['Trade History Report'],['Name:','','','Someone'],['Company:','','','Demo Broker Ltd.'],['Positions'],
+    ['Time','Position','Symbol','Type','Volume','Price','S / L','T / P','Time','Price','Commission','Swap','Profit'],
+    ['2026.11.25 17:15:02','17220580','XAUUSD','sell','0.01','3460.35','3459.81','3450.20','2026.11.25 17:15:55','3452.56','0.00','0.00','7.79'],
+    ['Deals'],['Time','Deal','Symbol','Type','Direction','Volume','Price','Order','Commission','Fee','Swap','Profit','Balance'],
+    ['2026.11.25 17:15:02','1','XAUUSD','sell','in','0.01','3460.35','17220580','0','0','0','0','100'],
+  ].map((v,i)=>row(i+1,v)).join('')+'</sheetData></worksheet>';
+  // Write parts as latin1 so the UTF-16 bytes survive the zip helper unchanged.
+  const files={'xl/workbook.xml':'<workbook><sheets><sheet name="S" r:id="rId1"/></sheets></workbook>','xl/_rels/workbook.xml.rels':'<Relationships><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>'};
+  const raw={'xl/worksheets/sheet1.xml':u16(sheet)};
+  const buffer=zip(Object.fromEntries([...Object.entries(files),...Object.entries(raw)].map(([k,v])=>[k,k in raw?Buffer.from(v,'latin1'):v])));
+  const table=await broker.parseUpload(blob(buffer));
+  assert.deepEqual(table.headers.slice(0,4),['Open Time','Position ID','Symbol','Side']);assert.equal(table.records.length,1);assert.equal(table.broker,'Demo Broker Ltd.');
+  const mapping=broker.suggest(table.headers);assert.equal(broker.sideHint(table,mapping),'buy-sell');
+  const [trade]=broker.convert(table,mapping,{sideMode:'buy-sell',brokerName:'MT5'});
+  assert.equal(trade.date,'2026-11-25');assert.equal(trade.direction,'Short');assert.equal(trade.entry,3460.35);assert.equal(trade.exit,3452.56);assert.equal(trade.pnl,7.79);assert.equal(trade.execution_id,'17220580');
 });

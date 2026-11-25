@@ -1608,5 +1608,18 @@
   "This browser cannot open Excel files. Save the file as CSV and try again.": "Este navegador não consegue abrir arquivos do Excel. Salve o arquivo como CSV e tente novamente.",
   "This Excel file has no worksheets.": "Este arquivo do Excel não tem planilhas.",
   "Old .xls files are not supported. In Excel, save it as .xlsx or CSV, then choose that file.": "Arquivos .xls antigos não são suportados. No Excel, salve como .xlsx ou CSV e escolha esse arquivo.",
-  "Map each column to only one journal field.": "Mapeie cada coluna para apenas um campo do diário."
+  "Map each column to only one journal field.": "Mapeie cada coluna para apenas um campo do diário.",
+  "Drop your file here or click to choose": "Solte seu arquivo aqui ou clique para escolher",
+  "CSV, Excel (.xlsx) or XML, up to 5 MB": "CSV, Excel (.xlsx) ou XML, até 5 MB",
+  "Change file": "Trocar arquivo",
+  "Amounts must be in {value1}. Use closed trades, not single order fills.": "Os valores devem estar em {value1}. Use operações fechadas, não execuções de ordens avulsas.",
+  "Download a template": "Baixar um modelo",
+  "Trades already in your journal are skipped.": "Operações que já estão no seu diário são ignoradas.",
+  "and {value1} more": "e mais {value1}",
+  "Import 1 trade": "Importar 1 operação",
+  "Upload your broker’s trade history. Columns are matched for you.": "Envie o histórico de operações da sua corretora. As colunas são mapeadas para você.",
+  "Adjust columns and formats": "Ajustar colunas e formatos",
+  "{value1} trades found": "{value1} operações encontradas",
+  "1 trade found": "1 operação encontrada",
+  "Import {value1} trades": "Importar {value1} operações"
 }

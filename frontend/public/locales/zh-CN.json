@@ -1608,5 +1608,18 @@
   "This browser cannot open Excel files. Save the file as CSV and try again.": "此浏览器无法打开 Excel 文件。请将文件另存为 CSV 后重试。",
   "This Excel file has no worksheets.": "此 Excel 文件没有工作表。",
   "Old .xls files are not supported. In Excel, save it as .xlsx or CSV, then choose that file.": "不支持旧版 .xls 文件。请在 Excel 中另存为 .xlsx 或 CSV，然后选择该文件。",
-  "Map each column to only one journal field.": "每列只能映射到一个日志字段。"
+  "Map each column to only one journal field.": "每列只能映射到一个日志字段。",
+  "Drop your file here or click to choose": "将文件拖到此处或点击选择",
+  "CSV, Excel (.xlsx) or XML, up to 5 MB": "CSV、Excel (.xlsx) 或 XML，最大 5 MB",
+  "Change file": "更换文件",
+  "Amounts must be in {value1}. Use closed trades, not single order fills.": "金额必须以 {value1} 计。请使用已平仓交易，而非单笔订单成交。",
+  "Download a template": "下载模板",
+  "Trades already in your journal are skipped.": "日志中已有的交易将被跳过。",
+  "and {value1} more": "还有 {value1} 笔",
+  "Import 1 trade": "导入 1 笔交易",
+  "Upload your broker’s trade history. Columns are matched for you.": "上传经纪商的交易记录。列会自动匹配。",
+  "Adjust columns and formats": "调整列和格式",
+  "{value1} trades found": "找到 {value1} 笔交易",
+  "1 trade found": "找到 1 笔交易",
+  "Import {value1} trades": "导入 {value1} 笔交易"
 }

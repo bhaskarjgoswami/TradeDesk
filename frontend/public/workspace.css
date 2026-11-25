@@ -1060,3 +1060,33 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 /* Trade detail view (trade.js #tdForm): one-tap reflection controls reuse the trade form chips */
 #tdForm.tf-review>*{margin-top:0}
 .cal-head .cal-title,.cal-head .cal-title p{text-align:left}
+
+/* ---------- Import trades dialog ---------- */
+.imp-drop{display:grid;justify-items:center;gap:6px;padding:36px 20px;border:1.5px dashed var(--line);border-radius:14px;background:var(--panel2);text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.imp-drop:hover,.imp-drop.over,.imp-drop:focus-within{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--panel))}
+.imp-drop b{font-size:14px;font-weight:600;color:var(--txt)}
+.imp-drop span:not(.imp-drop-icon){font-size:12.5px;color:var(--mut)}
+.imp-drop-icon,.imp-file-icon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--accent-weak,var(--panel));color:var(--accent);font-size:18px;font-weight:600;margin-bottom:4px}
+.imp-drop[hidden],.imp-file[hidden]{display:none}
+.imp-file{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
+.imp-file-icon{margin:0;flex-shrink:0}
+.imp-file>div{flex:1;min-width:0;display:grid;gap:2px}
+.imp-file b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.imp-file span{font-size:12.5px;color:var(--mut)}
+.imp-hint{font-size:12px;color:var(--mut);margin:10px 2px 0;line-height:1.6}
+.imp-hint .ws-link{font-size:12px;padding:0}
+#wsImportStep{display:grid;gap:14px;margin-top:18px}
+.imp-broker{max-width:360px}
+.imp-preview .ws-table{min-width:0}
+.imp-preview .right{text-align:right}
+.imp-preview .pos{color:var(--grn)}.imp-preview .neg{color:var(--red)}
+.imp-more{font-size:12px;color:var(--mut);margin:6px 2px 0}
+.imp-more-box{border:1px solid var(--line);border-radius:12px;padding:0 14px}
+.imp-more-box summary{cursor:pointer;font-size:13px;font-weight:600;padding:12px 0;color:var(--txt)}
+.imp-more-box[open] summary{border-bottom:1px solid var(--line);margin-bottom:14px}
+.imp-more-box .ws-form-grid{padding-bottom:14px}
+.imp-more-box h3{display:none}
+#wsImportStep{grid-template-columns:minmax(0,1fr)}
+.imp-preview{overflow-x:auto}
+.imp-preview td{white-space:nowrap}
+@media(max-width:600px){.imp-file .btn{padding:8px 12px;font-size:12.5px}.imp-broker{max-width:none}.imp-drop{padding:28px 16px}}

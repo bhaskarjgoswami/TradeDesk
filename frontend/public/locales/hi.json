@@ -1608,5 +1608,18 @@
   "This browser cannot open Excel files. Save the file as CSV and try again.": "यह ब्राउज़र Excel फ़ाइलें नहीं खोल सकता। फ़ाइल को CSV के रूप में सेव करके फिर कोशिश करें।",
   "This Excel file has no worksheets.": "इस Excel फ़ाइल में कोई वर्कशीट नहीं है।",
   "Old .xls files are not supported. In Excel, save it as .xlsx or CSV, then choose that file.": "पुरानी .xls फ़ाइलें समर्थित नहीं हैं। Excel में इसे .xlsx या CSV के रूप में सेव करें, फिर वह फ़ाइल चुनें।",
-  "Map each column to only one journal field.": "हर कॉलम को सिर्फ़ एक जर्नल फ़ील्ड से मैप करें।"
+  "Map each column to only one journal field.": "हर कॉलम को सिर्फ़ एक जर्नल फ़ील्ड से मैप करें।",
+  "Drop your file here or click to choose": "अपनी फ़ाइल यहाँ छोड़ें या चुनने के लिए क्लिक करें",
+  "CSV, Excel (.xlsx) or XML, up to 5 MB": "CSV, Excel (.xlsx) या XML, 5 MB तक",
+  "Change file": "फ़ाइल बदलें",
+  "Amounts must be in {value1}. Use closed trades, not single order fills.": "राशियाँ {value1} में होनी चाहिए। बंद ट्रेड इस्तेमाल करें, अलग-अलग ऑर्डर फ़िल नहीं।",
+  "Download a template": "टेम्पलेट डाउनलोड करें",
+  "Trades already in your journal are skipped.": "जो ट्रेड पहले से आपकी जर्नल में हैं, वे छोड़ दिए जाते हैं।",
+  "and {value1} more": "और {value1}",
+  "Import 1 trade": "1 ट्रेड इम्पोर्ट करें",
+  "Upload your broker’s trade history. Columns are matched for you.": "अपने ब्रोकर की ट्रेड हिस्ट्री अपलोड करें। कॉलम अपने आप मैप हो जाते हैं।",
+  "Adjust columns and formats": "कॉलम और फ़ॉर्मैट बदलें",
+  "{value1} trades found": "{value1} ट्रेड मिले",
+  "1 trade found": "1 ट्रेड मिला",
+  "Import {value1} trades": "{value1} ट्रेड इम्पोर्ट करें"
 }

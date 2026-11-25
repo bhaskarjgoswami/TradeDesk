@@ -3,7 +3,7 @@
   'use strict';
   const fields=['date','symbol','direction','setup','entry','stop','exit','qty','pnl','fee','risk','r_multiple','notes','tags','contract_value','broker','currency','execution_id'];
   const numeric=new Set(['entry','stop','exit','qty','pnl','fee','risk','r_multiple','contract_value']);
-  const aliases={execution_id:['tradeid','positionid','brokertradeid','closedtradeid'],date:['date','tradedate','opendate','entrydate','entrytime','datetime','time'],symbol:['symbol','tradingsymbol','ticker','instrument','contract','product'],direction:['direction','side','position','positionside','buysell'],entry:['entry','entryprice','openprice','averageentryprice','buyprice'],exit:['exit','exitprice','closeprice','averageexitprice','sellprice'],stop:['stop','stoploss','sl'],qty:['qty','quantity','size','volume','lots'],pnl:['pnl','pl','grosspnl','grosspl','grossprofit','profitloss','realizedpnl','realisedpnl','realizedpl','realisedpl'],fee:['fee','fees','commission','commissions','brokerage'],contract_value:['contractvalue','contractmultiplier','multiplier'],broker:['broker','brokername','exchange'],currency:['currency','accountcurrency','pnlcurrency','profitcurrency'],r_multiple:['rmultiple','r'],setup:['setup','strategy'],risk:['risk'],notes:['notes','comment','comments','description'],tags:['tags']};
+  const aliases={execution_id:['tradeid','positionid','brokertradeid','closedtradeid'],date:['date','tradedate','opendate','opentime','entrydate','entrytime','datetime','time'],symbol:['symbol','tradingsymbol','ticker','instrument','contract','product'],direction:['direction','side','position','positionside','buysell'],entry:['entry','entryprice','openprice','averageentryprice','buyprice'],exit:['exit','exitprice','closeprice','averageexitprice','sellprice'],stop:['stop','stoploss','sl'],qty:['qty','quantity','size','volume','lots'],pnl:['pnl','pl','profit','grosspnl','grosspl','grossprofit','profitloss','realizedpnl','realisedpnl','realizedpl','realisedpl'],fee:['fee','fees','commission','commissions','brokerage'],contract_value:['contractvalue','contractmultiplier','multiplier'],broker:['broker','brokername','exchange'],currency:['currency','accountcurrency','pnlcurrency','profitcurrency'],r_multiple:['rmultiple','r'],setup:['setup','strategy'],risk:['risk'],notes:['notes','comment','comments','description'],tags:['tags']};
   const normalize=value=>String(value).trim().toLowerCase().replace(/[^a-z0-9]/g,'');
   function parse(text){
     const source=String(text).replace(/^\uFEFF/,'');
@@ -36,6 +36,50 @@
       if(row.slice(headers.length).some(v=>String(v).trim()))throw Error('Data row '+(i+1)+' has more values than there are column headers.');
       row=row.slice(0,headers.length);while(row.length<headers.length)row.push('');return row;
     })};
+  }
+  // Spreadsheet reports (MetaTrader and others) put title rows and several
+  // tables on one sheet. Find each header row with data under it and keep the
+  // table whose columns match the most journal fields.
+  const filled=row=>row.filter(v=>String(v).trim()).length;
+  const looksLikeValue=v=>/^[-+(]?[\d.,:/ ]+%?\)?$/.test(String(v).trim());
+  function nameColumns(header,data){
+    const width=Math.max(header.length,...data.map(r=>r.length));
+    const keep=[];for(let c=0;c<width;c++)if(String(header[c]||'').trim()||data.some(r=>String(r[c]||'').trim()))keep.push(c);
+    let names=keep.map(c=>String(header[c]||'').trim()||'Column '+(c+1));
+    const count={};names.forEach(n=>{count[n.toLowerCase()]=(count[n.toLowerCase()]||0)+1;});
+    const seen={};names=names.map(n=>{const k=n.toLowerCase();if(count[k]<2)return n;seen[k]=(seen[k]||0)+1;
+      if(count[k]===2&&/^(time|date|price)$/i.test(n))return(seen[k]===1?'Open ':'Close ')+n;return seen[k]===1?n:n+' '+seen[k];});
+    const column=i=>data.map(r=>String(r[keep[i]]||'').trim()).filter(Boolean);
+    names=names.map((n,i)=>{
+      const values=column(i);if(!values.length)return n;
+      if(/^position$/i.test(n)&&values.every(v=>/^\d+$/.test(v)))return'Position ID';
+      if(/^type$/i.test(n)&&values.every(v=>/^(buy|sell)$/i.test(v)))return'Side';
+      return n;
+    });
+    return[names,...data.map(r=>keep.map(c=>r[c]??''))];
+  }
+  // Report headers often name the broker ("Company: ..." or "Broker: ...").
+  function reportBroker(rows){
+    for(const row of rows.slice(0,20)){
+      const cells=row.map(v=>String(v).trim()).filter(Boolean);
+      if(cells.length===2&&/^(company|broker|brokerage)\s*:?$/i.test(cells[0]))return cells[1].slice(0,80);
+    }
+    return'';
+  }
+  function fromSheet(rows){const table=finish(pickTable(rows)),broker=reportBroker(rows);if(broker)table.broker=broker;return table;}
+  function pickTable(rows){
+    let best=null;
+    for(let i=0;i<rows.length-1;i++){
+      const head=rows[i],width=filled(head);
+      if(width<3||head.some(v=>String(v).trim()&&looksLikeValue(v)))continue;
+      const data=[];
+      for(let j=i+1;j<rows.length;j++){if(filled(rows[j])<Math.max(2,Math.ceil(width/2)))break;data.push(rows[j]);}
+      if(!data.length)continue;
+      const table=nameColumns(head,data),hits=Object.values(suggest(table[0])).filter(v=>v>=0).length;
+      if(!best||hits>best.hits)best={hits,table};
+      i+=data.length;
+    }
+    return best&&best.hits>=2?best.table:rows;
   }
   const entities={amp:'&',lt:'<',gt:'>',quot:'"',apos:"'"};
   const decode=s=>s.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi,(m,e)=>{if(e[0]!=='#')return e in entities?entities[e]:m;const n=e[1].toLowerCase()==='x'?parseInt(e.slice(2),16):parseInt(e.slice(1),10);return n>0&&n<=0x10ffff?String.fromCodePoint(n):m;});
@@ -107,7 +151,7 @@
   }
   function parseXml(text){
     const rootNode=xmlTree(text);
-    return finish(rootNode.name==='Workbook'?spreadsheetRows(rootNode):recordRows(rootNode));
+    return rootNode.name==='Workbook'?fromSheet(spreadsheetRows(rootNode)):finish(recordRows(rootNode));
   }
   // Picks the reader from the file contents, so a misnamed file still works.
   function parseFile(text){
@@ -130,10 +174,17 @@
     return async name=>{
       const f=files[name];if(!f)return null;
       const start=f.offset+30+view.getUint16(f.offset+26,true)+view.getUint16(f.offset+28,true),data=bytes.subarray(start,start+f.size);
-      if(f.method===0)return new TextDecoder().decode(data);
+      if(f.method===0)return decodeText(data);
       if(f.method!==8||typeof DecompressionStream!=='function')throw Error('This browser cannot open Excel files. Save the file as CSV and try again.');
-      return new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+      return decodeText(new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()));
     };
+  }
+  // Some exporters (MetaTrader) write UTF-16 text, marked by a byte order mark.
+  function decodeText(bytes){
+    if(bytes[0]===0xff&&bytes[1]===0xfe)return new TextDecoder('utf-16le').decode(bytes.subarray(2));
+    if(bytes[0]===0xfe&&bytes[1]===0xff)return new TextDecoder('utf-16be').decode(bytes.subarray(2));
+    if(bytes[0]===0x3c&&bytes[1]===0&&bytes[2]===0x3f&&bytes[3]===0)return new TextDecoder('utf-16le').decode(bytes);
+    return new TextDecoder().decode(bytes);
   }
   const builtinDates=new Set([14,15,16,17,18,19,20,21,22,45,46,47]);
   const isDateFormat=code=>/[dmyhs]/i.test(String(code).replace(/\[[^\]]*\]|"[^"]*"|\\./g,''));
@@ -175,14 +226,20 @@
       });
       if(out.some(v=>v))rows.push(out);
     });
-    return finish(rows);
+    return fromSheet(rows);
   }
   // Reads a File/Blob: .xlsx by its zip signature, otherwise CSV or XML text.
   async function parseUpload(file){
     const buffer=await file.arrayBuffer(),head=new Uint8Array(buffer.slice(0,4));
     if(head[0]===0x50&&head[1]===0x4b)return parseXlsx(buffer);
     if(head[0]===0xd0&&head[1]===0xcf&&head[2]===0x11&&head[3]===0xe0)throw Error('Old .xls files are not supported. In Excel, save it as .xlsx or CSV, then choose that file.');
-    return parseFile(new TextDecoder().decode(buffer));
+    return parseFile(decodeText(new Uint8Array(buffer)));
+  }
+  // 'buy-sell' when the suggested direction column only holds Buy/Sell values.
+  function sideHint(table,mapping){
+    const col=mapping.direction;if(col==null||col<0)return'position';
+    const values=table.records.map(r=>String(r[col]||'').trim()).filter(Boolean);
+    return values.length&&values.every(v=>/^(buy|sell|b|s)$/i.test(v))?'buy-sell':'position';
   }
   function suggest(headers){
     const normalized=headers.map(normalize);
@@ -245,5 +302,5 @@
       }catch(error){throw Error('Row '+(index+1)+': '+error.message);}
     });
   }
-  return{fields,parse,parseXml,parseFile,parseXlsx,parseUpload,suggest,convert};
+  return{fields,parse,parseXml,parseFile,parseXlsx,parseUpload,suggest,sideHint,convert};
 });

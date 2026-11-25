@@ -1608,5 +1608,18 @@
   "This browser cannot open Excel files. Save the file as CSV and try again.": "لا يمكن لهذا المتصفح فتح ملفات Excel. احفظ الملف بصيغة CSV وحاول مرة أخرى.",
   "This Excel file has no worksheets.": "لا يحتوي ملف Excel هذا على أوراق عمل.",
   "Old .xls files are not supported. In Excel, save it as .xlsx or CSV, then choose that file.": "ملفات ‎.xls القديمة غير مدعومة. في Excel، احفظه بصيغة ‎.xlsx أو CSV ثم اختر ذلك الملف.",
-  "Map each column to only one journal field.": "طابق كل عمود مع حقل واحد فقط في الدفتر."
+  "Map each column to only one journal field.": "طابق كل عمود مع حقل واحد فقط في الدفتر.",
+  "Drop your file here or click to choose": "أفلت ملفك هنا أو انقر للاختيار",
+  "CSV, Excel (.xlsx) or XML, up to 5 MB": "CSV أو Excel (.xlsx) أو XML، حتى 5 ميغابايت",
+  "Change file": "تغيير الملف",
+  "Amounts must be in {value1}. Use closed trades, not single order fills.": "يجب أن تكون المبالغ بعملة {value1}. استخدم صفقات مغلقة، وليس تنفيذات أوامر منفردة.",
+  "Download a template": "تنزيل قالب",
+  "Trades already in your journal are skipped.": "يتم تخطي الصفقات الموجودة بالفعل في دفترك.",
+  "and {value1} more": "و{value1} أخرى",
+  "Import 1 trade": "استيراد صفقة واحدة",
+  "Upload your broker’s trade history. Columns are matched for you.": "ارفع سجل تداولات الوسيط. تتم مطابقة الأعمدة تلقائيًا.",
+  "Adjust columns and formats": "ضبط الأعمدة والتنسيقات",
+  "{value1} trades found": "تم العثور على {value1} صفقات",
+  "1 trade found": "تم العثور على صفقة واحدة",
+  "Import {value1} trades": "استيراد {value1} صفقات"
 }
