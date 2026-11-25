@@ -27,12 +27,13 @@ export default function App() {
   if (legal) return <ErrorBoundary><Suspense fallback={<PageLoading />}><Legal page={legal} /></Suspense></ErrorBoundary>;
   if (loading) return <PageLoading />;
   // Signed-in visitors go straight to their journal.
-  if (session) { window.location.replace("/app"); return null; }
+  if (session) { window.location.replace(loc.pathname === "/pricing" ? "/app#billing" : "/app"); return null; }
   return (
     <ErrorBoundary>
       <Suspense fallback={<PageLoading />}>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/pricing" element={<Landing />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

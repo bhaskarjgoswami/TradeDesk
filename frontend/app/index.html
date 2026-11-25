@@ -54,6 +54,8 @@
   .app.collapsed .tb-toggle{width:38px;justify-content:center;padding:9px;margin-left:auto;margin-right:auto}
   .app.collapsed .tb-toggle .tgl-lbl{display:none}
   .tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .tb-guard{font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;background:#ffffff14;color:#d9d8ea;white-space:nowrap}.tb-guard.over{background:#e5484d33;color:#ffb4b6}
+  .nav-badge{margin-left:auto;min-width:20px;padding:1px 7px;border-radius:999px;background:var(--accent);color:#fff;font-size:11px;font-weight:600;text-align:center;line-height:18px}
   /* collapsed icon-rail sidebar (desktop) */
   @media(min-width:981px){
     .sidebar{transition:width .18s ease}
@@ -412,7 +414,7 @@
     .mobilebar{display:flex;flex:0 0 52px}
     .app{flex:1;height:auto;min-height:0}
     .sidebar{position:fixed;top:0;left:0;height:100vh;z-index:60;transform:translateX(-100%);transition:transform .22s ease;box-shadow:2px 0 24px rgba(0,0,0,.25);width:248px}
-    .sidebar.open{transform:none}
+    .sidebar.open{transform:none}.sidebar:not(.open){box-shadow:none}
     .middle{width:300px}
   }
   /* ---------- phone ---------- */
@@ -596,7 +598,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
   <!-- TOP BAR -->
   <div class="topbar">
     <div class="tb-brand"><div class="logo"><svg class="hi" viewBox="0 0 24 24"><path d="M6 3.5h11A1.5 1.5 0 0 1 18.5 5v14a1.5 1.5 0 0 1-1.5 1.5H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h6M9.5 12h4"/></svg></div> <span translate="no">TradeDesk</span></div>
-    <div class="tb-right"><button type="button" class="btn ghost" id="routineOpen" aria-controls="routinePanel" aria-expanded="false"><svg class="rt-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M4.9 8.9l1.4 1.4M19.1 8.9l-1.4 1.4M3 17h2M19 17h2M7.5 17a4.5 4.5 0 0 1 9 0M2 21h20"/></svg><span class="rt-label">Pre-Market Routine</span></button><div class="tb-bell"><svg class="hi" viewBox="0 0 24 24"><path d="M6 9.5a6 6 0 0 1 12 0c0 4.5 1.8 5.5 1.8 5.5H4.2S6 14 6 9.5"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></div>
+    <div class="tb-right"><button type="button" class="btn ghost" id="routineOpen" aria-controls="routinePanel" aria-expanded="false"><svg class="rt-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M4.9 8.9l1.4 1.4M19.1 8.9l-1.4 1.4M3 17h2M19 17h2M7.5 17a4.5 4.5 0 0 1 9 0M2 21h20"/></svg><span class="rt-label">Pre-Market Routine</span></button><span class="tb-guard" id="tbGuard" role="status" hidden></span>
       <div class="tb-acct">
         <button type="button" class="tb-avatar" id="tbAvatar" title="Account" aria-label="Account menu" aria-haspopup="menu" aria-controls="avatarMenu" aria-expanded="false">B</button>
         <div class="tb-menu" id="avatarMenu" role="menu" aria-label="Account">
@@ -616,6 +618,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
 <nav aria-label="Main">
 <div class="side-h">Journal</div>
 <a class="navitem" data-view="month" href="#" title="Journal"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6zM9 7h6M9 11h6M9 15h4"/></svg></span>Journal</a>
+<a class="navitem" data-view="trades" href="#trades" title="Trades"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>Trades<span class="nav-badge" id="navReviewCount" hidden></span></a>
 <a class="navitem" data-view="performance" href="#performance" title="Performance"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16h16M7 15l4-5 4 3 5-7"/></svg></span>Performance</a>
 <a class="navitem" data-view="edge" href="#edge" title="Trade plan"><span class="ic"><svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></span>Trade plan</a>
 <div class="side-h">Tools</div>
@@ -688,6 +691,7 @@ try{applyDesign(localStorage.getItem('tj_design')||'mercury');}catch{}</script>
 <div class="pane" id="pane-trade"><div class="pane-pad ws-page" id="ws-trade"></div></div>
 <div class="pane" id="pane-month"><div class="pane-pad ws-page" id="ws-month"></div></div>
 <div class="pane" id="pane-performance"><div class="pane-pad ws-page" id="ws-performance"></div></div>
+<div class="pane" id="pane-trades"><div class="pane-pad ws-page" id="ws-trades"></div></div>
     <!-- settings pane -->
     <div class="pane" id="pane-settings">
       <div class="pane-pad">
@@ -921,7 +925,7 @@ function focusPaneHeading(v){requestAnimationFrame(()=>{const h=document.querySe
 $('#sidebarMembership').onclick=event=>{event.preventDefault();setView('billing');};
 function setView(v){
   view=v;
-  if(['month','settings','edge','performance','news','focus','feedback','billing'].includes(v))history.replaceState(null,'',location.pathname+location.search+(v==='month'?'':'#'+v));
+  if(['month','trades','settings','edge','performance','news','focus','feedback','billing'].includes(v))history.replaceState(null,'',location.pathname+location.search+(v==='month'?'':'#'+v));
   $$('.navitem').forEach(n=>{const on=n.dataset.view===v;n.classList.toggle('on',on);if(on)n.setAttribute('aria-current','page');else n.removeAttribute('aria-current');});
   $$('.pane').forEach(p=>p.classList.remove('on'));
   $('#pane-'+v).classList.add('on');
@@ -931,7 +935,8 @@ function setView(v){
   app.classList.add('view-'+v);
   if(v!=='journal')app.classList.remove('detail');
   closeDrawer();
-  if(v==='trades')renderAllTable();
+  if(v==='trades')window.renderTradesList?.();
+  window.renderTradeCounters?.();
   if(v==='performance')loadPerformance();
   if(v==='settings')renderSettings();
   if(v==='feedback')renderFeedback();
@@ -1239,7 +1244,10 @@ function chkBadge(json,planJson){let a=[],plan={};try{a=json?JSON.parse(json):[]
 // ---------- all trades table ----------
 async function loadAll(){const response=await fetch('/api/trades');const rows=await response.json().catch(()=>null);if(!response.ok||!Array.isArray(rows))throw Error(rows?.error||'Could not load your journal. Please try again.');allTrades=rows;window.tradesLoaded=true;tradesChanged();return rows;}
 // Single-trade writes patch the cached list instead of re-downloading the whole history.
-function tradesChanged(){allTrades.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||b.id-a.id);window.TDLocale?.protect(allTrades);window.tdRenderUsage?.();renderTags();}
+function tradesChanged(){allTrades.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||b.id-a.id);window.TDLocale?.protect(allTrades);window.tdRenderUsage?.();renderTags();window.renderTradeCounters?.();if(view==='trades')window.renderTradesList?.();}
+// Sidebar badge for trades waiting for review, and the daily trade limit chip in the top bar.
+window.renderTradeCounters=function(){const n=window.tradesToReviewCount?.()||0,badge=$('#navReviewCount');if(badge){badge.hidden=!n;badge.textContent=n>99?'99+':String(n);badge.title=`${n} ${n===1?'trade':'trades'} to review`;}
+  const chip=$('#tbGuard');if(!chip)return;const g=typeof WS!=='undefined'?WS.guard?.settings:null;if(!g||!g.enabled){chip.hidden=true;return;}const used=allTrades.filter(t=>t.date===wsLocalDate()).length;chip.hidden=false;chip.textContent=`${used} of ${g.maxTrades} trades today`;chip.classList.toggle('over',used>=g.maxTrades);chip.title=used>=g.maxTrades?'Daily trade limit reached':'Daily trade limit from your risk settings';}
 function upsertTrade(row){if(!row||!Number.isInteger(row.id))return;const i=allTrades.findIndex(t=>t.id===row.id);if(i<0)allTrades.unshift(row);else allTrades[i]=row;tradesChanged();}
 function dropTrade(id){allTrades=allTrades.filter(t=>t.id!==id);tradesChanged();}
 async function refreshTrade(id){const response=await fetch('/api/trades/'+id);if(response.status===404){dropTrade(Number(id));return null;}const row=await response.json().catch(()=>null);if(!response.ok||!row)throw Error(row?.error||'Could not load this trade. Please try again.');upsertTrade(row);return row;}
@@ -1657,8 +1665,15 @@ function routineArt(state){if(RM.active)return rmView();if(RN.active&&window.new
    <div class="rp-progress"><div class="rp-bar"><i style="width:${Math.round(p*100)}%"></i></div><span>${ready?'Ready to trade ✓':`${ticked} of ${n} checks · ${doneSteps} of ${steps.length} steps`}</span></div></aside>`;
   routineArtIntro=false;routineJustArt=null;return html;}
 let routineJustArt=null;
+// Daily reset time is stored as UTC HH:MM; show it in the trader's time zone (Account setting, else the browser's).
+function routineResetLocal(utc){const [h,m]=String(utc||'00:00').split(':').map(Number),at=new Date();at.setUTCHours(h||0,m||0,0,0);
+  const zone=(typeof PF!=='undefined'&&PF.data?.settings?.timezone)||undefined;
+  try{return at.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',timeZone:zone});}catch{return at.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});}}
+// The trade plan step completes by itself when all its items are ticked: a progress ring sits where the checkbox would be.
+function routinePlanRing(step,isDone){const keys=routinePlanKeys(step),done=new Set(routineState.planChecked||[]),n=keys.filter(k=>done.has(k)).length,t=keys.length,C=2*Math.PI*9,frac=t?n/t:0;
+  return `<span class="rp-ring${isDone?' done':''}" role="img" aria-label="${n} of ${t} plan items checked. Completes when all are ticked." title="Completes when all plan items are ticked">${isDone?'':`<svg viewBox="0 0 24 24" aria-hidden="true"><circle class="rp-ring-track" cx="12" cy="12" r="9"/><circle class="rp-ring-fill" cx="12" cy="12" r="9" style="stroke-dasharray:${C};stroke-dashoffset:${C*(1-frac)}"/></svg>`}</span>`;}
 function routinePopupDismissed(){try{return localStorage.getItem('tj_routine_popup');}catch{return null;}}
-function renderRoutinePanel(){const el=$('#routinePanel');if(!routineState){el.hidden=true;return;}const {settings,period,checked}=routineState,complete=settings.steps.every(step=>checked.includes(step.id));
+function renderRoutinePanel(){const el=$('#routinePanel');if(!routineState){el.hidden=true;return;}const {settings,period,checked}=routineState,complete=settings.steps.every(step=>checked.includes(step.id));if(complete)window.tdTrack?.('routine_completed');
   [$('#routineOpen'),$('#routineMobileOpen')].forEach(button=>{button.querySelector('.rt-label').textContent='Pre-Market Routine';button.title=`${checked.length} of ${settings.steps.length} steps complete`;});
   // Popup mode opens only from the routine button or Preview, never automatically on login.
   // settings.popup only decides whether it opens by itself; opening it from the button or Preview always uses the two-column view.
@@ -1666,10 +1681,10 @@ function renderRoutinePanel(){const el=$('#routinePanel');if(!routineState){el.h
   const visible=routineForced||(!auto&&settings.enabled&&!dismissed&&!(complete&&settings.autoHide)&&(settings.showAll||view==='journal'||view==='month'));el.hidden=!visible;
   const popup=auto||routineForced;
   el.classList.toggle('popup',popup);$('#routineBackdrop').hidden=!(visible&&popup);if(popup){el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');}else{el.removeAttribute('role');el.removeAttribute('aria-modal');}$('#routineOpen').setAttribute('aria-expanded',String(visible));if(!visible)return;
-  el.innerHTML=`<div class="routine-panel-head"><b id="routineHeading">Pre-Market Routine</b><button type="button" id="routineClose" aria-label="Close pre-market routine" title="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>${settings.steps.map(step=>`<div class="routine-item ${step.action==='preferences'?'rp-plan-step':''}">${step.action==='preferences'?'':`<input id="routine_check_${step.id}" class="rp-check" type="checkbox" data-complete-step="${step.id}" aria-label="${esc(routineStepTitle(step))}" ${checked.includes(step.id)?'checked':''}>`}${routineTile(step.icon,"routine-icon")}<div style="flex:1">${step.action==='preferences'?`<span class="rp-plan-title"><span>${esc(routineStepTitle(step))}</span><small class="rp-plan-sub">${routinePlanSub(step)}</small>${checked.includes(step.id)?'<i class="rp-done">Done</i>':''}</span>`:`<label for="routine_check_${step.id}"><span>${esc(routineStepTitle(step))}</span></label>`}${step.action==='preferences'?routinePlanChecklist(step):step.action!=='none'?`<button type="button" data-routine-action="${step.action}" data-step="${step.id}">${step.action==='journal'?'Open journal':step.action==='focus'?(popup?'Start meditation':'Open meditation'):step.action==='news'?'Open news':'Open performance'}</button>`:''}</div></div>`).join('')}<p class="routine-foot">${complete?'All steps complete.':`${checked.length} of ${settings.steps.length} complete.`} Resets daily at ${esc(settings.resetTime)} UTC.</p><div id="routinePanelStatus" role="status" aria-live="polite"></div>`;
+  el.innerHTML=`<div class="routine-panel-head"><b id="routineHeading">Pre-Market Routine</b><button type="button" id="routineClose" aria-label="Close pre-market routine" title="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>${settings.steps.map(step=>`<div class="routine-item ${step.action==='preferences'?'rp-plan-step':''}">${step.action==='preferences'?routinePlanRing(step,checked.includes(step.id)):`<input id="routine_check_${step.id}" class="rp-check" type="checkbox" data-complete-step="${step.id}" aria-label="${esc(routineStepTitle(step))}" ${checked.includes(step.id)?'checked':''}>`}${routineTile(step.icon,"routine-icon")}<div style="flex:1">${step.action==='preferences'?`<span class="rp-plan-title"><span>${esc(routineStepTitle(step))}</span><small class="rp-plan-sub">${routinePlanSub(step)}</small>${checked.includes(step.id)?'<i class="rp-done">Done</i>':''}</span>`:`<label for="routine_check_${step.id}"><span>${esc(routineStepTitle(step))}</span></label>`}${step.action==='preferences'?routinePlanChecklist(step):step.action!=='none'?`<button type="button" data-routine-action="${step.action}" data-step="${step.id}">${step.action==='journal'?'Open journal':step.action==='focus'?(popup?'Start meditation':'Open meditation'):step.action==='news'?'Open news':'Open performance'}</button>`:''}</div></div>`).join('')}<p class="routine-foot"><span>${popup?'':complete?'All steps complete. ':`${checked.length} of ${settings.steps.length} complete. `}</span>Resets daily at <span translate="no">${esc(routineResetLocal(settings.resetTime))}</span>.</p><div id="routinePanelStatus" role="status" aria-live="polite"></div>`;
   el.classList.toggle('rp-fs',popup);
-  if(popup){const doneN=settings.steps.filter(x=>checked.includes(x.id)).length;
-    el.innerHTML=routineArt(routineState)+`<div class="rp-main">${el.innerHTML}<div class="rp-footer"><span>${complete?'All steps complete':`${doneN} of ${settings.steps.length} steps done`}</span><div class="rp-footer-actions"><button type="button" class="btn ghost rp-cancel-btn" id="routineCancel">Cancel</button><button type="button" class="btn rp-done-btn" id="routineDone">${complete?'Done · Start trading':'Done'}</button></div></div></div>`;}
+  // Ticks save instantly, so the footer has one button that closes the popup. Progress lives in the left column only.
+  if(popup)el.innerHTML=routineArt(routineState)+`<div class="rp-main">${el.innerHTML}<div class="rp-footer"><div class="rp-footer-actions"><button type="button" class="btn rp-done-btn" id="routineDone">${complete?'Start trading':'Done'}</button></div></div></div>`;
   // Sections open and close on their own (all open by default), with an animated height.
   el.querySelectorAll('details.rp-acc').forEach(d=>d.querySelector('summary').addEventListener('click',e=>{e.preventDefault();if(d.dataset.anim)return;
     if(d.open){routineClosedSecs.add(d.dataset.sec);routineAccAnimate(d,false);return;}routineClosedSecs.delete(d.dataset.sec);routineAccAnimate(d,true);}));
@@ -1677,7 +1692,6 @@ function renderRoutinePanel(){const el=$('#routinePanel');if(!routineState){el.h
   window.newsRoutineWire?.();
   el.querySelectorAll('[data-ref]').forEach(b=>b.onclick=()=>{if(window.tfPreview)tfPreview(b.dataset.ref,b.dataset.refLabel);else window.open('/'+b.dataset.ref,'_blank');});
   if(routineJust){el.querySelector(`[data-complete-step="${CSS.escape(routineJust)}"]`)?.closest('.rp-item,.routine-item')?.classList.add('just');routineJust=null;}
-  $('#routineCancel')?.addEventListener('click',()=>$('#routineClose').click());
   $('#routineDone')?.addEventListener('click',()=>{$('#routineClose').click();if(complete)toast('Routine complete. Trade your plan.');});
   $('#routineClose').onclick=()=>{routineArtIntro=true;routineForced=false;routineHiddenPeriod=period;if(popup)try{localStorage.setItem('tj_routine_popup',period);}catch{}renderRoutinePanel();};
   el.querySelectorAll('[data-routine-action]').forEach(button=>button.onclick=()=>{if(popup&&button.dataset.routineAction==='focus'){rmOpen(button.dataset.step);return;}if(popup&&button.dataset.routineAction==='news'){rnOpen(button.dataset.step);return;}if(popup)$('#routineClose').click();if(button.dataset.routineAction==='preferences'){settingsTab='playbook';setView('edge');}else setView(button.dataset.routineAction);});
@@ -1725,7 +1739,7 @@ async function boot(){
   if(booted)return;booted=true;
   selectedDate=TODAY();
   $('#dvTitle').textContent=fmtDateLong(selectedDate);
-  setView(['#settings','#edge','#performance','#news','#focus','#feedback','#billing'].includes(location.hash)?location.hash.slice(1):'month');
+  setView(['#trades','#settings','#edge','#performance','#news','#focus','#feedback','#billing'].includes(location.hash)?location.hash.slice(1):'month');
   // Load everything at once; each round trip to the hosted database is slow, so running them one by one stacked the waits.
   try{await Promise.all([loadPlanSettings(),loadRoutine(),loadWorkspace(),loadAll(),loadDays(false)]);if(routineState)renderRoutinePanel();}
   catch(error){booted=false;toast(error.message||'Could not load your journal. Please try again.');return;}
@@ -1753,6 +1767,7 @@ async function initJournal(){
 <script src="/feedback-page.js"></script>
 <script src="/meditation.js"></script>
 <script src="/news.js"></script>
+<script src="/trades-list.js"></script>
 <script src="/onboarding.js"></script>
 </body>
 </html>

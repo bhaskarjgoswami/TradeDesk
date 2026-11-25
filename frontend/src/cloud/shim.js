@@ -173,6 +173,7 @@ async function handle(url, init, nativeFetch) {
     res = await nativeFetch(API + url, readInit({ ...init, headers }));
   }
   if(res.status===423)showDeletionRecovery();
+  if (res.ok) trackFromRequest(path, method, init.body);
   if (res.status === 401) {
     window.sessionExpired?.();
     return json({error:"Your session expired. Sign in again to continue; your unsaved form has been kept."},401);
@@ -291,7 +292,18 @@ style.textContent = ".login-left .forgot[hidden]{display:none}";
 document.head.appendChild(style);
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", decorate); else decorate();
 
-supabase.auth.getSession().then(({ data }) => { setImageCookie(data.session); refreshSidebarMembership(data.session); });
+// First-party usage events (backend app/events.py): event name only, at most once per day per browser.
+window.tdTrack = (name) => {
+  const key = "td_ev_" + name + "_" + new Date().toISOString().slice(0, 10);
+  try { if (localStorage.getItem(key)) return; localStorage.setItem(key, "1"); } catch {}
+  fetch("/api/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) }).catch(() => {});
+};
+function trackFromRequest(path, method, body) {
+  if (path === "/api/trades" && method === "POST") window.tdTrack("trade_logged");
+  else if (/^\/api\/workspace\/review\/\d+$/.test(path) && method === "PUT" && typeof body === "string" && /"reviewed"\s*:\s*true/.test(body)) window.tdTrack("trade_reviewed");
+  else if (/^\/api\/trades\/\d+$/.test(path) && method === "PUT" && typeof body === "string" && /\\?"reviewed\\?"\s*:\s*true/.test(body)) window.tdTrack("trade_reviewed");
+}
+supabase.auth.getSession().then(({ data }) => { setImageCookie(data.session); refreshSidebarMembership(data.session); if (data.session) window.tdTrack("app_open"); });
 supabase.auth.onAuthStateChange((event, session) => {
   setImageCookie(session);
   refreshSidebarMembership(session);

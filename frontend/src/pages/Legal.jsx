@@ -61,9 +61,10 @@ const PAGES = {
           <li>Exchange API keys you save, encrypted by the application before storage.</li>
           <li>Plan status and payment reference IDs. Card and UPI details are handled by Razorpay and never reach us.</li>
           <li>Technical data: server logs (time, route, status, no request bodies) and reports of errors in your browser (error text, page path, browser version). Values that look like emails or tokens are removed before storage.</li>
+          <li>Product usage: which of these steps your account reached on each day (opened the app, logged a trade, reviewed a trade, completed the routine), so we can see where the product needs work. No trade content, amounts or device details are included, and these records are deleted with your account.</li>
         </ul>
         <h3>How we use it</h3>
-        <p>Only to provide the service: show your journal, compute your statistics, import your fills, manage your plan, keep the service secure and fix errors. We do not sell your data or use it for advertising.</p>
+        <p>Only to provide the service: show your journal, compute your statistics, import your fills, manage your plan, keep the service secure and fix errors, and improve the product from the usage steps above. We do not sell your data or use it for advertising.</p>
         <h3>Legal basis (EU, EEA and UK users)</h3>
         <ul>
           <li>Contract: your account, journal, imports and Pro plan.</li>

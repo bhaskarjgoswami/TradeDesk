@@ -436,7 +436,9 @@ tbody tr:hover td{background:var(--panel2)}
 .pub-hero p{max-width:620px;margin:0 auto 28px;color:var(--mut);font-size:17px;line-height:1.55}
 .pub-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .pub-cta .btn{text-decoration:none;padding:11px 18px}
-.pub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;padding-bottom:64px}
+.pub-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding-bottom:64px;scroll-margin-top:16px}
+@media(max-width:900px){.pub-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.pub-grid{grid-template-columns:1fr}}
 .pub-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
 .pub-card h3{margin:12px 0 6px;font-size:16px}
 .pub-card p{margin:0;color:var(--mut);font-size:14px;line-height:1.55}
@@ -448,6 +450,34 @@ tbody tr:hover td{background:var(--panel2)}
 .pub-pricing h2{font-size:28px;letter-spacing:-.6px;margin:0 0 20px}
 .pub-plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;max-width:700px;margin:0 auto;text-align:left}
 .pub-price{font-size:22px;font-weight:700;margin-top:4px}
+.pub-per{font-size:14px;font-weight:500;color:var(--mut)}
+[dir="rtl"] .pub-price{direction:ltr;unicode-bidi:isolate;text-align:end}
+.pub-cycle{display:inline-flex;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px;margin:0 0 20px}
+.pub-cycle button{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:6px 16px;border:0;border-radius:999px;background:transparent;color:var(--mut);font:inherit;font-weight:600;font-size:13px;cursor:pointer}
+.pub-cycle button:hover:not(.on){color:var(--txt)}
+.pub-cycle button.on{background:var(--accent);color:#fff}
+.pub-cycle button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pub-save{font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;background:var(--accent-weak);color:var(--link,var(--accent))}
+.pub-cycle button.on .pub-save{background:rgba(255,255,255,.22);color:#fff}
+#pricing{scroll-margin-top:16px}
+/* Product screenshots: framed like a browser window. */
+.pub-shot{margin:44px auto 0;max-width:960px}
+.pub-frame{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel);box-shadow:0 24px 60px -28px rgba(40,30,110,.35)}
+.pub-frame-bar{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.pub-frame-bar i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.pub-frame img{display:block;width:100%;height:auto}
+.pub-shot figcaption{margin-top:10px;font-size:12px;color:var(--mut);text-align:center}
+.pub-showcase{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:40px;align-items:center;padding-bottom:72px}
+.pub-showcase .pub-shot{margin:0;max-width:none}
+.pub-showcase h2{font-size:26px;letter-spacing:-.5px;line-height:1.2;margin:14px 0 10px}
+.pub-showcase p{margin:0;color:var(--mut);font-size:15px;line-height:1.6}
+.pub-trust{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:28px 0;margin-bottom:64px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pub-promise{display:flex;gap:12px;align-items:flex-start}
+.pub-promise .pub-ic{flex-shrink:0}
+.pub-promise h3{margin:0 0 4px;font-size:15px}
+.pub-promise p{margin:0;color:var(--mut);font-size:13px;line-height:1.55}
+@media(max-width:900px){.pub-showcase{grid-template-columns:1fr;gap:24px}.pub-trust{grid-template-columns:1fr;gap:20px}}
+@media(max-width:560px){.pub-shot{margin-top:32px}.pub-frame{border-radius:10px}.pub-frame-bar{padding:7px 10px}.pub-frame-bar i{width:7px;height:7px}}
 .pub-legal{max-width:720px !important;padding-bottom:56px !important;line-height:1.65;font-size:15px}
 .pub-legal h1{font-size:30px;letter-spacing:-.6px;margin:28px 0 16px}
 .pub-legal h3{margin:26px 0 6px;font-size:16px}
@@ -461,7 +491,7 @@ tbody tr:hover td{background:var(--panel2)}
 .pub-foot nav{display:flex;gap:16px}
 .pub-foot a{color:var(--mut);text-decoration:none}
 .pub-foot a:hover{color:var(--txt)}
-@media(max-width:560px){.pub-head nav{gap:8px}.pub-head nav .btn.ghost{display:none}.pub-hero{padding:44px 0 36px}}
+@media(max-width:560px){.pub-head nav{gap:8px}.pub-hero{padding:44px 0 36px}}
 .pub-plan-cta{display:flex;justify-content:center;margin-top:16px;min-height:40px}
 .pub-faq{max-width:700px;margin:0 auto;padding:8px 0 64px}
 .pub-faq h2{text-align:center;margin-bottom:16px}
@@ -671,7 +701,7 @@ table.grp .num{text-align:right;font-variant-numeric:tabular-nums}
 
 /* Keep localized navigation and billing copy within narrow viewports. */
 .pub-legal{overflow-wrap:anywhere}.pub-foot nav,.billing-footer>div,.bill-controls{flex-wrap:wrap}.billing-membership{max-inline-size:100%}.billing-back>span{display:inline-block}[dir=rtl] .billing-back>span{transform:scaleX(-1)}
-@media(max-width:620px){.pub-head{flex-wrap:wrap;justify-content:center}.pub-head nav{width:100%;justify-content:center}.pub-head .language-control{min-width:0;max-width:100%}.pub-head nav>a{min-height:44px;align-items:center;justify-content:center;white-space:normal;text-align:center;max-width:100%}.pub-head nav>a.btn{display:inline-flex}.pub-foot nav{max-width:100%;row-gap:12px}.bill-seg button{min-width:0;white-space:normal}.billing-footer a{overflow-wrap:anywhere}}
+@media(max-width:620px){.pub-head{flex-wrap:wrap;justify-content:center}.pub-head nav{width:100%;justify-content:center}.pub-head .language-control{min-width:0;max-width:100%}.pub-head nav>a{min-height:44px;align-items:center;justify-content:center;white-space:normal;text-align:center;max-width:100%}.pub-head nav>a{display:inline-flex;margin:0}.pub-head nav>a.pub-signin{background:none;border:0;padding:0 4px;color:var(--txt);font-weight:600}.pub-foot nav{max-width:100%;row-gap:12px}.bill-seg button{min-width:0;white-space:normal}.billing-footer a{overflow-wrap:anywhere}}
 
 /* Language control: globe icon, visible focus ring, compact chip on phones */
 .lc-globe{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;color:var(--lang-label,#6a6779);flex-shrink:0}
@@ -683,3 +713,7 @@ table.grp .num{text-align:right;font-variant-numeric:tabular-nums}
 .language-control select{position:absolute;inset:0;width:100%;max-width:none;min-height:0;opacity:0;cursor:pointer;font-size:16px}
 .language-control:focus-within{outline:2px solid var(--link,#6252e0);outline-offset:2px}
 }
+
+/* Phone header: brand on one row, then language, Pricing, Sign in and Start free on one aligned row. */
+@media(max-width:620px){.pub-head{padding:14px 16px;row-gap:10px}.pub-head nav{flex-wrap:nowrap;gap:6px}.pub-head nav>a:not(.btn){padding:0 4px;font-size:14px}.pub-head nav>a.btn:not(.pub-signin){padding:9px 14px;white-space:nowrap}}
+@media(max-width:360px){.pub-head nav{flex-wrap:wrap}}

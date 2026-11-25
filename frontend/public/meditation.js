@@ -67,8 +67,10 @@ function medScene(name){const W=1200,H=700;let r=0;const rnd=()=>{r=(r*9301+4929
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="sk-${name}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset=".6" stop-color="${sky[1]}"/><stop offset="1" stop-color="${sky[2]}"/></linearGradient><filter id="mb"><feGaussianBlur stdDeviation="22"/></filter></defs><rect width="${W}" height="${H}" fill="url(#sk-${name})"/>${art}</svg>`;}
 
 // ---------- session engine (shared by page and pre-market popup) ----------
-const MS={template:null,minutes:10,bells:true,bellEvery:1,ambient:'none',running:false,remaining:600,deadline:0,timer:null,phase:0,phaseEnd:0,done:false,onTick:null,onDone:null,lastBell:0};
-function msLoad(t){Object.assign(MS,{template:t,minutes:t.minutes,bells:t.bells>0,bellEvery:t.bells||1,ambient:t.ambient,remaining:t.minutes*60,running:false,done:false,phase:0});}
+const MS={template:null,minutes:10,bells:false,bellEvery:1,ambient:'none',running:false,remaining:600,deadline:0,timer:null,phase:0,phaseEnd:0,done:false,onTick:null,onDone:null,lastBell:0};
+// Interval bells stay off unless the trader turned them on (saved in this browser as tj_med_bells).
+function medBellsPref(){try{const v=localStorage.getItem('tj_med_bells');return v===null?null:v==='1';}catch{return null;}}
+function msLoad(t){const pref=medBellsPref();Object.assign(MS,{template:t,minutes:t.minutes,bells:pref??false,bellEvery:t.bells||1,ambient:t.ambient,remaining:t.minutes*60,running:false,done:false,phase:0});}
 function msStart(){MS.running=true;MS.done=false;MS.deadline=Date.now()+MS.remaining*1000;MS.lastBell=MS.minutes*60-MS.remaining;MS.phase=0;MS.phaseEnd=Date.now()+msPattern()[0]?.[1]*1000||0;maCtx();maAmbient(MS.ambient);maBell(true);
   clearInterval(MS.timer);MS.timer=setInterval(msTick,200);msTick();}
 function msPause(){MS.running=false;clearInterval(MS.timer);MS.remaining=Math.max(0,Math.ceil((MS.deadline-Date.now())/1000));maStopAmbient();MS.onTick&&MS.onTick();}
@@ -103,10 +105,10 @@ function renderSanctuary(){if(!MS.template)msLoad(MED_TEMPLATES[0]);const st=med
     <div class="med-dots">${MED_SCENES.map((s,i)=>`<i class="${i===MP.scene?'on':''}"></i>`).join('')}</div>
     <div class="med-card" id="medCard">${medCard()}</div></section>
    <aside class="med-side"><div class="med-box"><span class="med-label">TODAY I WILL</span><input id="medIntent" placeholder="e.g. journal every trade" maxlength="140" value="${esc(MP.intent??'')}"></div>
-    <div class="med-box"><span class="med-label">YOUR PROGRESS</span><button type="button" class="med-link" id="medSessions">View sessions</button>
+    <div class="med-box"><span class="med-label">YOUR PROGRESS</span>${st.total?`<button type="button" class="med-link" id="medSessions">View sessions</button>
      <div class="med-stat"><span>This week sessions</span><div class="med-week">${st.week.map(d=>`<span class="${d.done?'done':''} ${d.today?'today':''}" title="${d.k}"><i>${d.done?'✓':''}</i>${d.label}</span>`).join('')}</div></div>
-     <div class="med-stat"><span>Minutes this week</span><b>${st.weekMin} m</b></div><div class="med-stat"><span>Current streak</span><b>${st.current} Day${st.current===1?'':'s'}</b></div>
-     <div class="med-stat"><span>Longest streak</span><b>${st.longest} Day${st.longest===1?'':'s'}</b></div><div class="med-stat"><span>Total meditation minutes</span><b>${st.totalMin} m</b></div><div class="med-stat"><span>Total sessions</span><b>${st.total} Session${st.total===1?'':'s'}</b></div></div></aside></div>
+     <div class="med-stat"><span>Minutes this week</span><b>${st.weekMin} min</b></div><div class="med-stat"><span>Current streak</span><b>${st.current===1?'1 day':`${st.current} days`}</b></div>
+     <div class="med-stat"><span>Longest streak</span><b>${st.longest===1?'1 day':`${st.longest} days`}</b></div><div class="med-stat"><span>Total meditation minutes</span><b>${st.totalMin} min</b></div><div class="med-stat"><span>Total sessions</span><b>${st.total===1?'1 session':`${st.total} sessions`}</b></div>`:'<p class="med-empty-progress">Start your first session to see your progress.</p>'}</div></aside></div>
   <section class="med-kit"><div class="med-kit-head"><h2>Mental toolkit</h2><p>Guided exercises to reset, rewire and recover your trading mind.</p></div>
    <div class="med-tabs" role="tablist">${MED_CATS.map(([k,l])=>`<button type="button" role="tab" data-med-cat="${k}" aria-selected="${MP.cat===k}">${l} <small>${MED_TEMPLATES.filter(x=>x.cat!=='session'&&(k==='all'||x.cat===k)).length}</small></button>`).join('')}</div>
    <div class="med-grid">${MP.cat==='reboot'?'<div class="med-tip"><b>⚡ Quick Reset Tools</b><p>Use these before or after a trade to get back into flow fast.</p></div>':''}${list.map(x=>`<button type="button" class="med-tile ${t&&t.id===x.id?'on':''}" data-med-tpl="${x.id}"><span class="med-tile-scene">${medScene(x.scene)}</span><span class="med-chip">${MED_CATS.find(c=>c[0]===x.cat)[1]}</span><span class="med-fav ${favs.includes(x.id)?'on':''}" data-med-fav="${x.id}" role="button" aria-label="Favourite ${esc(x.name)}">★</span><b>${esc(x.name)}</b><small>${msFmt(x.minutes*60)}</small></button>`).join('')}</div></section>`;
@@ -119,12 +121,12 @@ function medCard(){const t=MS.template,p=msPattern(),total=MS.minutes*60;
   if(MS.done)return `<div class="med-run"><div class="med-orb done"><span>✓</span></div><h3>Session complete</h3><p class="med-sub">Carry this calm into your next trade.</p><div class="med-actions"><button type="button" class="btn" data-med="again">Start another</button></div></div>`;
   return `<div class="med-lotus" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4c-2.2 2.6-2.2 5.4 0 8 2.2-2.6 2.2-5.4 0-8zM4 11c1.8 3.8 4.6 5.6 8 5.6s6.2-1.8 8-5.6M8 20h8"/></svg></div>
    <h3>${esc(t&&t.cat!=='session'?t.name:'Meditation session')}</h3>${t&&t.cat!=='session'?`<p class="med-sub">${esc(t.desc)}</p>`:''}
-   <label class="med-l">Duration:</label><div class="med-dur"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 3h6"/></svg>${msFmt(MS.minutes*60)}</div>
+   <label class="med-l">Duration</label><div class="med-dur"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 3h6"/></svg>${msFmt(MS.minutes*60)}</div>
    <div class="med-chips">${[5,10,15,30,60].map(m=>`<button type="button" data-med-min="${m}" aria-pressed="${MS.minutes===m}">${m===60?'1 hour':m+' min'}</button>`).join('')}</div>
    ${p.length?`<p class="med-pattern">Breathing: ${p.map(x=>`${x[0].toLowerCase()} ${x[1]}s`).join(' · ')}</p>`:''}
-   <div class="med-row"><label class="med-l" for="medBells">Interval Bells:</label><button type="button" class="med-switch" id="medBells" role="switch" aria-checked="${MS.bells}"><i></i></button></div>
-   <select class="med-sel" id="medBellEvery" ${MS.bells?'':'disabled'}>${[1,2,5,10].map(m=>`<option value="${m}" ${MS.bellEvery===m?'selected':''}>Every ${m} Minute${m===1?'':'s'}</option>`).join('')}</select>
-   <label class="med-l" for="medAmbient">Ambient Sound:</label><select class="med-sel" id="medAmbient">${MED_AMBIENT.map(([k,l])=>`<option value="${k}" ${MS.ambient===k?'selected':''}>${l}</option>`).join('')}</select>
+   <div class="med-row"><label class="med-l" for="medBells">Interval bells</label><button type="button" class="med-switch" id="medBells" role="switch" aria-checked="${MS.bells}"><i></i></button></div>
+   <select class="med-sel" id="medBellEvery" ${MS.bells?'':'disabled'}>${[1,2,5,10].map(m=>`<option value="${m}" ${MS.bellEvery===m?'selected':''}>Every ${m} minute${m===1?'':'s'}</option>`).join('')}</select>
+   <label class="med-l" for="medAmbient">Ambient sound</label><select class="med-sel" id="medAmbient">${MED_AMBIENT.map(([k,l])=>`<option value="${k}" ${MS.ambient===k?'selected':''}>${l}</option>`).join('')}</select>
    <div class="med-vol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/></svg><input type="range" id="medVol" min="0" max="1" step=".05" value="${MA.volume}" aria-label="Volume"><button type="button" class="med-link" id="medPreview">Preview</button></div>
    <button type="button" class="btn med-start" data-med="start">Start</button>`;}
 function medPaintRun(){const time=$('#medTime'),orb=$('#medOrb'),cue=$('#medCue');if(!time){return;}time.textContent=msFmt(MS.remaining);if(MS.running&&orb){const c=msCue();if(cue.textContent!==c.label){cue.textContent=c.label;orb.style.transitionDuration=c.secs+'s';orb.style.transform=`scale(${c.scale})`;}}}
@@ -134,7 +136,7 @@ function medWire(){const root=$('#ws-focus');
   root.querySelectorAll('[data-med-tpl]').forEach(b=>b.onclick=e=>{const id=b.dataset.medTpl;if(e.target.closest('[data-med-fav]')){const f=medFavs(),i=f.indexOf(id);i<0?f.push(id):f.splice(i,1);try{localStorage.setItem('tj_med_favs',JSON.stringify(f));}catch{}renderSanctuary();return;}
     if(MS.running&&!confirm('End the current session and load this exercise?'))return;msStop();msLoad(medTemplate(id));MP.scene=Math.max(0,MED_SCENES.indexOf(MS.template.scene));renderSanctuary();$('#medCard')?.scrollIntoView({behavior:'smooth',block:'center'});});
   root.querySelectorAll('[data-med-min]').forEach(b=>b.onclick=()=>{MS.minutes=+b.dataset.medMin;MS.remaining=MS.minutes*60;$('#medCard').innerHTML=medCard();medWire();});
-  $('#medBells')?.addEventListener('click',()=>{MS.bells=!MS.bells;$('#medCard').innerHTML=medCard();medWire();});
+  $('#medBells')?.addEventListener('click',()=>{MS.bells=!MS.bells;try{localStorage.setItem('tj_med_bells',MS.bells?'1':'0');}catch{}$('#medCard').innerHTML=medCard();medWire();});
   $('#medBellEvery')?.addEventListener('change',e=>MS.bellEvery=+e.target.value);
   $('#medAmbient')?.addEventListener('change',e=>{MS.ambient=e.target.value;try{localStorage.setItem('tj_med_ambient',MS.ambient);}catch{}if(MA.amb.length)maAmbient(MS.ambient);});
   $('#medVol')?.addEventListener('input',e=>{maVolume(+e.target.value);try{localStorage.setItem('tj_med_vol',e.target.value);}catch{}});

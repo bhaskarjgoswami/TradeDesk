@@ -67,6 +67,10 @@ def delete_account(user=Depends(limit("delete", 3))):
         with get_conn() as conn:
             with conn.cursor() as cur:
                 cur.execute(f'DROP SCHEMA IF EXISTS "{schema_for(uid)}" CASCADE')
+                # first-party usage events (app/events.py), if that table exists yet
+                cur.execute("SELECT to_regclass('analytics.product_events') AS t")
+                if cur.fetchone()['t']:
+                    cur.execute('DELETE FROM analytics.product_events WHERE user_id=%s',(uid,))
         forget_schema(schema_for(uid))
         r = c.delete(f"{SUPABASE_URL}/auth/v1/admin/users/{uid}")
         if r.status_code not in (200, 204):

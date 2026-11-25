@@ -10,6 +10,7 @@ from .observability import scrub_event,request_diagnostics
 from .routers import trades, stats, daylogs, exchange, subscription, account, playbooks
 from .journal.router import router as journal_router
 from .client_errors import router as client_errors_router
+from .events import router as events_router
 
 if os.environ.get("SENTRY_DSN"):
     import sentry_sdk
@@ -52,6 +53,7 @@ app.include_router(account.router)
 app.include_router(playbooks.router)
 app.include_router(journal_router)
 app.include_router(client_errors_router)
+app.include_router(events_router)
 
 
 @app.get("/health")

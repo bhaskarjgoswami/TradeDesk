@@ -3,10 +3,10 @@
 //  - page loads: network first, cached shell only when offline
 //  - /assets/* (content-hashed): cache first
 //  - everything else (API, Supabase, other origins): not intercepted
-const CACHE = "tradedesk-v6";
+const CACHE = "tradedesk-v7";
 const SHELL = "/index.html";
 
-const JOURNAL_ASSETS=['/cloud-boot.js','/language.js','/onboarding.js','/feedback-page.js','/trade-drafts.js','/broker-import.js','/workspace.js','/calendar.js','/trade.js','/playbook.js','/profile.js','/meditation.js','/news.js','/workspace.css','/theme.css','/theme-mercury.css'];
+const JOURNAL_ASSETS=['/cloud-boot.js','/language.js','/onboarding.js','/feedback-page.js','/trade-drafts.js','/broker-import.js','/workspace.js','/calendar.js','/trade.js','/playbook.js','/profile.js','/meditation.js','/news.js','/trades-list.js','/workspace.css','/theme.css','/theme-mercury.css'];
 self.addEventListener("install",(event)=>{
   event.waitUntil((async()=>{
     const cache=await caches.open(CACHE);

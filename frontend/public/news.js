@@ -105,8 +105,18 @@ function newsCountdown(ms){
   const mins=Math.max(0,Math.round(ms/60000)),d=Math.floor(mins/1440),h=Math.floor(mins%1440/60),m=mins%60;
   return d?`${d}d ${h}h`:h?`${h}h ${m}m`:`${m}m`;
 }
-const newsTime=iso=>new Date(iso).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-const newsDay=iso=>new Date(iso).toLocaleDateString([], {weekday:'short',day:'numeric',month:'short'});
+// Times follow the time zone in Account (profile.js), else the browser's, and the reader's locale ("1:45 PM").
+function newsZone(){try{return (typeof PF!=='undefined'&&PF.data?.settings?.timezone)||Intl.DateTimeFormat().resolvedOptions().timeZone||undefined;}catch{return undefined;}}
+function newsFmt(iso,opts){try{return new Date(iso).toLocaleString(undefined,{...opts,timeZone:newsZone()});}catch{return new Date(iso).toLocaleString(undefined,opts);}}
+const newsTime=iso=>newsFmt(iso,{hour:'numeric',minute:'2-digit'});
+const newsDay=iso=>newsFmt(iso,{weekday:'short',day:'numeric',month:'short'});
+// YYYY-MM-DD in the reader's zone, so keys sort and compare as strings.
+const newsDayKey=iso=>{try{return new Date(iso).toLocaleDateString('en-CA',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:newsZone()});}catch{return new Date(iso).toLocaleDateString('en-CA');}};
+// Short zone name for the calendar header ("IST", "EST"). Some locales only know "GMT+5:30"; try a few
+// English locales for a proper abbreviation before falling back to the offset.
+function newsZoneShort(){const zone=newsZone(),part=locale=>{try{return new Intl.DateTimeFormat(locale,{timeZone:zone,timeZoneName:'short'}).formatToParts(new Date()).find(x=>x.type==='timeZoneName')?.value||'';}catch{return '';}};
+  const tries=[...(navigator.languages||[]),'en-IN','en-US','en-GB','en-AU'].map(part).filter(Boolean);
+  return tries.find(x=>!/^(GMT|UTC)[+-]/.test(x))||tries[0]||'';}
 function newsAgo(iso){
   if(!iso)return '';const mins=Math.round((Date.now()-Date.parse(iso))/60000);
   if(mins<1)return 'now';if(mins<60)return mins+'m';if(mins<1440)return Math.floor(mins/60)+'h';
@@ -129,7 +139,7 @@ async function newsLoadIndices(force=false){
   if(view==='news')newsPaint();
 }
 function newsItemRow(i){
-  return `<li class="news-item"><div class="news-meta"><span class="ws-tag purple">${NEWS_CAT_LABEL[i.cat]||'Indices'}</span>${newsIsHigh(i)?'<span class="ws-tag red">High impact</span>':''}<span class="news-source" data-user-content>${esc(i.source)}</span>${i.published_at?`<time translate="no" datetime="${esc(i.published_at)}" title="${esc(new Date(i.published_at).toLocaleString())}">${esc(newsAgo(i.published_at))}</time>`:''}</div><a class="news-title" href="${esc(i.link)}" target="_blank" rel="noopener noreferrer" data-user-content>${esc(i.title)}</a>${i.summary?`<p class="news-summary" data-user-content>${esc(i.summary)}</p>`:''}</li>`;
+  return `<li class="news-item"><div class="news-meta"><span class="ws-tag purple">${NEWS_CAT_LABEL[i.cat]||'Indices'}</span><span class="news-source" data-user-content>${esc(i.source)}</span>${i.published_at?`<time translate="no" datetime="${esc(i.published_at)}" title="${esc(new Date(i.published_at).toLocaleString())}">${esc(newsAgo(i.published_at))}</time>`:''}</div><a class="news-title" href="${esc(i.link)}" target="_blank" rel="noopener noreferrer" data-user-content>${esc(i.title)}</a>${i.summary?`<p class="news-summary" data-user-content>${esc(i.summary)}</p>`:''}</li>`;
 }
 
 function newsHeadlines(){
@@ -155,20 +165,32 @@ function newsCalendar(){
   const events=newsAllEvents();
   if(!NEWS.events&&!NEWS.calError&&!events.length)body=`<div class="news-loading" role="status">Loading calendar…</div>`;
   else{
-    const days=new Map();events.forEach(e=>{const key=new Date(e.at).toDateString();if(!days.has(key))days.set(key,[]);days.get(key).push(e);});
-    const now=Date.now();
-    body=(NEWS.calError?`<p class="news-muted">Live calendar unavailable: ${esc(NEWS.calError)}</p>`:'')+(events.length?[...days.values()].map(list=>`<div class="news-day"><h3 translate="no">${esc(newsDay(list[0].at))}</h3>${list.map(e=>`<div class="news-ev${Date.parse(e.at)<now?' past':''}"><span class="news-ev-time" translate="no">${esc(newsTime(e.at))}</span><span class="news-dot ${e.impact==='high'?'high':'medium'}" title="${e.impact==='high'?'High impact':'Medium impact'}"></span><div class="news-ev-main"><b data-user-content>${e.currency?`<span class="news-ccy">${esc(e.currency)}</span>`:''}${esc(e.title)}</b>${e.forecast||e.previous?`<span class="news-ev-nums"><span>Forecast</span> <b translate="no">${esc(e.forecast||'—')}</b> · <span>Previous</span> <b translate="no">${esc(e.previous||'—')}</b></span>`:''}</div>${e.mine?`<span class="ws-tag purple">Yours</span>`:''}</div>`).join('')}</div>`).join(''):NEWS.calError?'':wsEmpty('No events for this filter','Switch to High + medium to see more releases.'));
+    // Past days are collapsed behind "Show earlier"; the next upcoming event gets a "Next" marker.
+    const now=Date.now(),today=newsDayKey(now),next=events.find(e=>Date.parse(e.at)>=now);
+    const shown=NEWS.showEarlier?events:events.filter(e=>newsDayKey(e.at)>=today),hiddenDays=new Set(events.filter(e=>newsDayKey(e.at)<today).map(e=>newsDayKey(e.at))).size;
+    const days=new Map();shown.forEach(e=>{const key=newsDayKey(e.at);if(!days.has(key))days.set(key,[]);days.get(key).push(e);});
+    const earlier=hiddenDays?`<button type="button" class="news-earlier" data-news-action="earlier" aria-expanded="${!!NEWS.showEarlier}">${NEWS.showEarlier?'Hide earlier days':'Show earlier'}</button>`:'';
+    body=(NEWS.calError?`<p class="news-muted">Live calendar unavailable: ${esc(NEWS.calError)}</p>`:'')+(events.length?earlier+`<div class="news-cal-list">`+(shown.length?[...days.values()].map(list=>`<div class="news-day"><h3 translate="no">${esc(newsDay(list[0].at))}</h3>${list.map(e=>`<div class="news-ev${Date.parse(e.at)<now?' past':''}${e===next?' next':''}">${e===next?'<span class="news-next">Next</span>':''}<span class="news-ev-time" translate="no">${esc(newsTime(e.at))}</span><span class="news-dot ${e.impact==='high'?'high':'medium'}" title="${e.impact==='high'?'High impact':'Medium impact'}"></span><div class="news-ev-main"><b data-user-content>${e.currency?`<span class="news-ccy">${esc(e.currency)}</span>`:''}${esc(e.title)}</b>${e.forecast||e.previous?`<span class="news-ev-nums"><span>Forecast</span> <b translate="no">${esc(e.forecast||'—')}</b> · <span>Previous</span> <b translate="no">${esc(e.previous||'—')}</b></span>`:''}</div>${e.mine?`<span class="ws-tag purple">Yours</span>`:''}</div>`).join('')}</div>`).join(''):`<p class="news-muted">No more events this week.</p>`)+`</div>`:NEWS.calError?'':wsEmpty('No events for this filter','Switch to High + medium to see more releases.'));
   }
-  return `<aside class="ws-card news-cal" aria-label="Economic calendar"><div class="ws-card-head"><h2>This week</h2>${toggle}</div>${body}<p class="news-muted news-cal-note">Times in your local time zone. Some local events, such as RBI policy, are not always listed; add them in your own market calendar.</p></aside>`;
+  return `<aside class="ws-card news-cal" aria-label="Economic calendar"><div class="ws-card-head"><h2>This week</h2>${newsZoneShort()?`<span class="news-zone">Times in <span translate="no">${esc(newsZoneShort())}</span></span>`:''}${toggle}</div>${body}<p class="news-muted news-cal-note">Some local events, such as RBI policy, are not always listed; add them in your own market calendar.</p></aside>`;
 }
 
 function newsPaint(){
   const root=$('#ws-news');if(!root)return;
   const [,regionLabel,regionFlag]=newsCountryInfo(newsCountry());
   const regionNote=`<button type="button" class="news-region-note" data-news-action="account" title="Change your country in Account"><span class="news-flag" aria-hidden="true">${regionFlag}</span><span>${regionLabel}</span></button>`;
-  const updated=NEWS.fetchedAt?`<span class="ws-date">Updated <span translate="no">${esc(new Date(NEWS.fetchedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}))}</span></span>`:'';
+  const updated=NEWS.fetchedAt?`<span class="ws-date">Updated <span translate="no">${esc(new Date(NEWS.fetchedAt).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}))}</span></span>`:'';
+  const oldList=root.querySelector('.news-cal-list'),oldTop=oldList?oldList.scrollTop:0;
   root.innerHTML=wsHeader('BEFORE · CHECK NEWS AND EVENTS','News','Headlines for the topics and country you choose, plus this week\'s economic calendar. Read-only, from public sources.',`${regionNote}${updated}<button type="button" class="btn ghost" data-news-action="refresh" ${NEWS.loading?'disabled':''}>${NEWS.loading?'Refreshing…':'Refresh'}</button>`)+`<div class="news-grid">${newsHeadlines()}${newsCalendar()}</div>`;
+  newsScrollToNext(root,oldList?oldTop:null);
 }
+// Scroll the calendar list (not the page) so the next event sits near the top.
+// Repaints keep the reader's own scroll position unless the next event changed.
+function newsScrollToNext(root,oldTop){const list=root.querySelector('.news-cal-list'),next=list?.querySelector('.news-ev.next');if(!list)return;
+  const key=next?next.textContent:'';if(oldTop!==null&&key===NEWS.scrolledNext){list.scrollTop=oldTop;return;}NEWS.scrolledNext=key;
+  if(!next||list.scrollHeight<=list.clientHeight)return;
+  const day=next.closest('.news-day'),target=day&&day.firstElementChild&&day.querySelector('.news-ev')===next?day:next;
+  list.scrollTop=Math.max(0,list.scrollTop+target.getBoundingClientRect().top-list.getBoundingClientRect().top-4);}
 
 function newsTick(){
   if(view!=='news'){clearInterval(NEWS.tick);NEWS.tick=null;return;}
@@ -194,6 +216,7 @@ document.addEventListener('click',event=>{
   const cat=event.target.closest('[data-news-cat]'),impact=event.target.closest('[data-news-impact]');
   if(cat){NEWS.cat=cat.dataset.newsCat;newsPaint();return;}
   if(impact){NEWS.impact=impact.dataset.newsImpact;newsPaint();return;}
+  if(event.target.closest('[data-news-action="earlier"]')){NEWS.showEarlier=!NEWS.showEarlier;newsPaint();return;}
   if(event.target.closest('[data-news-action="regions"]')){newsOpenRegionSettings();return;}
   if(event.target.closest('[data-news-action="account"]')){setView('settings');showSettingsTab('account');return;}
   if(event.target.closest('[data-news-action="refresh"],[data-ws-action="news-refresh"]')){event.stopPropagation();newsLoad(true);if(newsRegions().includes('stocks'))newsLoadIndices(true);}
@@ -208,7 +231,7 @@ function newsUpcomingHigh(){
 window.newsRoutineView=function(){
   // High-impact events only; everything else is one click away on the full News page.
   // No countdown card: just today's high-impact events (the next one included), then headlines.
-  const now=Date.now(),today=new Date().toDateString(),later=newsUpcomingHigh().filter(e=>new Date(e.at).toDateString()===today);
+  const now=Date.now(),today=newsDayKey(now),later=newsUpcomingHigh().filter(e=>newsDayKey(e.at)===today);
   const loading=!NEWS.events&&!NEWS.calError;
   const list=later.length?`<div class="rn-sec"><span class="rn-label">High-impact events today</span><ul class="rn-events">${later.map(e=>{const url=newsEventUrl(e),inner=`<span class="news-dot high" aria-hidden="true"></span><span class="rn-when" translate="no">${esc(newsTime(e.at))}</span><span class="rn-ev" data-user-content>${e.currency?`<span class="news-ccy">${esc(e.currency)}</span>`:''}${esc(e.title)}</span>${e.mine?'<span class="ws-tag purple">Yours</span>':''}${url?'<span class="rn-out" aria-hidden="true">↗</span>':''}`;
     return `<li class="${Date.parse(e.at)<now?'past':''}">${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="Open the original calendar">${inner}</a>`:inner}</li>`;}).join('')}</ul></div>`:`<div class="rn-sec"><span class="rn-label">High-impact events today</span><p class="rn-sub">${loading?'Loading calendar…':NEWS.calError?esc(NEWS.calError):'No more high-impact events today.'}</p></div>`;

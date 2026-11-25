@@ -4,6 +4,12 @@ const PF={data:{settings:{},revision:0},busy:false,uploading:false,dirty:false};
 const PF_REGIONS='AF AX AL DZ AS AD AO AI AQ AG AR AM AW AU AT AZ BS BH BD BB BY BE BZ BJ BM BT BO BQ BA BW BR IO BN BG BF BI CV KH CM CA KY CF TD CL CN CX CC CO KM CG CD CK CR CI HR CU CW CY CZ DK DJ DM DO EC EG SV GQ ER EE SZ ET FK FO FJ FI FR GF PF GA GM GE DE GH GI GR GL GD GP GU GT GG GN GW GY HT VA HN HK HU IS IN ID IR IQ IE IM IL IT JM JP JE JO KZ KE KI KP KR KW KG LA LV LB LS LR LY LI LT LU MO MG MW MY MV ML MT MH MQ MR MU YT MX FM MD MC MN ME MS MA MZ MM NA NR NP NL NC NZ NI NE NG NU NF MK MP NO OM PK PW PS PA PG PY PE PH PN PL PT PR QA RE RO RU RW BL SH KN LC MF PM VC WS SM ST SA SN RS SC SL SG SX SK SI SB SO ZA GS SS ES LK SD SR SJ SE CH SY TW TJ TZ TH TL TG TK TO TT TN TR TM TC TV UG UA AE GB US UM UY UZ VU VE VN VG VI WF EH YE ZM ZW'.split(' ');
 function pfCountries(){let names;try{names=new Intl.DisplayNames(window.TDLocale?.language||undefined,{type:'region'});}catch{names=null;}return PF_REGIONS.map(code=>[code,names?.of(code)||code]).sort((a,b)=>a[1].localeCompare(b[1]));}
 function pfZones(){try{return Intl.supportedValuesOf('timeZone');}catch{return [Intl.DateTimeFormat().resolvedOptions().timeZone];}}
+// Friendly time zone label, e.g. "India Standard Time (Asia/Kolkata)". Values stay IANA ids.
+// Legacy ids (Asia/Calcutta) are shown under their current name; the option value is unchanged.
+const PF_ZONE_ALIAS={'Asia/Calcutta':'Asia/Kolkata','Asia/Saigon':'Asia/Ho_Chi_Minh','Asia/Katmandu':'Asia/Kathmandu','Asia/Rangoon':'Asia/Yangon','Europe/Kiev':'Europe/Kyiv','America/Buenos_Aires':'America/Argentina/Buenos_Aires','Atlantic/Faeroe':'Atlantic/Faroe','Pacific/Truk':'Pacific/Chuuk','Pacific/Ponape':'Pacific/Pohnpei','Pacific/Enderbury':'Pacific/Kanton'};
+function pfZoneLabel(zone){const id=PF_ZONE_ALIAS[zone]||zone,city=id.replace(/_/g,' ');let name='';
+  try{name=new Intl.DateTimeFormat(window.TDLocale?.language||undefined,{timeZone:zone,timeZoneName:'long'}).formatToParts(new Date()).find(x=>x.type==='timeZoneName')?.value||'';}catch{}
+  return name&&name!==zone?`${name} (${city})`:city;}
 const pfName=p=>[p.firstName,p.lastName].filter(Boolean).join(' ');
 function pfInitials(p){const n=(p.displayName||pfName(p)).trim();if(n)return n.split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();return (userEmail||'T').trim()[0].toUpperCase();}
 
@@ -23,13 +29,9 @@ function renderProfileEditor(){const host=$('#profileEditor');if(!host)return;co
     ${f('First name','firstName',p.firstName,'autocomplete="given-name" maxlength="60"')}${f('Surname','lastName',p.lastName,'autocomplete="family-name" maxlength="60"')}
     ${f('Display name','displayName',p.displayName,'maxlength="60" placeholder="How your name appears in the app"')}
     <label class="tf-field">Email<input value="${esc(userEmail||'')}" disabled title="Your login email"></label>
-    ${f('Mobile number','mobile',p.mobile,'type="tel" autocomplete="tel" inputmode="tel" maxlength="24" placeholder="Include your country code"')}
     ${sel('Country','country',pfCountries(),p.country,'Select country')}
-    ${f('Zip / postal code','zip',p.zip,'autocomplete="postal-code" maxlength="12" placeholder="e.g. 560001"')}
-    ${sel('Time zone','timezone',pfZones().map(z=>[z,z.replace(/_/g,' ')]),zone,'Select time zone')}
+    ${sel('Time zone','timezone',(pfZones().includes(zone)?pfZones():[zone,...pfZones()]).map(z=>[z,pfZoneLabel(z)]),zone,'Select time zone')}
     <label class="tf-field pf-full">Language<select name="language" data-language-selector translate="no">${TDLocale.languages.map(([code,name])=>`<option value="${code}" ${code===(p.language||TDLocale.language)?'selected':''}>${name}</option>`).join('')}</select></label>
-    ${sel('Gender','gender',[['man','Man'],['woman','Woman'],['non-binary','Non-binary']],p.gender,'Prefer not to say')}
-    <label class="tf-field pf-full">Bio<textarea name="bio" rows="3" maxlength="500" placeholder="A line about your trading style">${esc(p.bio||'')}</textarea></label>
    </div>
    <div class="pf-foot"><span class="ws-form-status" id="pfStatus" role="status" aria-live="polite"></span><button type="submit" class="btn" id="pfSave">Save profile</button></div></form>`;
   PF.dirty=false;PF.photo=p.photo||'';pfPaintPreview();
@@ -40,7 +42,8 @@ function renderProfileEditor(){const host=$('#profileEditor');if(!host)return;co
     PF.uploading=true;$('#pfSave').disabled=true;$('#pfStatus').textContent='Uploading photo…';
     try{const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});const response=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})});const result=await response.json();if(!response.ok||!result.path)throw Error(result.error||'Upload failed');PF.dirty=true;PF.photo=result.path;$('#pfStatus').textContent='Photo ready. Save to keep it.';$('#pfPhotoBtn').textContent='Change photo';pfPaintPreview();}
     catch(error){$('#pfStatus').textContent=error.message||'Upload failed';}finally{PF.uploading=false;$('#pfSave').disabled=false;}};
-  form.onsubmit=async event=>{event.preventDefault();if(PF.busy||PF.uploading)return;const values=Object.fromEntries(new FormData(form));const settings={...PF.data.settings,language:values.language,gender:values.gender,firstName:values.firstName.trim(),lastName:values.lastName.trim(),displayName:values.displayName.trim(),mobile:values.mobile.trim(),country:values.country,zip:values.zip.trim(),timezone:values.timezone,bio:values.bio.trim(),photo:PF.photo};
+  form.onsubmit=async event=>{event.preventDefault();if(PF.busy||PF.uploading)return;const values=Object.fromEntries(new FormData(form));// Gender, bio, mobile and zip are no longer edited here; the spread keeps any stored values.
+    const settings={...PF.data.settings,language:values.language,firstName:values.firstName.trim(),lastName:values.lastName.trim(),displayName:values.displayName.trim(),country:values.country,timezone:values.timezone,photo:PF.photo};
     PF.busy=true;$('#pfSave').disabled=true;$('#pfStatus').textContent='Saving…';
     try{PF.data=await wsApi('profile','PUT',{settings,revision:PF.data.revision});PF.dirty=false;await TDLocale.setLanguage(PF.data.settings.language);$('#pfStatus').textContent='Profile saved.';pfPaintAvatar();}
     catch(error){$('#pfStatus').textContent=error.message;}finally{PF.busy=false;$('#pfSave').disabled=false;}};}
