@@ -1621,5 +1621,10 @@
   "Adjust columns and formats": "Ajuster les colonnes et formats",
   "{value1} trades found": "{value1} trades trouvés",
   "1 trade found": "1 trade trouvé",
-  "Import {value1} trades": "Importer {value1} trades"
+  "Import {value1} trades": "Importer {value1} trades",
+  "Imported 1 trade": "1 trade importé",
+  "Imported {value1} trades": "{value1} trades importés",
+  "Imported 1 trade · {value1} already in your journal": "1 trade importé · {value1} déjà dans votre journal",
+  "Imported {value1} trades · {value2} already in your journal": "{value1} trades importés · {value2} déjà dans votre journal",
+  "These trades are already in your journal": "Ces trades sont déjà dans votre journal"
 }

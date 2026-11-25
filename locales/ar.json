@@ -1621,5 +1621,10 @@
   "Adjust columns and formats": "ضبط الأعمدة والتنسيقات",
   "{value1} trades found": "تم العثور على {value1} صفقات",
   "1 trade found": "تم العثور على صفقة واحدة",
-  "Import {value1} trades": "استيراد {value1} صفقات"
+  "Import {value1} trades": "استيراد {value1} صفقات",
+  "Imported 1 trade": "تم استيراد صفقة واحدة",
+  "Imported {value1} trades": "تم استيراد {value1} صفقات",
+  "Imported 1 trade · {value1} already in your journal": "تم استيراد صفقة واحدة · {value1} موجودة بالفعل في دفترك",
+  "Imported {value1} trades · {value2} already in your journal": "تم استيراد {value1} صفقات · {value2} موجودة بالفعل في دفترك",
+  "These trades are already in your journal": "هذه الصفقات موجودة بالفعل في دفترك"
 }

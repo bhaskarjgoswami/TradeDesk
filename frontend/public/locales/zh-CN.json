@@ -1621,5 +1621,10 @@
   "Adjust columns and formats": "调整列和格式",
   "{value1} trades found": "找到 {value1} 笔交易",
   "1 trade found": "找到 1 笔交易",
-  "Import {value1} trades": "导入 {value1} 笔交易"
+  "Import {value1} trades": "导入 {value1} 笔交易",
+  "Imported 1 trade": "已导入 1 笔交易",
+  "Imported {value1} trades": "已导入 {value1} 笔交易",
+  "Imported 1 trade · {value1} already in your journal": "已导入 1 笔交易 · {value1} 笔已在日志中",
+  "Imported {value1} trades · {value2} already in your journal": "已导入 {value1} 笔交易 · {value2} 笔已在日志中",
+  "These trades are already in your journal": "这些交易已在您的日志中"
 }

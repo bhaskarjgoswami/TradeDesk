@@ -1621,5 +1621,10 @@
   "Adjust columns and formats": "कॉलम और फ़ॉर्मैट बदलें",
   "{value1} trades found": "{value1} ट्रेड मिले",
   "1 trade found": "1 ट्रेड मिला",
-  "Import {value1} trades": "{value1} ट्रेड इम्पोर्ट करें"
+  "Import {value1} trades": "{value1} ट्रेड इम्पोर्ट करें",
+  "Imported 1 trade": "1 ट्रेड इम्पोर्ट हुआ",
+  "Imported {value1} trades": "{value1} ट्रेड इम्पोर्ट हुए",
+  "Imported 1 trade · {value1} already in your journal": "1 ट्रेड इम्पोर्ट हुआ · {value1} पहले से जर्नल में",
+  "Imported {value1} trades · {value2} already in your journal": "{value1} ट्रेड इम्पोर्ट हुए · {value2} पहले से जर्नल में",
+  "These trades are already in your journal": "ये ट्रेड पहले से आपकी जर्नल में हैं"
 }

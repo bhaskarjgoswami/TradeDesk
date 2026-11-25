@@ -1621,5 +1621,10 @@
   "Adjust columns and formats": "Ajustar columnas y formatos",
   "{value1} trades found": "{value1} operaciones encontradas",
   "1 trade found": "1 operación encontrada",
-  "Import {value1} trades": "Importar {value1} operaciones"
+  "Import {value1} trades": "Importar {value1} operaciones",
+  "Imported 1 trade": "1 operación importada",
+  "Imported {value1} trades": "{value1} operaciones importadas",
+  "Imported 1 trade · {value1} already in your journal": "1 operación importada · {value1} ya en tu diario",
+  "Imported {value1} trades · {value2} already in your journal": "{value1} operaciones importadas · {value2} ya en tu diario",
+  "These trades are already in your journal": "Estas operaciones ya están en tu diario"
 }
