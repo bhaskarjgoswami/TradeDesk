@@ -1626,5 +1626,8 @@
   "Imported {value1} trades": "{value1} operações importadas",
   "Imported 1 trade · {value1} already in your journal": "1 operação importada · {value1} já no seu diário",
   "Imported {value1} trades · {value2} already in your journal": "{value1} operações importadas · {value2} já no seu diário",
-  "These trades are already in your journal": "Essas operações já estão no seu diário"
+  "These trades are already in your journal": "Essas operações já estão no seu diário",
+  "Choose a PNG, JPG, GIF or WebP image under 15 MB.": "Escolha uma imagem PNG, JPG, GIF ou WebP com menos de 15 MB.",
+  "Choose an image under 5 MB.": "Escolha uma imagem com menos de 5 MB.",
+  "Finishing chart upload…": "Concluindo o envio do gráfico…"
 }

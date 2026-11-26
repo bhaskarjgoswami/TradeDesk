@@ -39,7 +39,7 @@ window.openTradePage=async function(trade=null,date=null,strategyId=null,draft=n
   TF.charts={htf:charts.htf||(!plan.charts&&images[0])||'',mtf:charts.mtf||(!plan.charts&&images[1])||'',ltf:charts.ltf||(!plan.charts&&images[2])||''};
   const primaryKey=trade?.id||(draft?.source_id?'broker:'+draft.source_id:'new'),brokerKey=trade?.source_id?'broker:'+trade.source_id:null;let recovered=window.TradeDeskDrafts?.load(primaryKey);TF.draftStorageKey=primaryKey;if(!recovered&&brokerKey){recovered=window.TradeDeskDrafts?.load(brokerKey);if(recovered)TF.draftStorageKey=brokerKey;}TF.timezone=recovered?.timezone||tfZoneName();
   if(recovered){TF.restore=recovered;TF.charts=recovered.charts||TF.charts;if(recovered.trade?.id===trade?.id&&trade)TF.trade=recovered.trade;else if(trade&&recovered.pendingBody&&!recovered.trade){TF.trade={...trade,revision:1};recovered.pendingBody=null;}TF.draft=recovered.seed||TF.draft;}else TF.restore=null;
-  const seed=TF.trade||TF.draft;TF.autoPnl=seed?.pnl==null;TF.autoRisk=seed?.risk==null;TF.autoR=seed?.r_multiple==null;TF.uploads=0;TF.busy=false;TF.dirty=false;TF.contractEdited=false;TF.clientId=trade?null:(recovered?.clientId||crypto.randomUUID());TF.pendingBody=recovered?.pendingBody||null;TF.reviewedAt=recovered?.reviewedAt||wsReview(seed||{}).reviewedAt||null;TF.dirty=!!recovered;
+  const seed=TF.trade||TF.draft;TF.autoPnl=seed?.pnl==null;TF.autoRisk=seed?.risk==null;TF.autoR=seed?.r_multiple==null;TF.uploads=0;TF.uploadTasks=new Set();TF.busy=false;TF.dirty=false;TF.contractEdited=false;TF.clientId=trade?null:(recovered?.clientId||crypto.randomUUID());TF.pendingBody=recovered?.pendingBody||null;TF.reviewedAt=recovered?.reviewedAt||wsReview(seed||{}).reviewedAt||null;TF.dirty=!!recovered;
   TF.quick=!trade&&!TF.draft&&!recovered&&!!window.matchMedia?.('(max-width:600px)').matches;
   TF.strategy=strategyId??trade?.strategy_id??(trade?'':(WS.items.strategy.find(i=>i.body.primary&&i.body.active)?.id??''));setView('trade');};
 
@@ -108,9 +108,31 @@ function tfRenderChart(key){const zone=$('#tfChart-'+key),path=TF.charts[key];zo
 function tfChartActions(key,removable){const label=key.toUpperCase();return `<div class="tf-chart-actions"><button type="button" data-chart-preview="${key}" aria-label="Preview ${label} chart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Preview</button>${removable?`<button type="button" class="danger" data-chart-remove="${key}" aria-label="Delete ${label} chart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Delete</button>`:''}</div>`;}
 function tfPreview(path,label){let box=$('#tfLightbox');if(!box){box=document.createElement('dialog');box.id='tfLightbox';box.className='tf-lightbox';document.body.appendChild(box);box.onclick=event=>{if(event.target===box||event.target.closest('[data-lightbox-close]'))box.close();};}
   box.innerHTML=`<div class="tf-lightbox-bar"><b>${esc(label)} chart</b><a href="/${esc(path)}" target="_blank" rel="noopener noreferrer">Open in new tab ↗</a><button type="button" data-lightbox-close aria-label="Close preview">×</button></div><img src="/${esc(path)}" alt="${esc(label)} chart">`;if(!box.open)box.showModal();}
-async function tfUpload(file,key){if(!file)return;if(!['image/png','image/jpeg','image/gif','image/webp'].includes(file.type)||file.size>5*1024*1024){toast('Choose a PNG, JPG, GIF or WebP image under 5 MB.');return;}TF.uploads++;$('#tfSave').disabled=true;const zone=$('#tfChart-'+key);zone.classList.add('busy');
-  try{const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});const response=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})});const result=await response.json();if(!response.ok||!result.path)throw Error(result.error||'Upload failed');TF.charts[key]=result.path;TF.dirty=true;tfRenderChart(key);tfPersistDraft();}
-  catch(error){toast(error.message||'Upload failed');}finally{TF.uploads--;zone.classList.remove('busy');if(!TF.uploads&&$('#tfSave'))$('#tfSave').disabled=false;}}
+// Chart screenshots are often 1 to 3 MB PNGs. Resize to at most 2400px and
+// re-encode as WebP (JPEG where WebP encoding is missing) before upload; keep
+// the original when that is not smaller. GIFs keep their animation.
+async function tfShrink(file){
+  if(file.type==='image/gif'||typeof createImageBitmap!=='function')return file;
+  try{
+    const bitmap=await createImageBitmap(file),scale=Math.min(1,2400/Math.max(bitmap.width,bitmap.height));
+    const canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close?.();
+    const encode=type=>new Promise(resolve=>canvas.toBlob(blob=>resolve(blob&&blob.type===type?blob:null),type,.9));
+    const blob=await encode('image/webp')||await encode('image/jpeg');
+    return blob&&blob.size<file.size?blob:file;
+  }catch{return file;}
+}
+async function tfUpload(file,key){if(!file)return;if(!['image/png','image/jpeg','image/gif','image/webp'].includes(file.type)||file.size>15*1024*1024){toast('Choose a PNG, JPG, GIF or WebP image under 15 MB.');return;}
+  TF.uploads++;const zone=$('#tfChart-'+key);zone.classList.add('busy');zone.setAttribute('aria-busy','true');
+  const task=(async()=>{
+    try{const small=await tfShrink(file);if(small.size>5*1024*1024)throw Error('Choose an image under 5 MB.');
+      const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(small);});
+      const response=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})});const result=await response.json();if(!response.ok||!result.path)throw Error(result.error||'Upload failed');
+      TF.charts[key]=result.path;TF.dirty=true;tfRenderChart(key);tfPersistDraft();}
+    catch(error){toast(error.message||'Upload failed');}
+    finally{TF.uploads--;zone.classList.remove('busy');zone.removeAttribute('aria-busy');}
+  })();
+  (TF.uploadTasks ||= new Set()).add(task);task.finally(()=>TF.uploadTasks.delete(task));return task;}
 document.addEventListener('paste',event=>{if(view!=='trade')return;const item=[...(event.clipboardData?.items||[])].find(it=>it.type.startsWith('image/'));if(!item)return;event.preventDefault();const key=TF.target||TF_CHARTS.map(c=>c[0]).find(k=>!TF.charts[k])||'htf';tfUpload(item.getAsFile(),key);});
 
 // P&L, risk and R fill themselves from prices until the user types a value.
@@ -120,7 +142,9 @@ function tfRecalc(){const form=$('#tfForm');if(!form)return;const entry=tfNum('e
   if(TF.autoR){const pnl=tfNum('pnl'),risk=tfNum('risk');let r=null;if(entry!=null&&stop!=null&&exit!=null&&entry!==stop)r=(exit-entry)*sign/Math.abs(entry-stop);else if(pnl!=null&&risk>0)r=pnl/risk;form.r_multiple.value=r==null?'':Math.round(r*100)/100;}
   $('#tfPnlHint').textContent=cv==null||cv<=0?'Enter units per lot / contract to calculate P&L and risk, or type your broker’s values.':TF.autoPnl&&entry!=null&&exit!=null&&qty?`Calculated: (exit - entry) × lots × contract size ${cv}. Type a value to override.`:'';tfLive();}
 
-async function tfSave(){if(TF.busy||TF.uploads)return;const form=$('#tfForm'),status=$('#tfStatus');
+async function tfSave(){if(TF.busy)return;const form=$('#tfForm'),status=$('#tfStatus');
+  // Save stays clickable during chart uploads; finish them first so the trade keeps its charts.
+  if(TF.uploads){TF.busy=true;$('#tfSave').disabled=true;status.textContent='Finishing chart upload…';try{while(TF.uploadTasks?.size)await Promise.allSettled([...TF.uploadTasks]);}finally{TF.busy=false;if($('#tfSave'))$('#tfSave').disabled=false;}if(view!=='trade'||!$('#tfForm'))return;}
   // A required field hidden by quick add opens the full form before it takes focus.
   const reveal=control=>{if(TF.quick&&control?.closest('[data-full]'))tfSetQuick(false);control?.focus();};
   if(!form.date.value||!form.symbol.value.trim()||!form.direction.value){status.textContent='Entry date, instrument and direction are required.';reveal(!form.date.value?form.date:!form.symbol.value.trim()?form.symbol:form.direction);return;}

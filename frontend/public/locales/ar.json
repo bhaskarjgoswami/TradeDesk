@@ -1626,5 +1626,8 @@
   "Imported {value1} trades": "تم استيراد {value1} صفقات",
   "Imported 1 trade · {value1} already in your journal": "تم استيراد صفقة واحدة · {value1} موجودة بالفعل في دفترك",
   "Imported {value1} trades · {value2} already in your journal": "تم استيراد {value1} صفقات · {value2} موجودة بالفعل في دفترك",
-  "These trades are already in your journal": "هذه الصفقات موجودة بالفعل في دفترك"
+  "These trades are already in your journal": "هذه الصفقات موجودة بالفعل في دفترك",
+  "Choose a PNG, JPG, GIF or WebP image under 15 MB.": "اختر صورة PNG أو JPG أو GIF أو WebP أصغر من 15 ميغابايت.",
+  "Choose an image under 5 MB.": "اختر صورة أصغر من 5 ميغابايت.",
+  "Finishing chart upload…": "جارٍ إكمال رفع الرسم البياني…"
 }

@@ -1089,3 +1089,46 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 .imp-preview{overflow-x:auto}
 .imp-preview td{white-space:nowrap}
 @media(max-width:600px){.imp-file .btn{padding:8px 12px;font-size:12.5px}.imp-broker{max-width:none}.imp-drop{padding:28px 16px}}
+/* Chart upload in progress */
+.tf-chart.busy{opacity:1}
+.tf-chart.busy::after{content:"";position:absolute;inset:0;background:color-mix(in srgb,var(--panel) 65%,transparent)}
+.tf-chart.busy::before{content:"";position:absolute;z-index:1;width:26px;height:26px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--accent);animation:cal-spin .8s linear infinite}
+@media(prefers-reduced-motion:reduce){.tf-chart.busy::before{animation:none}}
+
+/* ---- Review and reflection: clean, minimal pass (both themes; add-trade form + trade detail) ---- */
+.tf-review{gap:22px}
+.tf-review .tf-field{gap:8px;font-size:12px;font-weight:500;color:var(--mut);letter-spacing:.1px}
+.tf-review .tf-row{gap:16px}
+/* Emotion chips: quiet outline pills, emoji muted until chosen */
+.tf-review .tf-chips{gap:6px}
+.tf-review .tf-chip{min-height:30px;padding:4px 11px;gap:6px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--mut);font-size:12.5px;font-weight:450;transition:color .15s,border-color .15s,background .15s}
+.tf-review .tf-chip:hover{border-color:var(--mut);color:var(--txt)}
+.tf-review .tf-chip:has(input:checked){border-color:transparent;background:var(--accent-weak);color:var(--accent);font-weight:550}
+.tf-review .tf-chip-icon{font-size:13px;filter:grayscale(1);opacity:.55;transition:filter .15s,opacity .15s}
+.tf-review .tf-chip:hover .tf-chip-icon,.tf-review .tf-chip:has(input:checked) .tf-chip-icon{filter:none;opacity:1}
+/* Yes/No and A+..F: compact segmented control with a soft selected pill */
+.tf-review .tf-seg{gap:2px;padding:2px;border:0;border-radius:9px;background:var(--panel2)}
+.tf-review .tf-seg .tf-chip{min-height:28px;min-width:44px;padding:0 12px;border:0;border-radius:7px;background:transparent;color:var(--mut);font-weight:500}
+.tf-review .tf-seg .tf-chip+.tf-chip{border-inline-start:0}
+.tf-review .tf-seg .tf-chip:hover{color:var(--txt);background:transparent}
+.tf-review .tf-seg .tf-chip:has(input:checked){background:var(--panel);color:var(--txt);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.tf-review .tf-scale .tf-chip{min-width:40px}
+/* Inputs: flat, hairline, modest radius (overrides the theme pill inputs) */
+.tf-review .tf-field input,.tf-review .tf-field select,.tf-review .tf-field textarea{min-height:38px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:transparent;box-shadow:none;font-size:13.5px;font-weight:400;color:var(--txt)}
+.tf-review .tf-field select{padding-inline-end:32px}
+.tf-review .tf-field textarea{min-height:96px;line-height:1.6;resize:vertical}
+.tf-review .tf-field input::placeholder,.tf-review .tf-field textarea::placeholder{color:var(--mut);opacity:.7}
+.tf-review .tf-field input:hover,.tf-review .tf-field select:hover,.tf-review .tf-field textarea:hover{border-color:var(--mut);box-shadow:none}
+.tf-review .tf-field input:focus,.tf-review .tf-field select:focus,.tf-review .tf-field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak);background:transparent;outline:none}
+/* Mistake suggestions: plain text tags, no dashed borders */
+.tf-review .tf-mchips{gap:4px 6px;margin-top:2px}
+.tf-review .tf-mchip{min-height:26px;padding:3px 9px;border:0;border-radius:6px;background:var(--panel2);color:var(--mut);font-size:11.5px;transition:color .15s,background .15s}
+.tf-review .tf-mchip::before{content:"+ ";opacity:.6}
+.tf-review .tf-mchip:hover{color:var(--txt)}
+.tf-review .tf-mchip[aria-pressed="true"]{background:var(--accent-weak);color:var(--accent)}
+.tf-review .tf-mchip[aria-pressed="true"]::before{content:"\2713  ";opacity:1}
+.tf-review .tf-mchip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* Save: right-aligned, compact */
+.tf-review .td-save{margin-top:4px}
+.tf-review .td-save .btn{min-height:38px;padding:0 18px;border-radius:10px;font-size:13.5px;font-weight:550}
+@media(max-width:640px){.tf-review .tf-chip{min-height:36px}.tf-review .tf-seg .tf-chip{min-height:34px}.tf-review .tf-field input,.tf-review .tf-field select{min-height:42px}.tf-review .td-save .btn{width:100%}}
