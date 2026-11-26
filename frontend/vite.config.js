@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 if (process.env.VERCEL_ENV === "preview") {
   const api = process.env.VITE_API_URL || "";
   const auth = process.env.VITE_SUPABASE_URL || "";
-  if (!api || !auth || !process.env.VITE_SUPABASE_ANON_KEY || api.includes("tradedesk-nopw.onrender.com") || auth.includes("nltngvrqawdwltauqkiw.supabase.co")) {
+  if (!api || !auth || !process.env.VITE_SUPABASE_ANON_KEY || api.includes("tradedesk-nopw.onrender.com") || api.includes("tradedesk-api-sg.onrender.com") || auth.includes("nltngvrqawdwltauqkiw.supabase.co")) {
     throw new Error("Preview requires isolated staging API and Supabase configuration; production fallback is disabled.");
   }
 }

@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/images/:name",
-      "destination": "https://tradedesk-nopw.onrender.com/j/images/:name"
+      "destination": "https://tradedesk-api-sg.onrender.com/j/images/:name"
     },
     {
       "source": "/app",

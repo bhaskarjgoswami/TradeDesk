@@ -15,7 +15,7 @@ jobs:
       - name: API health
         run: |
           for i in 1 2 3 4 5 6; do
-            if curl -fsS -m 30 https://tradedesk-nopw.onrender.com/ready; then echo; echo "API up"; exit 0; fi
+            if curl -fsS -m 30 https://tradedesk-api-sg.onrender.com/ready; then echo; echo "API up"; exit 0; fi
             echo "attempt $i failed, retrying (cold start?)"; sleep 15
           done
           echo "::error::TradeDesk API did not answer /ready for ~4 minutes"; exit 1

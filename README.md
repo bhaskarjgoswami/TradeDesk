@@ -86,7 +86,7 @@ Verification accepts `razorpay_order_id`, `razorpay_payment_id`, and `razorpay_s
 
 To test locally, start the backend with `uvicorn app.main:app --reload --port 8787`, configure the frontend public Supabase/API settings for the same environment, run `npm run dev` in `frontend`, sign in, open `/billing`, select a period, and click Get Pro. With test keys, a Test Mode notice appears. Use Razorpay's documented test-payment flow; confirm Pro only activates after verification. Also dismiss checkout and test a failed payment. No real money is collected in Test Mode.
 
-Test Mode works through the signed browser callback without a webhook. Before live checkout is enabled, configure `RAZORPAY_WEBHOOK_SECRET` and an `order.paid` webhook at `https://tradedesk-nopw.onrender.com/api/subscription/webhook`, enable automatic capture in Razorpay, complete merchant activation, and replace the test credentials with Live credentials. Live checkout remains disabled until its webhook secret is configured. Access periods are one-time purchases, without automatic renewal.
+Test Mode works through the signed browser callback without a webhook. Before live checkout is enabled, configure `RAZORPAY_WEBHOOK_SECRET` and an `order.paid` webhook at `https://tradedesk-api-sg.onrender.com/api/subscription/webhook`, enable automatic capture in Razorpay, complete merchant activation, and replace the test credentials with Live credentials. Live checkout remains disabled until its webhook secret is configured. Access periods are one-time purchases, without automatic renewal.
 
 ## Global journal and broker imports
 
