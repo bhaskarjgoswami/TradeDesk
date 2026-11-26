@@ -71,6 +71,8 @@ function renderTradePage(){const t=TF.trade||TF.draft||{},review=wsReview(t),[en
     <p class="tf-status" id="tfStatus" role="status" aria-live="polite"></p>
    </section>
    <div class="tf-right">
+    <section class="ws-card" data-full><h2>Charts</h2><p class="ws-subtitle">Add screenshots to review context + execution. Click, drop or paste an image. Hover an uploaded chart to preview or delete it.</p>
+     <div class="tf-charts">${TF_CHARTS.map(([key,label,tip])=>`<div><div class="tf-chart-label">${label}<span class="tf-info" title="${esc(tip)}" aria-label="${esc(tip)}">i</span></div><div class="tf-chart" id="tfChart-${key}" data-chart="${key}" tabindex="0" role="button" aria-label="Upload ${label} chart"></div></div>`).join('')}<input type="file" id="tfFile" accept="image/*" hidden></div></section>
     <section class="ws-card tf-review"><h2>Review and reflection</h2>
      ${chips('Entry emotion','emotionIn',TF_EMOTION_IN.map(e=>[e,e,emoji(e)]),review.emotionIn)}
      ${chips('Exit emotion','emotionOut',TF_EMOTION_OUT.map(e=>[e,e,emoji(e)]),review.emotionOut,'data-full')}
@@ -82,8 +84,7 @@ function renderTradePage(){const t=TF.trade||TF.draft||{},review=wsReview(t),[en
        ${tfMistakeChips()}</div></div>
      <label class="tf-field" data-full>Add a note or reflection<textarea name="notes" rows="4" placeholder="What went well? What will you do differently next time?">${esc(t.notes||'')}</textarea></label>
     </section>
-    <section class="ws-card" data-full><h2>Charts</h2><p class="ws-subtitle">Add screenshots to review context + execution. Click, drop or paste an image. Hover an uploaded chart to preview or delete it.</p>
-     <div class="tf-charts">${TF_CHARTS.map(([key,label,tip])=>`<div><div class="tf-chart-label">${label}<span class="tf-info" title="${esc(tip)}" aria-label="${esc(tip)}">i</span></div><div class="tf-chart" id="tfChart-${key}" data-chart="${key}" tabindex="0" role="button" aria-label="Upload ${label} chart"></div></div>`).join('')}<input type="file" id="tfFile" accept="image/*" hidden></div></section>
+
     </div><button type="button" class="ws-link tf-showall" id="tfShowAll">Show all fields</button><div class="tf-foot">${TF.trade?'<button type="button" class="tf-delete" id="tfDelete">Delete</button>':''}<button type="button" class="btn ghost" id="tfCancel">Cancel</button><button type="submit" class="btn" id="tfSave">${TF.trade?'Save changes':'Save trade'}</button></div></form>`;
   const form=$('#tfForm');
   if(TF.restore){for(let [name,value] of Object.entries(TF.restore.fields)){const control=form.elements.namedItem(name);if(name==='followed'&&typeof value==='boolean')value=value?'yes':'';if(control&&!control.tagName&&control.length!=null){for(const radio of control)radio.checked=radio.value===String(value??'');continue;}if(!control||!['INPUT','TEXTAREA','SELECT'].includes(control.tagName))continue;if(control.type==='checkbox')control.checked=!!value;else control.value=String(value??'');}for(const key of ['autoPnl','autoRisk','autoR'])if(typeof TF.restore.auto?.[key]==='boolean')TF[key]=TF.restore.auto[key];TF.restore=null;$('#tfStatus').textContent='Unsaved draft restored on this device.';}
@@ -178,7 +179,7 @@ async function tfSave(){if(TF.busy)return;const form=$('#tfForm'),status=$('#tfS
   // The write is complete. A failed refresh must never turn this into a new POST.
   upsertTrade(saved);
   if(changedSinceAttempt){tfPersistDraft();status.textContent='Previous save confirmed. Your newer changes are still here; save again to apply them.';$('#tfSave').textContent='Save changes';return;}
-  toast(t.id?'Trade updated':'Trade saved ✓');if(TF.queue.length){tfNextImport();return;}if(t.id&&TF.back==='tradeview'){openTradeDetail(saved.id);return;}calShowDay(body.date);
+  toast(t.id?'Trade updated':'Trade saved ✓');if(TF.queue.length){tfNextImport();return;}if(t.id&&TF.back==='tradeview'){openTradeDetail(saved.id);return;}if(t.id&&TF.back==='trades'){setView('trades');return;}calShowDay(body.date);
 }
 // Delta: pull today's fills, then journal them one at a time on this page.
 async function tfPull(){const button=$('#tfPull');button.disabled=true;try{const r=await(await fetch('/api/delta/today?timezone='+encodeURIComponent(tfZoneName()))).json();
@@ -191,22 +192,27 @@ async function tfDelete(){if(!TF.trade||!await tdConfirm('Delete this trade perm
 async function tfLeave(){if(TF.dirty&&!await tdConfirm('Discard this unsaved draft?',{confirmLabel:'Discard',danger:true}))return;window.TradeDeskDrafts?.clear(TF.draftStorageKey||TF.trade?.id||'new');TF.dirty=false;if(TF.trade&&TF.back==='tradeview'){openTradeDetail(TF.trade.id);return;}if(TF.back==='month'||TF.back==='journal'||!TF.back||TF.back==='trade'){calShowDay(TF.date);return;}setView(TF.back);}
 
 
-// ---------- trade details (read-only facts + editable reflection) ----------
-const TD={id:null,dirty:false};
+// ---------- shared trade details and review queue ----------
+const TD={id:null,dirty:false,busy:false,reviewMode:false};
+function tdCanLeave(){if(TD.busy){toast('Wait for the current save or upload to finish.');return false;}if(TD.dirty&&!confirm('Discard unsaved reflection changes?'))return false;TD.dirty=false;return true;}
 const tdOrdered=()=>[...allTrades].sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.entry_time||'').localeCompare(String(b.entry_time||''))||a.id-b.id);
 // Session from the entry time in UTC: Asia 00-07, London 07-13, New York 13-21.
 function tdSession(t){if(!t.entry_time||!String(t.entry_time).includes('T'))return '—';const d=new Date(t.entry_time);if(Number.isNaN(d.getTime()))return '—';const h=d.getUTCHours();return h<7?'Asia':h<13?'London':h<21?'New York':'After hours';}
 function tdDuration(t){const a=new Date(t.entry_time),b=new Date(t.exit_time),m=Math.round((b-a)/60000);if(!t.entry_time||!t.exit_time||!String(t.entry_time).includes('T')||!String(t.exit_time).includes('T')||!Number.isFinite(m)||m<0)return '—';return m<60?m+'m':m<1440?`${Math.floor(m/60)}h ${m%60}m`:`${Math.floor(m/1440)}d ${Math.floor(m%1440/60)}h`;}
 const tdCost=v=>v?money(-v):money(0);
-window.openTradeDetail=function(id){if(TD.dirty&&view==='tradeview'&&!confirm('Discard unsaved reflection changes?'))return;TD.id=id;TD.dirty=false;setView('tradeview');};
-function renderTradeDetail(){const t=allTrades.find(x=>x.id===TD.id);if(!t){calShowDay(wsLocalDate());return;}
+window.openTradeDetail=function(id){if(!tdCanLeave())return;TD.id=id;setView('tradeview');};
+function renderTradeDetail(target='#ws-tradeview',reviewMode=false){
+  const root=document.querySelector(target),$=selector=>root.querySelector(selector),$$=selector=>Array.from(root.querySelectorAll(selector));
+  TD.reviewMode=reviewMode;
+  const t=allTrades.find(x=>x.id===TD.id);if(!t){calShowDay(wsLocalDate());return;}
   const r=wsReview(t),plan=wsJson(t.plan),charts=plan.charts||{},images=wsJson(t.images,[]),order=tdOrdered(),i=order.findIndex(x=>x.id===t.id),prev=order[i-1],next=order[i+1];
   TF_CHARTS.forEach(([k],n)=>{if(!plan.charts&&images[n])charts[k]=images[n];});
   const net=wsClosed(t)?wsNet(t):null,[whole,cents]=net===null?['Open','']:money(net).split(/(?=[.,]\d{2}(?:\D*)$)/),row=(label,value)=>`<div class="td-row"><span>${label}</span><b class="num">${value}</b></div>`,price=v=>v==null||v===''?'Not set':esc(String(v));
   const strategies=WS.items.strategy.filter(x=>x.body.active||x.id===Number(t.strategy_id)),sel=(label,name,options,current)=>`<label class="tf-field">${label}<select name="${name}"><option value="">Select</option>${options.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return `<option value="${esc(v)}" ${String(current??'')===String(v)?'selected':''}>${esc(l)}</option>`;}).join('')}</select></label>`;
-  $('#ws-tradeview').innerHTML=`<button type="button" class="ws-link td-back" id="tdBack">← Journal</button>
+  const left=reviewMode?tradesToReviewCount():0,progress=left===1?'1 trade to review':`${left} trades to review`;
+  root.innerHTML=`${reviewMode?`<p class="tl-progress" aria-live="polite">${progress}</p>`:''}<button type="button" class="ws-link td-back" id="tdBack">${reviewMode?'All trades':'← Journal'}</button>
   <div class="td-head"><h1>${esc(t.symbol||'Trade')} <span>·</span> ${esc(new Date(t.date+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'}))}</h1>
-   <div class="ws-actions"><button type="button" class="btn ghost" id="tdEdit">Edit trade</button><div class="cal-seg td-nav"><button type="button" id="tdPrev" ${prev?'':'disabled'}>‹ Previous</button><button type="button" id="tdNext" ${next?'':'disabled'}>Next Trade ›</button></div></div></div>
+   <div class="ws-actions"><button type="button" class="btn ghost" id="tdEdit">Edit trade</button>${reviewMode?'':`<div class="cal-seg td-nav"><button type="button" id="tdPrev" ${prev?'':'disabled'}>‹ Previous</button><button type="button" id="tdNext" ${next?'':'disabled'}>Next Trade ›</button></div>`}</div></div>
   <div class="tf-grid">
    <section class="ws-card td-left"><h2>Trade details</h2>
     <div class="cal-pnet ${net===null?'muted':wsSign(net)}">${esc(whole)}<small>${esc(cents||'')}</small></div><div class="cal-plabel">NET PNL</div>
@@ -218,34 +224,35 @@ function renderTradeDetail(){const t=allTrades.find(x=>x.id===TD.id);if(!t){calS
    </section>
    <div class="tf-right">
     <section class="ws-card"><h2>Charts</h2><p class="ws-subtitle">Screenshots of the context and execution. Hover a chart to preview it.</p>
-     <div class="tf-charts">${TF_CHARTS.map(([k,label,tip])=>`<div><div class="tf-chart-label">${label}<span class="tf-info" title="${esc(tip)}">i</span></div>${charts[k]?`<div class="tf-chart filled" tabindex="0" data-td-chart="${esc(charts[k])}" data-td-label="${label}" aria-label="${label} chart"><img src="/${esc(charts[k])}" alt="${label} chart">${tfChartActions(k,false)}</div>`:`<button type="button" class="tf-chart" data-td-add aria-label="Add ${label} chart in Edit trade"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg></button>`}</div>`).join('')}</div></section>
-    <section class="ws-card tf-review"><h2>Review and reflection</h2><form id="tdForm" class="tf-review">
+     <div class="tf-charts">${TF_CHARTS.map(([k,label,tip])=>`<div><div class="tf-chart-label">${label}<span class="tf-info" title="${esc(tip)}">i</span></div>${charts[k]?`<div class="tf-chart filled" tabindex="0" data-td-chart="${esc(charts[k])}" data-td-label="${label}" aria-label="${label} chart"><img src="/${esc(charts[k])}" alt="${label} chart">${tfChartActions(k,false)}</div>`:`<button type="button" class="tf-chart" data-td-add ${reviewMode?'':'disabled'} aria-label="Add ${label} chart in Edit trade"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg></button>`}</div>`).join('')}</div></section>
+    <section class="ws-card tf-review"><h2>Review and reflection</h2><form id="tdForm" class="tf-review"><fieldset class="td-reflection-fields" ${reviewMode?'':'disabled'}>
      ${tfChips('Entry emotion','emotionIn',TF_EMOTION_IN.map(e=>[e,e,tfEmoji(e)]),r.emotionIn,'','','td')}
      ${tfChips('Exit emotion','emotionOut',TF_EMOTION_OUT.map(e=>[e,e,tfEmoji(e)]),r.emotionOut,'','','td')}
      <div class="tf-row">${tfChips('Did you follow your plan?','followed',[['yes','Yes'],['no','No']],r.followedPlan===true?'yes':r.followedPlan===false?'no':'','','tf-seg','td')}${sel('Which plan did you intend to follow?','strategy',strategies.map(x=>[x.id,x.title]),t.strategy_id)}</div>
      ${tfChips('Setup quality','quality',['A+','A','B','C','F'],r.quality,'','tf-seg tf-scale','td')}
      <div class="tf-row"><label class="tf-field">Trade management<input name="management" value="${esc(r.management||'')}" placeholder="e.g. Partial at 1R, stop to entry"></label><div class="tf-field"><label class="tf-field">Mistakes<input name="mistakes" list="tdMistakes" value="${esc(r.mistakes||'')}" placeholder="Start typing" autocomplete="off"><datalist id="tdMistakes">${TF_MISTAKES.map(m=>`<option value="${esc(m)}">`).join('')}</datalist></label>${tfMistakeChips()}</div></div>
      <label class="tf-field">Add a note or reflection<textarea name="notes" rows="4" placeholder="What went well? What will you do differently next time?">${esc(t.notes||'')}</textarea></label>
-     <div class="td-save"><span class="ws-form-status" id="tdStatus" role="status"></span><button type="submit" class="btn" id="tdSave">Save reflection</button></div></form></section>
+     </fieldset>${reviewMode?'<div class="td-save"><span class="ws-form-status" id="tdStatus" role="status"></span><button type="button" class="btn ghost" id="tdSkip">Skip</button><button type="submit" class="btn" id="tdSave">Save and next</button></div>':''}</form></section>
    </div></div>`;
-  const form=$('#tdForm');tfWireChips(form);form.oninput=event=>{TD.dirty=true;$('#tdStatus').textContent='Unsaved changes';if(event.target.name==='mistakes')tfSyncMistakeChips(form);};
-  form.onsubmit=async event=>{event.preventDefault();const button=$('#tdSave');button.disabled=true;$('#tdStatus').textContent='Saving…';
+  const form=$('#tdForm');if(reviewMode)tfWireChips(form);form.oninput=event=>{if(!reviewMode)return;TD.dirty=true;$('#tdStatus').textContent='Unsaved changes';if(event.target.name==='mistakes')tfSyncMistakeChips(form);};
+  form.onsubmit=async event=>{event.preventDefault();if(!reviewMode||TD.busy)return;TD.busy=true;const button=$('#tdSave');form.querySelector('fieldset').disabled=true;button.disabled=true;$('#tdStatus').textContent='Saving…';
     const pick=name=>form.elements.namedItem(name)?.value||'',followed=pick('followed');
     const review={...r,version:1,followedPlan:followed==='yes'?true:followed==='no'?false:null,quality:pick('quality'),emotionIn:pick('emotionIn'),emotionOut:pick('emotionOut'),management:form.management.value.trim(),mistakes:form.mistakes.value.trim(),reviewed:true,reviewedAt:r.reviewedAt||new Date().toISOString()};
     const strategyId=form.strategy.value?Number(form.strategy.value):null,body={...t,review:JSON.stringify(review),notes:form.notes.value.trim(),strategy_id:strategyId,expectedRevision:t.revision};
-    try{const response=await fetch('/api/trades/'+t.id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const row=await response.json().catch(()=>null);if(!response.ok)throw Error();TD.dirty=false;upsertTrade(row);toast('Reflection saved');renderTradeDetail();}
-    catch{$('#tdStatus').textContent='Could not save. Your edits are still here.';button.disabled=false;}};
-  $('#tdBack').onclick=()=>{if(TD.dirty&&!confirm('Discard unsaved reflection changes?'))return;TD.dirty=false;calShowDay(t.date);};
-  $('#tdEdit').onclick=()=>{if(TD.dirty&&!confirm('Discard unsaved reflection changes?'))return;TD.dirty=false;openTradePage(t);};
-  if(prev)$('#tdPrev').onclick=()=>openTradeDetail(prev.id);if(next)$('#tdNext').onclick=()=>openTradeDetail(next.id);
-  $$('#ws-tradeview [data-td-add]').forEach(b=>b.onclick=()=>openTradePage(t));
-  $$('#ws-tradeview [data-td-chart]').forEach(zone=>{const show=()=>tfPreview(zone.dataset.tdChart,zone.dataset.tdLabel);zone.onclick=show;zone.onkeydown=event=>{if(event.target===zone&&['Enter',' '].includes(event.key)){event.preventDefault();show();}};});}
+    try{const response=await fetch('/api/trades/'+t.id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const row=await response.json().catch(()=>null);if(!response.ok)throw Error(row?.error||'Could not save. Your edits are still here.');if(!row||row.id!==t.id)throw Error('Could not save. Your edits are still here.');TD.dirty=false;upsertTrade(row);TD.busy=false;window.tdTrack?.('trade_reviewed');toast('Review saved');TL.reviewIdx=0;renderTradesList();}
+    catch(error){form.querySelector('fieldset').disabled=false;$('#tdStatus').textContent=error.message||'Could not save. Your edits are still here.';button.disabled=false;}finally{TD.busy=false;}};
+  $('#tdBack').onclick=()=>{if(!tdCanLeave())return;if(reviewMode){TL.tab='all';renderTradesList();}else calShowDay(t.date);};
+  $('#tdEdit').onclick=()=>{if(tdCanLeave())openTradePage(t);};
+  if(reviewMode)$('#tdSkip').onclick=()=>tlSkipReview(t.id);
+  if(!reviewMode&&prev)$('#tdPrev').onclick=()=>openTradeDetail(prev.id);if(!reviewMode&&next)$('#tdNext').onclick=()=>openTradeDetail(next.id);
+  $$('[data-td-add]').forEach(b=>b.onclick=()=>{if(tdCanLeave())openTradePage(t);});
+  $$('[data-td-chart]').forEach(zone=>{const show=()=>tfPreview(zone.dataset.tdChart,zone.dataset.tdLabel);zone.onclick=show;zone.onkeydown=event=>{if(event.target===zone&&['Enter',' '].includes(event.key)){event.preventDefault();show();}};});}
 
 // ---------- wiring: every add / edit entry point opens this page ----------
 const tfBaseRender=window.renderWorkspaceView;
 window.renderWorkspaceView=function(key){if(key==='trade')renderTradePage();else if(key==='tradeview')renderTradeDetail();else tfBaseRender(key);};
 const tfBaseSetView=setView;
-setView=function(v){if(view==='trade'&&v!=='trade'){if(TF.busy||TF.uploads){toast('Wait for the current save or upload to finish.');return;}if(TF.dirty&&!tfPersistDraft()&&!confirm('Leave this trade and discard unsaved changes?'))return;}tfBaseSetView(v);if(v==='trade'||v==='tradeview')$$('.navitem').forEach(n=>n.classList.toggle('on',n.dataset.view==='month'));};
+setView=function(v){if((view==='tradeview'||view==='trades'&&TD.reviewMode)&&v!==view&&!tdCanLeave())return;if(view==='trade'&&v!=='trade'){if(TF.busy||TF.uploads){toast('Wait for the current save or upload to finish.');return;}if(TF.dirty&&!tfPersistDraft()&&!confirm('Leave this trade and discard unsaved changes?'))return;}tfBaseSetView(v);if(v==='trade'||v==='tradeview')$$('.navitem').forEach(n=>n.classList.toggle('on',n.dataset.view==='month'));};
 $('#addTradeBtn').onclick=()=>openTradePage(null,selectedDate||wsLocalDate());
 window.toggleTrade=id=>{const t=dayData&&dayData.trades.find(x=>x.id===id)||allTrades.find(x=>x.id===id);if(t)openTradePage(t);};
 window.editTrade=async id=>{const t=allTrades.find(x=>x.id===Number(id));if(t)openTradePage(t);};
@@ -256,4 +263,4 @@ Object.assign(wsActions,{'new-trade':()=>openTradePage(null,wsLocalDate()),'cal-
 
 function tfPersistDraft(){const form=$('#tfForm');if(!form)return !TF.dirty;const fields=Object.fromEntries(new FormData(form));for(const name of ['emotionIn','emotionOut','followed','quality'])fields[name]=tfPick(name);return window.TradeDeskDrafts?.save(TF.draftStorageKey||TF.trade?.id||'new',{fields,timezone:TF.timezone,trade:TF.trade,seed:TF.draft,charts:TF.charts,clientId:TF.clientId,pendingBody:TF.pendingBody,reviewedAt:TF.reviewedAt,auto:{autoPnl:TF.autoPnl,autoRisk:TF.autoRisk,autoR:TF.autoR}})===true;}
 async function tfReloadSaved(){if(!TF.trade){toast('Check your journal for the completed save before starting another trade.');return;}if(!await tdConfirm('Discard this draft and load the latest saved trade?',{confirmLabel:'Discard',danger:true}))return;try{const latest=await refreshTrade(TF.trade.id);if(!latest){toast('This trade is no longer in your journal.');return;}window.TradeDeskDrafts?.clear(TF.draftStorageKey||TF.trade.id);TF.dirty=false;openTradePage(latest);}catch(error){toast(error.message||'Could not load the saved trade. Your draft is kept.');}}
-window.addEventListener('beforeunload',event=>{if(view==='trade'&&(TF.busy||TF.uploads||(TF.dirty&&!tfPersistDraft()))){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(TD.dirty||TD.busy||view==='trade'&&(TF.busy||TF.uploads||(TF.dirty&&!tfPersistDraft()))){event.preventDefault();event.returnValue='';}});

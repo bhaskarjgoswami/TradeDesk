@@ -1629,5 +1629,6 @@
   "These trades are already in your journal": "Estas operaciones ya están en tu diario",
   "Choose a PNG, JPG, GIF or WebP image under 15 MB.": "Elige una imagen PNG, JPG, GIF o WebP de menos de 15 MB.",
   "Choose an image under 5 MB.": "Elige una imagen de menos de 5 MB.",
-  "Finishing chart upload…": "Terminando de subir el gráfico…"
+  "Finishing chart upload…": "Terminando de subir el gráfico…",
+  "Add {value2} chart in Edit trade": "Agregar gráfico {value2} en Editar operación"
 }

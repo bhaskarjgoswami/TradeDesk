@@ -24,14 +24,14 @@ function tlSorted(list){const key=TL.sort,dir=TL.desc?-1:1;
   return [...list].sort((a,b)=>{const x=val(a),y=val(b);return x<y?-dir:x>y?dir:0;});}
 window.tradesToReviewCount=()=>(typeof allTrades==='undefined'?0:allTrades.filter(tlNeedsReview).length);
 
-window.renderTradesList=function(){const root=$('#ws-trades');if(!root)return;
+window.renderTradesList=function(){if(TD.busy)return;const root=$('#ws-trades');if(!root)return;
   const queue=allTrades.filter(tlNeedsReview).length;
   root.innerHTML=`<header class="ws-header"><div><span class="ws-eyebrow">Your trades</span><h1>Trades</h1><p class="ws-subtitle">Find any trade, and review the ones you haven't looked at yet.</p></div><div class="tl-head-actions">${wsBtn('Import trades','import',true)}${wsBtn('Export CSV','export',true)}<button type="button" class="btn" id="tlAdd">+ Add trade</button></div></header>
   <div class="tl-tabs" role="tablist" aria-label="Trades views"><button type="button" role="tab" id="tlTabAll" aria-selected="${TL.tab==='all'}" aria-controls="tlPanel" data-tl-tab="all">All trades <span class="tl-n">${allTrades.length}</span></button><button type="button" role="tab" id="tlTabReview" aria-selected="${TL.tab==='review'}" aria-controls="tlPanel" data-tl-tab="review">To review <span class="tl-n ${queue?'on':''}">${queue}</span></button><button type="button" role="tab" id="tlTabWeek" aria-selected="${TL.tab==='week'}" aria-controls="tlPanel" data-tl-tab="week">Weekly review</button></div>
   <div id="tlPanel" role="tabpanel" aria-labelledby="${TL_TAB_IDS[TL.tab]}"></div>`;
   $('#tlAdd').onclick=()=>openTradePage(null,wsLocalDate());
-  root.querySelectorAll('[data-tl-tab]').forEach(b=>b.onclick=()=>{TL.tab=b.dataset.tlTab;TL.reviewIdx=0;renderTradesList();});
-  root.querySelector('.tl-tabs').onkeydown=e=>{if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;e.preventDefault();const tabs=Object.keys(TL_TAB_IDS),i=tabs.indexOf(TL.tab);TL.tab=tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];renderTradesList();$('#'+TL_TAB_IDS[TL.tab]).focus();};
+  root.querySelectorAll('[data-tl-tab]').forEach(b=>b.onclick=()=>{if(!tdCanLeave())return;TL.tab=b.dataset.tlTab;TL.reviewIdx=0;renderTradesList();});
+  root.querySelector('.tl-tabs').onkeydown=e=>{if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;e.preventDefault();if(!tdCanLeave())return;const tabs=Object.keys(TL_TAB_IDS),i=tabs.indexOf(TL.tab);TL.tab=tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];renderTradesList();$('#'+TL_TAB_IDS[TL.tab]).focus();};
   if(TL.tab==='all')tlRenderAll();else if(TL.tab==='review')tlRenderReview();else tlRenderWeek();};
 
 function tlRenderAll(){const panel=$('#tlPanel');
@@ -67,31 +67,11 @@ function tlFocusReview(id){const q=tlQueue(),i=q.findIndex(t=>t.id===id);TL.revi
 function tlRenderReview(){const panel=$('#tlPanel'),q=tlQueue(),left=allTrades.filter(tlNeedsReview).length;
   if(!q.length){panel.innerHTML=`<div class="tl-empty tl-done"><b>${left?'Nothing left in this pass':'All caught up'}</b><p>${left?`You skipped some trades in this pass. Start again to review them.`:'Every closed trade has a review. New trades will show up here after you log them.'}</p>${left?'<button type="button" class="btn" id="tlRestart">Start again</button>':''}</div>`;
     const again=$('#tlRestart');if(again)again.onclick=()=>{TL.skipped.clear();TL.reviewIdx=0;tlRenderReview();};return;}
-  const t=q[Math.min(TL.reviewIdx,q.length-1)],r=wsReview(t),d=tlDir(t),rm=tlR(t);
-  const chips=(name,opts,cur,label)=>`<fieldset class="tl-chips"><legend>${label}</legend><div>${opts.map(([v,l])=>`<label class="tl-chip"><input type="radio" name="${name}" value="${esc(v)}" ${cur===v?'checked':''}><span>${esc(l)}</span></label>`).join('')}</div></fieldset>`;
-  const followed=r.followedPlan===true?'yes':r.followedPlan===false?'no':'';
-  panel.innerHTML=`<p class="tl-progress" aria-live="polite">${left===1?'1 trade to review':`${left} trades to review`}</p>
-   <form class="tl-card" id="tlReviewForm" data-id="${t.id}">
-    <div class="tl-card-head"><div><b translate="no">${esc(t.symbol||'Trade')}</b> ${d?`<span class="tl-dir ${d==='Long'?'long':'short'}">${esc(d)}</span>`:''}<span class="tl-meta">${esc(wsDate(t.date?t.date+'T12:00:00':''))}${t.setup?' · '+esc(t.setup):''}</span></div><div class="tl-result"><b class="${wsSign(wsNet(t))}">${money(wsNet(t))}</b>${rm==null?'':`<span class="${wsSign(rm)}">${wsNum(rm)}R</span>`}</div></div>
-    ${chips('followed',[['yes','Yes'],['no','No']],followed,'Did you follow your plan?')}
-    ${chips('quality',TL_QUALITY.map(x=>[x,x]),r.quality||'','Setup quality')}
-    ${chips('emotionIn',TL_EMO_IN.map(x=>[x,x]),r.emotionIn||'','Entry emotion')}
-    ${chips('emotionOut',TL_EMO_OUT.map(x=>[x,x]),r.emotionOut||'','Exit emotion')}
-    <label class="tl-lesson"><span>One lesson from this trade</span><input name="mistakes" maxlength="500" value="${esc(r.mistakes||'')}" placeholder="e.g. Waited for the retest, keep doing that"></label>
-    <div class="tl-actions"><button type="button" class="btn ghost" id="tlOpenTrade">Open trade</button><span class="tl-spacer"></span><button type="button" class="btn ghost" id="tlSkip">Skip</button><button type="submit" class="btn" id="tlSave">Save and next</button></div>
-    <p class="ws-form-status" id="tlStatus" role="status"></p>
-   </form>`;
-  const form=$('#tlReviewForm');
-  $('#tlOpenTrade').onclick=()=>openTradeDetail(t.id);
-  $('#tlSkip').onclick=()=>{TL.skipped.add(t.id);TL.reviewIdx=0;tlRenderReview();$('#tlPanel input')?.focus();};
-  form.onsubmit=async e=>{e.preventDefault();if(TL.busy)return;TL.busy=true;$('#tlSave').disabled=true;$('#tlStatus').textContent='Saving…';
-    const val=n=>form.querySelector(`input[name="${n}"]:checked`)?.value||'';
-    const f=val('followed'),review={...r,version:1,followedPlan:f==='yes'?true:f==='no'?false:(r.followedPlan??null),quality:val('quality'),emotionIn:val('emotionIn'),emotionOut:val('emotionOut'),mistakes:form.mistakes.value.trim(),reviewed:true,reviewedAt:r.reviewedAt||new Date().toISOString()};
-    // Review-only save: never resends prices or times, and fails cleanly if another tab changed this review.
-    try{await wsApi('review/'+t.id,'PUT',{review,notes:t.notes||'',expectedReview:t.review||null,expectedNotes:t.notes||null});
-      await refreshTrade(t.id);window.tdTrack?.('trade_reviewed');toast('Review saved');TL.reviewIdx=0;renderTradesList();$('#tlPanel input')?.focus();}
-    catch(err){$('#tlStatus').textContent=(err&&err.message)||'Could not save. Your answers are still here.';$('#tlSave').disabled=false;}
-    finally{TL.busy=false;}};}
+  const t=q[Math.min(TL.reviewIdx,q.length-1)];
+  TD.id=t.id;
+  renderTradeDetail('#tlPanel',true);}
+
+function tlSkipReview(id){if(!tdCanLeave())return;TL.skipped.add(id);TL.reviewIdx=0;renderTradesList();}
 
 // ---------- Weekly review: last week's result, discipline and one focus for the next ----------
 const tlIso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;

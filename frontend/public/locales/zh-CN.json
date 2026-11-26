@@ -1629,5 +1629,6 @@
   "These trades are already in your journal": "这些交易已在您的日志中",
   "Choose a PNG, JPG, GIF or WebP image under 15 MB.": "请选择小于 15 MB 的 PNG、JPG、GIF 或 WebP 图片。",
   "Choose an image under 5 MB.": "请选择小于 5 MB 的图片。",
-  "Finishing chart upload…": "正在完成图表上传…"
+  "Finishing chart upload…": "正在完成图表上传…",
+  "Add {value2} chart in Edit trade": "在编辑交易中添加 {value2} 图表"
 }

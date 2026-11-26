@@ -1629,5 +1629,6 @@
   "These trades are already in your journal": "ये ट्रेड पहले से आपकी जर्नल में हैं",
   "Choose a PNG, JPG, GIF or WebP image under 15 MB.": "15 MB से छोटी PNG, JPG, GIF या WebP इमेज चुनें।",
   "Choose an image under 5 MB.": "5 MB से छोटी इमेज चुनें।",
-  "Finishing chart upload…": "चार्ट अपलोड पूरा हो रहा है…"
+  "Finishing chart upload…": "चार्ट अपलोड पूरा हो रहा है…",
+  "Add {value2} chart in Edit trade": "व्यापार संपादित करें में {value2} चार्ट जोड़ें"
 }

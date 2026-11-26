@@ -1629,5 +1629,6 @@
   "These trades are already in your journal": "هذه الصفقات موجودة بالفعل في دفترك",
   "Choose a PNG, JPG, GIF or WebP image under 15 MB.": "اختر صورة PNG أو JPG أو GIF أو WebP أصغر من 15 ميغابايت.",
   "Choose an image under 5 MB.": "اختر صورة أصغر من 5 ميغابايت.",
-  "Finishing chart upload…": "جارٍ إكمال رفع الرسم البياني…"
+  "Finishing chart upload…": "جارٍ إكمال رفع الرسم البياني…",
+  "Add {value2} chart in Edit trade": "أضف مخطط {value2} في تحرير التجارة"
 }

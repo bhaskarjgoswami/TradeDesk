@@ -1133,3 +1133,11 @@ textarea.pbv-input{resize:vertical;min-height:72px;line-height:1.5}
 .tf-review .td-save{margin-top:4px}
 .tf-review .td-save .btn{min-height:38px;padding:0 18px;border-radius:10px;font-size:13.5px;font-weight:550}
 @media(max-width:640px){.tf-review .tf-chip{min-height:36px}.tf-review .tf-seg .tf-chip{min-height:34px}.tf-review .tf-field input,.tf-review .tf-field select{min-height:42px}.tf-review .td-save .btn{width:100%}}
+
+/* Shared trade detail and review queue fields retain their existing layout. */
+.td-reflection-fields{border:0;padding:0;margin:0;min-width:0;display:grid;gap:20px}
+.td-reflection-fields:disabled{opacity:1}
+.td-reflection-fields:disabled input,.td-reflection-fields:disabled select,.td-reflection-fields:disabled textarea{opacity:1;color:var(--txt);-webkit-text-fill-color:currentColor;cursor:default}
+.td-reflection-fields:disabled .tf-chip{cursor:default}
+
+.td-reflection-fields:disabled .tf-mchips{display:none}

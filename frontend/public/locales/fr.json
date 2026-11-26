@@ -1629,5 +1629,6 @@
   "These trades are already in your journal": "Ces trades sont déjà dans votre journal",
   "Choose a PNG, JPG, GIF or WebP image under 15 MB.": "Choisissez une image PNG, JPG, GIF ou WebP de moins de 15 Mo.",
   "Choose an image under 5 MB.": "Choisissez une image de moins de 5 Mo.",
-  "Finishing chart upload…": "Fin de l’envoi du graphique…"
+  "Finishing chart upload…": "Fin de l’envoi du graphique…",
+  "Add {value2} chart in Edit trade": "Ajouter {value2} graphique dans Modifier le commerce"
 }
