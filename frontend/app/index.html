@@ -1000,7 +1000,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('.tb-acct'))closeAcco
 $('#menuSettings').onclick=()=>{closeAccountMenu();openSettings();};
 $('#menuBilling').onclick=()=>{closeAccountMenu();setView('billing');};
 $('#menuFeedback').onclick=()=>{closeAccountMenu();setView('feedback');};
-$('#menuLogout').onclick=async()=>{closeAccountMenu();if(await tdConfirm('Log out of TradeDesk?',{confirmLabel:'Log out'}))doLogout(true);};
+$('#menuLogout').onclick=()=>{closeAccountMenu();doLogout(true);};
 
 // ---------- settings ----------
 let settingsTab='account';
